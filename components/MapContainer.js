@@ -293,24 +293,34 @@ export default function MapContainer({ initialFilters = null, isModal = false })
     }
   };
 
-  const handleFilter = async (startDate, startTime, endDate, endTime, deviceIdOverride = null) => {
+  const handleFilter = async (filters) => {
     setLoading(true);
     try {
-      // Combine date and time into ISO format for API
-      const formatTime = (t) => t.split(':').length === 2 ? `${t}:00` : t;
-      let url = `/api/gps-data?startDate=${startDate}T${formatTime(startTime)}&endDate=${endDate}T${formatTime(endTime)}`;
-      const deviceToUse = deviceIdOverride !== null ? deviceIdOverride : selectedDevice;
-      if (deviceToUse) {
-        url += `&deviceId=${deviceToUse}`;
-      }
-      const response = await fetch(url);
-      const result = await response.json();
+      // filters can be a single object or an array of objects
+      const filterArray = Array.isArray(filters) ? filters : [filters];
 
-      if (result.success) {
-        setLocations(result.data);
-      } else {
-        console.error('Error fetching data:', result.error);
-        if (!isModal) alert('Error fetching GPS data: ' + result.error);
+      const allResults = await Promise.all(filterArray.map(async (f) => {
+        const formatTime = (t) => t.split(':').length === 2 ? `${t}:00` : t;
+        let url = `/api/gps-data?startDate=${f.startDate}T${formatTime(f.startTime)}&endDate=${f.endDate}T${formatTime(f.endTime)}`;
+        const deviceToUse = f.deviceId || selectedDevice;
+        if (deviceToUse) {
+          url += `&deviceId=${deviceToUse}`;
+        }
+        const response = await fetch(url);
+        return response.json();
+      }));
+
+      const combinedData = allResults
+        .filter(r => r.success)
+        .flatMap(r => r.data)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      setLocations(combinedData);
+
+      // Check for errors in any of the fetches
+      const errors = allResults.filter(r => !r.success);
+      if (errors.length > 0) {
+        console.error('Errors fetching some data:', errors);
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -322,10 +332,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
   useEffect(() => {
     if (initialFilters) {
-      const { startDate, startTime, endDate, endTime, deviceId } = initialFilters;
-      if (startDate && startTime && endDate && endTime) {
-        handleFilter(startDate, startTime, endDate, endTime, deviceId);
-      }
+      handleFilter(initialFilters);
     }
   }, [initialFilters]);
 
@@ -449,17 +456,17 @@ export default function MapContainer({ initialFilters = null, isModal = false })
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    const startDate = document.getElementById('startDate')?.value;
+                    const startDateInput = document.getElementById('startDate')?.value;
                     const startHour = document.getElementById('startHour')?.value || '0';
                     const startMinute = document.getElementById('startMinute')?.value || '0';
-                    const endDate = document.getElementById('endDate')?.value;
+                    const endDateInput = document.getElementById('endDate')?.value;
                     const endHour = document.getElementById('endHour')?.value || '0';
                     const endMinute = document.getElementById('endMinute')?.value || '0';
 
-                    if (startDate && endDate) {
-                      // Explicitly parse local date components to avoid browser format inconsistencies
-                      const [sYear, sMonth, sDay] = startDate.split('-').map(Number);
-                      const [eYear, eMonth, eDay] = endDate.split('-').map(Number);
+                    if (startDateInput && endDateInput) {
+                      // Explicitly parse local date components
+                      const [sYear, sMonth, sDay] = startDateInput.split('-').map(Number);
+                      const [eYear, eMonth, eDay] = endDateInput.split('-').map(Number);
 
                       const startLocalDate = new Date(sYear, sMonth - 1, sDay, Number(startHour), Number(startMinute), 0);
                       const endLocalDate = new Date(eYear, eMonth - 1, eDay, Number(endHour), Number(endMinute), 0);
@@ -467,12 +474,13 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                       const startUtcString = startLocalDate.toISOString();
                       const endUtcString = endLocalDate.toISOString();
 
-                      const startUtcDateStr = startUtcString.split('T')[0];
-                      const startUtcTimeStr = startUtcString.split('T')[1].substring(0, 8);
-                      const endUtcDateStr = endUtcString.split('T')[0];
-                      const endUtcTimeStr = endUtcString.split('T')[1].substring(0, 8);
-
-                      handleFilter(startUtcDateStr, startUtcTimeStr, endUtcDateStr, endUtcTimeStr);
+                      handleFilter([{
+                        startDate: startUtcString.split('T')[0],
+                        startTime: startUtcString.split('T')[1].substring(0, 8),
+                        endDate: endUtcString.split('T')[0],
+                        endTime: endUtcString.split('T')[1].substring(0, 8),
+                        deviceId: selectedDevice
+                      }]);
                     }
                   }}
                   disabled={loading}

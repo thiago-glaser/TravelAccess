@@ -14,7 +14,9 @@ export default function SessionsPage() {
     const [error, setError] = useState(null);
     const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
     const [selectedSession, setSelectedSession] = useState(null);
+    const [selectedSessionIds, setSelectedSessionIds] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('single'); // 'single' or 'multi'
 
     // Robust UTC parsing and formatting
     const parseUTC = (dateVal) => {
@@ -67,6 +69,24 @@ export default function SessionsPage() {
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedSession(null);
+        setModalMode('single');
+    };
+
+    const toggleSelectSession = (e, sessionId) => {
+        e.stopPropagation();
+        setSelectedSessionIds(prev =>
+            prev.includes(sessionId)
+                ? prev.filter(id => id !== sessionId)
+                : [...prev, sessionId]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedSessionIds.length === sessions.length) {
+            setSelectedSessionIds([]);
+        } else {
+            setSelectedSessionIds(sessions.map(s => s.id));
+        }
     };
 
     const handleRowClick = (session) => {
@@ -93,6 +113,40 @@ export default function SessionsPage() {
             endDate: endParts.date,
             endTime: endParts.time
         });
+        setModalMode('single');
+        setIsModalOpen(true);
+    };
+
+    const handleViewSelectedMap = () => {
+        if (selectedSessionIds.length === 0) return;
+
+        const selectedSessions = sessions.filter(s => selectedSessionIds.includes(s.id));
+        const filters = selectedSessions.map(s => {
+            const start = parseUTC(s.startTime);
+            const end = parseUTC(s.endTime) || new Date();
+
+            const formatForMap = (date) => {
+                const iso = date.toISOString();
+                return {
+                    date: iso.split('T')[0],
+                    time: iso.split('T')[1].substring(0, 8)
+                };
+            };
+
+            const startParts = formatForMap(start);
+            const endParts = formatForMap(end);
+
+            return {
+                deviceId: s.deviceId,
+                startDate: startParts.date,
+                startTime: startParts.time,
+                endDate: endParts.date,
+                endTime: endParts.time
+            };
+        });
+
+        setSelectedSession(filters);
+        setModalMode('multi');
         setIsModalOpen(true);
     };
 
@@ -130,15 +184,28 @@ export default function SessionsPage() {
                             View and manage tracked travel sessions across your devices.
                         </p>
                     </div>
-                    <button
-                        onClick={() => fetchSessions(pagination.page)}
-                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
-                    >
-                        <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {selectedSessionIds.length > 0 && (
+                            <button
+                                onClick={handleViewSelectedMap}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 animate-in zoom-in duration-200"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A2 2 0 013 15.492V4.508a2 2 0 011.553-1.954L9 1h6l5.447 2.554A2 2 0 0121 5.508v10.984a2 2 0 01-1.553 1.954L15 21H9z" />
+                                </svg>
+                                View {selectedSessionIds.length} on Map
+                            </button>
+                        )}
+                        <button
+                            onClick={() => fetchSessions(pagination.page)}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                        >
+                            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
                 </header>
 
                 {error && (
@@ -175,6 +242,14 @@ export default function SessionsPage() {
                                     <table className="w-full text-left">
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-100">
+                                                <th className="px-4 py-4 w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                        checked={sessions.length > 0 && selectedSessionIds.length === sessions.length}
+                                                        onChange={toggleSelectAll}
+                                                    />
+                                                </th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Device</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Start Time</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">End Time</th>
@@ -188,8 +263,16 @@ export default function SessionsPage() {
                                                 <tr
                                                     key={session.id}
                                                     onClick={() => handleRowClick(session)}
-                                                    className="hover:bg-blue-50/50 transition-colors group cursor-pointer"
+                                                    className={`hover:bg-blue-50/50 transition-colors group cursor-pointer ${selectedSessionIds.includes(session.id) ? 'bg-blue-50/30' : ''}`}
                                                 >
+                                                    <td className="px-4 py-4 w-10" onClick={(e) => e.stopPropagation()}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                            checked={selectedSessionIds.includes(session.id)}
+                                                            onChange={(e) => toggleSelectSession(e, session.id)}
+                                                        />
+                                                    </td>
                                                     <td className="px-2 py-4 whitespace-nowrap">
                                                         <div className="flex flex-col">
                                                             <span className="text-sm font-bold text-gray-900">{session.description || 'Unknown Device'}</span>
@@ -304,8 +387,12 @@ export default function SessionsPage() {
                         {/* Modal Header */}
                         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">Session Map Detail</h3>
-                                <p className="text-sm text-gray-500">Viewing GPS path for the selected session</p>
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    {modalMode === 'multi' ? `Multi-Session Path (${selectedSessionIds.length} Selected)` : 'Session Map Detail'}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {modalMode === 'multi' ? 'Visualizing multiple selected sessions on one map' : 'Viewing GPS path for the selected session'}
+                                </p>
                             </div>
                             <button
                                 onClick={closeModal}
