@@ -38,15 +38,27 @@ export async function GET(request) {
         }
 
         if (startDate) {
-            // Parse datetime string "YYYY-MM-DDTHH:mm:ss" or just date "YYYY-MM-DD"
-            const startDateTime = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
+            // Robustly handle ISO strings (YYYY-MM-DDTHH:MM:SS.mmmZ) by truncating to seconds
+            let startDateTime = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
+            if (startDateTime.includes('.') && startDateTime.indexOf('.') > 10) {
+                startDateTime = startDateTime.split('.')[0];
+            }
+            // If it ends with Z but has no milliseconds
+            if (startDateTime.endsWith('Z')) {
+                startDateTime = startDateTime.slice(0, -1);
+            }
             query += ` AND timestamp_utc >= TO_TIMESTAMP(:startDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
             params.startDate = startDateTime;
         }
 
         if (endDate) {
-            // Parse datetime string "YYYY-MM-DDTHH:mm:ss" or just date "YYYY-MM-DD"
-            const endDateTime = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
+            let endDateTime = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
+            if (endDateTime.includes('.') && endDateTime.indexOf('.') > 10) {
+                endDateTime = endDateTime.split('.')[0];
+            }
+            if (endDateTime.endsWith('Z')) {
+                endDateTime = endDateTime.slice(0, -1);
+            }
             query += ` AND timestamp_utc <= TO_TIMESTAMP(:endDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
             params.endDate = endDateTime;
         }

@@ -9,6 +9,7 @@ export async function GET(request) {
     const deviceFilter = searchParams.get('deviceId');
     const yearFilter = searchParams.get('year');
     const monthFilter = searchParams.get('month');
+    const typeFilter = searchParams.get('type');
 
     let connection;
     try {
@@ -33,6 +34,10 @@ export async function GET(request) {
         if (monthFilter) {
             conditions.push(`EXTRACT(MONTH FROM s.start_utc) = :month`);
             bindParams.month = parseInt(monthFilter);
+        }
+        if (typeFilter) {
+            conditions.push(`s.session_type = :sessionType`);
+            bindParams.sessionType = typeFilter;
         }
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

@@ -290,7 +290,7 @@ export default function SessionsPage() {
                                     setFilters(prev => ({ ...prev, deviceId: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
                                 <option value="">All Devices</option>
                                 {devices.map(device => (
@@ -308,7 +308,7 @@ export default function SessionsPage() {
                                     setFilters(prev => ({ ...prev, year: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
                                 <option value="">Any Year</option>
                                 {[2024, 2025, 2026].map(year => (
@@ -324,7 +324,7 @@ export default function SessionsPage() {
                                     setFilters(prev => ({ ...prev, month: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
                                 <option value="">Any Month</option>
                                 {[
@@ -345,7 +345,7 @@ export default function SessionsPage() {
                                     const newLimit = e.target.value === 'all' ? 1000000 : parseInt(e.target.value);
                                     setPagination(p => ({ ...p, limit: newLimit, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
                                 <option value="20">20 per page</option>
                                 <option value="50">50 per page</option>

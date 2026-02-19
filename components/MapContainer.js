@@ -384,7 +384,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   onChange={(e) => {
                     setSelectedDevice(e.target.value);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200/50 text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                 >
                   <option value="">All Devices</option>
                   {devices.map(device => (
@@ -403,7 +403,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   <input
                     id="startDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
                     id="startHour"
@@ -411,7 +411,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="23"
                     placeholder="HH"
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
                     id="startMinute"
@@ -419,7 +419,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="59"
                     placeholder="MM"
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
               </div>
@@ -432,7 +432,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   <input
                     id="endDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
                     id="endHour"
@@ -440,7 +440,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="23"
                     placeholder="HH"
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
                     id="endMinute"
@@ -448,7 +448,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="59"
                     placeholder="MM"
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
               </div>
