@@ -6,6 +6,10 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit')) || 20;
     const offset = (page - 1) * limit;
 
+    const deviceFilter = searchParams.get('deviceId');
+    const yearFilter = searchParams.get('year');
+    const monthFilter = searchParams.get('month');
+
     let connection;
     try {
         connection = await oracledb.getConnection({
@@ -14,15 +18,32 @@ export async function GET(request) {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
+        // Build dynamic WHERE clause
+        let conditions = [];
+        let bindParams = {};
+
+        if (deviceFilter) {
+            conditions.push(`s.device_id = :deviceId`);
+            bindParams.deviceId = deviceFilter;
+        }
+        if (yearFilter) {
+            conditions.push(`EXTRACT(YEAR FROM s.start_utc) = :year`);
+            bindParams.year = parseInt(yearFilter);
+        }
+        if (monthFilter) {
+            conditions.push(`EXTRACT(MONTH FROM s.start_utc) = :month`);
+            bindParams.month = parseInt(monthFilter);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
         // Query to get total count
-        const countResult = await connection.execute(
-            `SELECT COUNT(*) as TOTAL FROM V_SESSIONS`,
-            [],
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
-        );
+        const countQuery = `SELECT COUNT(*) as TOTAL FROM V_SESSIONS s ${whereClause}`;
+        const countResult = await connection.execute(countQuery, bindParams, { outFormat: oracledb.OUT_FORMAT_OBJECT });
         const total = countResult.rows[0].TOTAL;
 
         // Query with pagination
+        const dataBindParams = { ...bindParams, offset, limit };
         const query = `
             SELECT 
                 s.id, 
@@ -35,12 +56,14 @@ export async function GET(request) {
                 s.location_end
             FROM V_SESSIONS s
             LEFT JOIN devices d ON s.device_id = d.device_id
+            ${whereClause}
             ORDER BY s.start_utc DESC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
         `;
 
-        const result = await connection.execute(query, { offset, limit }, {
+        const result = await connection.execute(query, dataBindParams, {
             outFormat: oracledb.OUT_FORMAT_OBJECT,
+            maxRows: limit
         });
 
         const sessions = result.rows.map(row => ({
