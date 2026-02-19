@@ -6,7 +6,8 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 
 ## ✨ Key Features
 
-- 📍 **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and custom markers.
+- 🗺️ **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and custom markers.
+- 🧭 **Persistent Navigation**: Sleek top-bar menu with branding and quick access to platform modules.
 - 📊 **Dynamic Analytics**:
   - **Speed Analysis**: Automatic speed calculation between GPS points with interactive SVG charts.
   - **Altitude Profiling**: Track elevation changes over time with detailed altitude charts.
@@ -101,7 +102,8 @@ TravelAccess/
 │   └── globals.css     # Global styles
 ├── components/         # Reusable React components
 │   ├── MapContainer.js # Main tracking dashboard & logic
-│   └── MapComponent.js # Leaflet map wrapper
+│   ├── MapComponent.js # Leaflet map wrapper
+│   └── Navbar.js       # Top navigation bar
 ├── public/             # Static assets
 ├── Dockerfile          # Production build configuration
 └── docker-compose.yml  # Multi-container orchestration
