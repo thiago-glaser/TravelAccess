@@ -93,11 +93,18 @@ const calculateAverageSpeed = (locations) => {
 
     console.log(`Point ${i}: speed=${speedKmH.toFixed(2)} km/h, distance=${distance.toFixed(2)}m, time=${timeDiffSeconds.toFixed(2)}s`);
 
+    // Use helper to get local date
+    const localDate = (() => {
+      const d = new Date(locations[i].date);
+      const utcDate = isNaN(d.getTime()) ? new Date(locations[i].date + 'Z') : d;
+      return new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+    })();
+
     speeds.push({
       index: i,
       speed: speedKmH,
-      date: new Date(locations[i].date),
-      time: new Date(locations[i].date).toLocaleTimeString(),
+      date: localDate,
+      time: localDate.toLocaleTimeString(),
     });
   }
 
@@ -105,13 +112,13 @@ const calculateAverageSpeed = (locations) => {
   return speeds;
 };
 
-export default function MapContainer() {
+export default function MapContainer({ initialFilters = null, isModal = false }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
   const [locations, setLocations] = useState([]);
   const [devices, setDevices] = useState([]);
-  const [selectedDevice, setSelectedDevice] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState(initialFilters?.deviceId || '');
   const [loading, setLoading] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState([]);
@@ -192,6 +199,13 @@ export default function MapContainer() {
       const device = devices.find(d => d.id === location.deviceId);
       const deviceName = device ? device.description : location.deviceId;
 
+      // Use helper to get local date
+      const localDate = (() => {
+        const d = new Date(location.date);
+        const utcDate = isNaN(d.getTime()) ? new Date(location.date + 'Z') : d;
+        return new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+      })();
+
       // Create popup content
       const popupContent = `
         <div style="font-size: 12px; min-width: 200px;">
@@ -199,7 +213,7 @@ export default function MapContainer() {
             ${deviceName}
           </h4>
           <p style="margin: 4px 0;">
-            <strong>Date:</strong> ${new Date(location.date).toLocaleDateString()} ${new Date(location.date).toLocaleTimeString()}
+            <strong>Date:</strong> ${localDate.toLocaleDateString()} ${localDate.toLocaleTimeString()}
           </p>
           <p style="margin: 4px 0;">
             <strong>Latitude:</strong> ${location.lat.toFixed(6)}
@@ -249,12 +263,18 @@ export default function MapContainer() {
     setSpeedData(speeds);
 
     // Process altitude data
-    const altitudes = filtered.map((loc, i) => ({
-      index: i,
-      altitude: loc.altitude || 0,
-      date: new Date(loc.date),
-      time: new Date(loc.date).toLocaleTimeString(),
-    }));
+    const altitudes = filtered.map((loc, i) => {
+      const d = new Date(loc.date);
+      const utcDate = isNaN(d.getTime()) ? new Date(loc.date + 'Z') : d;
+      const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+
+      return {
+        index: i,
+        altitude: loc.altitude || 0,
+        date: localDate,
+        time: localDate.toLocaleTimeString(),
+      };
+    });
     setAltitudeData(altitudes);
 
   }, [locations]);
@@ -273,13 +293,15 @@ export default function MapContainer() {
     }
   };
 
-  const handleFilter = async (startDate, startTime, endDate, endTime) => {
+  const handleFilter = async (startDate, startTime, endDate, endTime, deviceIdOverride = null) => {
     setLoading(true);
     try {
       // Combine date and time into ISO format for API
-      let url = `/api/gps-data?startDate=${startDate}T${startTime}:00&endDate=${endDate}T${endTime}:00`;
-      if (selectedDevice) {
-        url += `&deviceId=${selectedDevice}`;
+      const formatTime = (t) => t.split(':').length === 2 ? `${t}:00` : t;
+      let url = `/api/gps-data?startDate=${startDate}T${formatTime(startTime)}&endDate=${endDate}T${formatTime(endTime)}`;
+      const deviceToUse = deviceIdOverride !== null ? deviceIdOverride : selectedDevice;
+      if (deviceToUse) {
+        url += `&deviceId=${deviceToUse}`;
       }
       const response = await fetch(url);
       const result = await response.json();
@@ -288,15 +310,24 @@ export default function MapContainer() {
         setLocations(result.data);
       } else {
         console.error('Error fetching data:', result.error);
-        alert('Error fetching GPS data: ' + result.error);
+        if (!isModal) alert('Error fetching GPS data: ' + result.error);
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      alert('Error fetching GPS data: ' + error.message);
+      if (!isModal) alert('Error fetching GPS data: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialFilters) {
+      const { startDate, startTime, endDate, endTime, deviceId } = initialFilters;
+      if (startDate && startTime && endDate && endTime) {
+        handleFilter(startDate, startTime, endDate, endTime, deviceId);
+      }
+    }
+  }, [initialFilters]);
 
   useEffect(() => {
     fetchDevices();
@@ -324,178 +355,202 @@ export default function MapContainer() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={`${isModal ? 'max-w-full px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} py-8`}>
 
         {/* Filter Section */}
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Filter GPS Data by Date and Device
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Times shown are in your local timezone and will be converted to UTC for database queries
-          </p>
+        {!isModal && (
+          <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Filter GPS Data by Date and Device
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Times shown are in your local timezone and will be converted to UTC for database queries
+            </p>
 
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Device
-              </label>
-              <select
-                value={selectedDevice}
-                onChange={(e) => {
-                  setSelectedDevice(e.target.value);
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-              >
-                <option value="">All Devices</option>
-                {devices.map(device => (
-                  <option key={device.id} value={device.id}>
-                    {device.id} {device.description ? `- ${device.description}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Start Date & Time
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="startDate"
-                  type="date"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <input
-                  id="startHour"
-                  type="number"
-                  min="0"
-                  max="23"
-                  placeholder="HH"
-                  className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
-                />
-                <input
-                  id="startMinute"
-                  type="number"
-                  min="0"
-                  max="59"
-                  placeholder="MM"
-                  className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
-                />
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Device
+                </label>
+                <select
+                  value={selectedDevice}
+                  onChange={(e) => {
+                    setSelectedDevice(e.target.value);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                >
+                  <option value="">All Devices</option>
+                  {devices.map(device => (
+                    <option key={device.id} value={device.id}>
+                      {device.id} {device.description ? `- ${device.description}` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
 
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                End Date & Time
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="endDate"
-                  type="date"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <input
-                  id="endHour"
-                  type="number"
-                  min="0"
-                  max="23"
-                  placeholder="HH"
-                  className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
-                />
-                <input
-                  id="endMinute"
-                  type="number"
-                  min="0"
-                  max="59"
-                  placeholder="MM"
-                  className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
-                />
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Start Date & Time
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="startDate"
+                    type="date"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                  <input
+                    id="startHour"
+                    type="number"
+                    min="0"
+                    max="23"
+                    placeholder="HH"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                  />
+                  <input
+                    id="startMinute"
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="MM"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const startDate = document.getElementById('startDate')?.value;
-                  const startHour = document.getElementById('startHour')?.value || '0';
-                  const startMinute = document.getElementById('startMinute')?.value || '0';
-                  const endDate = document.getElementById('endDate')?.value;
-                  const endHour = document.getElementById('endHour')?.value || '0';
-                  const endMinute = document.getElementById('endMinute')?.value || '0';
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  End Date & Time
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="endDate"
+                    type="date"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                  <input
+                    id="endHour"
+                    type="number"
+                    min="0"
+                    max="23"
+                    placeholder="HH"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                  />
+                  <input
+                    id="endMinute"
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="MM"
+                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg"
+                  />
+                </div>
+              </div>
 
-                  if (startDate && endDate) {
-                    // Parse local times as ISO strings
-                    const startLocalDate = new Date(`${startDate}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`);
-                    const endLocalDate = new Date(`${endDate}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`);
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const startDate = document.getElementById('startDate')?.value;
+                    const startHour = document.getElementById('startHour')?.value || '0';
+                    const startMinute = document.getElementById('startMinute')?.value || '0';
+                    const endDate = document.getElementById('endDate')?.value;
+                    const endHour = document.getElementById('endHour')?.value || '0';
+                    const endMinute = document.getElementById('endMinute')?.value || '0';
 
-                    // Use toISOString() to automatically convert to UTC correctly
-                    const startUtcString = startLocalDate.toISOString();
-                    const endUtcString = endLocalDate.toISOString();
+                    if (startDate && endDate) {
+                      // Explicitly parse local date components to avoid browser format inconsistencies
+                      const [sYear, sMonth, sDay] = startDate.split('-').map(Number);
+                      const [eYear, eMonth, eDay] = endDate.split('-').map(Number);
 
-                    // Extract UTC date and time parts
-                    const startUtcDateStr = startUtcString.split('T')[0];
-                    const startUtcTimeStr = startUtcString.split('T')[1].substring(0, 5);
-                    const endUtcDateStr = endUtcString.split('T')[0];
-                    const endUtcTimeStr = endUtcString.split('T')[1].substring(0, 5);
+                      const startLocalDate = new Date(sYear, sMonth - 1, sDay, Number(startHour), Number(startMinute), 0);
+                      const endLocalDate = new Date(eYear, eMonth - 1, eDay, Number(endHour), Number(endMinute), 0);
 
-                    handleFilter(startUtcDateStr, startUtcTimeStr, endUtcDateStr, endUtcTimeStr);
-                  }
-                }}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
-              >
-                {loading ? 'Loading...' : 'Filter'}
-              </button>
+                      const startUtcString = startLocalDate.toISOString();
+                      const endUtcString = endLocalDate.toISOString();
 
-              <button
-                onClick={async () => {
-                  setSelectedDevice('');
-                  setLocations([]);
-                  const startDateInput = document.getElementById('startDate');
-                  const startHourInput = document.getElementById('startHour');
-                  const startMinuteInput = document.getElementById('startMinute');
-                  const endDateInput = document.getElementById('endDate');
-                  const endHourInput = document.getElementById('endHour');
-                  const endMinuteInput = document.getElementById('endMinute');
-                  if (startDateInput) startDateInput.value = '';
-                  if (startHourInput) startHourInput.value = '';
-                  if (startMinuteInput) startMinuteInput.value = '';
-                  if (endDateInput) endDateInput.value = '';
-                  if (endHourInput) endHourInput.value = '';
-                  if (endMinuteInput) endMinuteInput.value = '';
+                      const startUtcDateStr = startUtcString.split('T')[0];
+                      const startUtcTimeStr = startUtcString.split('T')[1].substring(0, 8);
+                      const endUtcDateStr = endUtcString.split('T')[0];
+                      const endUtcTimeStr = endUtcString.split('T')[1].substring(0, 8);
 
-                  // Reload devices
-                  fetchDevices();
-                }}
-                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium"
-              >
-                Reset
-              </button>
+                      handleFilter(startUtcDateStr, startUtcTimeStr, endUtcDateStr, endUtcTimeStr);
+                    }
+                  }}
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
+                >
+                  {loading ? 'Loading...' : 'Filter'}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setSelectedDevice('');
+                    setLocations([]);
+                    const startDateInput = document.getElementById('startDate');
+                    const startHourInput = document.getElementById('startHour');
+                    const startMinuteInput = document.getElementById('startMinute');
+                    const endDateInput = document.getElementById('endDate');
+                    const endHourInput = document.getElementById('endHour');
+                    const endMinuteInput = document.getElementById('endMinute');
+                    if (startDateInput) startDateInput.value = '';
+                    if (startHourInput) startHourInput.value = '';
+                    if (startMinuteInput) startMinuteInput.value = '';
+                    if (endDateInput) endDateInput.value = '';
+                    if (endHourInput) endHourInput.value = '';
+                    if (endMinuteInput) endMinuteInput.value = '';
+
+                    // Reload devices
+                    fetchDevices();
+                  }}
+                  className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
+        )}
 
-          {locations.length > 0 && (
-            <div className="mt-4 text-sm text-gray-600">
-              <p>
-                Found <span className="font-bold text-blue-600">{locations.length}</span> GPS location(s)
-                {filteredLocations.length < locations.length && (
-                  <span className="text-gray-500"> (showing {filteredLocations.length} after filtering points within 10m)</span>
-                )}
-                {selectedDevice && ` from device ${selectedDevice}`}
-              </p>
-              {filteredLocations.length > 1 && (
-                <p className="mt-2">
-                  <span className="font-bold text-blue-600">Total Distance Traveled:</span>{' '}
-                  {totalDistance >= 1000
-                    ? (totalDistance / 1000).toFixed(2) + ' km'
-                    : totalDistance.toFixed(2) + ' m'
-                  }
+        {/* Statistics Bar - Shown in both regular and modal modes if data exists */}
+        {locations.length > 0 && (
+          <div className={`${isModal ? 'bg-white border-b border-gray-100 px-6 py-4 mb-0' : 'mt-4 text-sm text-gray-600'}`}>
+            <div className={`flex flex-col md:flex-row ${isModal ? 'md:items-center md:justify-between' : 'gap-2'}`}>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className={`${isModal ? 'text-sm' : ''} text-gray-600`}>
+                  Found <span className="font-bold text-blue-600">{locations.length}</span> GPS location(s)
+                  {filteredLocations.length < locations.length && (
+                    <span className="text-gray-500"> (showing {filteredLocations.length} after filtering points within 10m)</span>
+                  )}
+                  {selectedDevice && !isModal && ` from device ${selectedDevice}`}
                 </p>
+              </div>
+
+              {filteredLocations.length > 1 && (
+                <div className="flex items-center gap-2 mt-2 md:mt-0">
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
+                    <span className="text-gray-500 mr-1">Total Distance:</span>
+                    <span className="text-green-700 font-bold">
+                      {totalDistance >= 1000
+                        ? (totalDistance / 1000).toFixed(2) + ' km'
+                        : totalDistance.toFixed(2) + ' m'
+                      }
+                    </span>
+                  </p>
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Map Section */}
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">

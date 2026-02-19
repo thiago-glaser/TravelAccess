@@ -30,25 +30,25 @@ export async function GET(request) {
       WHERE 1=1
     `;
 
-        const params = [];
+        const params = {};
 
         if (deviceId) {
             query += ` AND device_id = :deviceId`;
-            params.push(deviceId);
+            params.deviceId = deviceId;
         }
 
         if (startDate) {
             // Parse datetime string "YYYY-MM-DDTHH:mm:ss" or just date "YYYY-MM-DD"
             const startDateTime = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
             query += ` AND timestamp_utc >= TO_TIMESTAMP(:startDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
-            params.push(startDateTime);
+            params.startDate = startDateTime;
         }
 
         if (endDate) {
             // Parse datetime string "YYYY-MM-DDTHH:mm:ss" or just date "YYYY-MM-DD"
             const endDateTime = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
             query += ` AND timestamp_utc <= TO_TIMESTAMP(:endDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
-            params.push(endDateTime);
+            params.endDate = endDateTime;
         }
 
         query += ` ORDER BY timestamp_utc DESC`;

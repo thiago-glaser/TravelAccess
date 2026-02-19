@@ -8,8 +8,9 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 
 - 🗺️ **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and custom markers.
 - 🧭 **Persistent Navigation**: Sleek top-bar menu with branding and quick access to platform modules.
-- � **Session Management**: Track discrete movement sessions with start/end timing and duration analytics.
-- �📊 **Dynamic Analytics**:
+- 🕒 **Session Management**: Track discrete movement sessions with start/end timing and duration analytics.
+- 📉 **Advanced Reporting**: Generate comprehensive summaries for distance, speed, and altitude trends.
+- 📊 **Dynamic Analytics**:
   - **Speed Analysis**: Automatic speed calculation between GPS points with interactive SVG charts.
   - **Altitude Profiling**: Track elevation changes over time with detailed altitude charts.
   - **Distance Tracking**: Accurate distance calculation using the Haversine formula.
@@ -100,7 +101,8 @@ The application requires the following environment variables:
 TravelAccess/
 ├── app/                # Next.js App Router (Pages & APIs)
 │   ├── api/            # Backend API routes
-│   └── sessions/       # Session management page
+│   ├── sessions/       # Session management page
+│   └── reports/        # Analytics reporting page
 ├── components/         # Reusable React components
 │   ├── MapContainer.js # Main tracking dashboard & logic
 │   ├── MapComponent.js # Leaflet map wrapper
