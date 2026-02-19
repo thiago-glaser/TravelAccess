@@ -323,11 +323,8 @@ export default function MapContainer() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">
-          Travel Access GPS Tracker
-        </h1>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Filter Section */}
         <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
