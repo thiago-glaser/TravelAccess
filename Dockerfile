@@ -21,8 +21,8 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine AS runner
 
-# Install Oracle Instant Client dependencies
-RUN apk add --no-cache libaio libnsl libc6-compat wget unzip
+# Install Oracle Instant Client dependencies and OpenSSL for HTTPS
+RUN apk add --no-cache libaio libnsl libc6-compat wget unzip openssl
 
 # Download and install Oracle Instant Client
 RUN mkdir -p /opt/oracle && \
@@ -48,6 +48,13 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/public ./public
+COPY server.js ./
+
+# Generate self-signed certificate for HTTPS
+RUN mkdir -p /app/certs && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /app/certs/server.key -out /app/certs/server.crt \
+    -subj "/C=US/ST=State/L=City/O=TravelAccess/CN=localhost"
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -62,4 +69,4 @@ USER nextjs
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
