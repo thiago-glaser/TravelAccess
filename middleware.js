@@ -6,7 +6,7 @@ export function middleware(request) {
 
     // Paths that don't require authentication
     if (
-        pathname.startsWith('/api/auth') ||
+        pathname.startsWith('/api/auth') || // Covers /api/auth/google and /api/auth/google/callback
         pathname.startsWith('/login') ||
         pathname.startsWith('/register') ||
         pathname.includes('.') // Static files
