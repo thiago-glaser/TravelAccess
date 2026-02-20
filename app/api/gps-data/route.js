@@ -29,17 +29,19 @@ export async function GET(request) {
         });
         console.log('✅ Oracle connection successful!\n');
 
-        // Get location data with filters
+        // Get location data with filters restricted by user
+        const userId = session.id || session.ID || session.USER_ID;
         let query = `
-      SELECT id, device_id, timestamp_utc, latitude, longitude, altitude
-      FROM location_data
-      WHERE 1=1
-    `;
+            SELECT ld.id, ld.device_id, ld.timestamp_utc, ld.latitude, ld.longitude, ld.altitude
+            FROM location_data ld
+            JOIN USER_DEVICES ud ON ld.device_id = ud.device_id
+            WHERE ud.user_id = :userId
+        `;
 
-        const params = {};
+        const params = { userId };
 
         if (deviceId) {
-            query += ` AND device_id = :deviceId`;
+            query += ` AND ld.device_id = :deviceId`;
             params.deviceId = deviceId;
         }
 
@@ -53,7 +55,7 @@ export async function GET(request) {
             if (startDateTime.endsWith('Z')) {
                 startDateTime = startDateTime.slice(0, -1);
             }
-            query += ` AND timestamp_utc >= TO_TIMESTAMP(:startDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
+            query += ` AND ld.timestamp_utc >= TO_TIMESTAMP(:startDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
             params.startDate = startDateTime;
         }
 
@@ -65,11 +67,11 @@ export async function GET(request) {
             if (endDateTime.endsWith('Z')) {
                 endDateTime = endDateTime.slice(0, -1);
             }
-            query += ` AND timestamp_utc <= TO_TIMESTAMP(:endDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
+            query += ` AND ld.timestamp_utc <= TO_TIMESTAMP(:endDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
             params.endDate = endDateTime;
         }
 
-        query += ` ORDER BY timestamp_utc DESC`;
+        query += ` ORDER BY ld.timestamp_utc DESC`;
 
         const result = await connection.execute(query, params, {
             outFormat: oracledb.OUT_FORMAT_OBJECT,
