@@ -1,6 +1,12 @@
 import oracledb from 'oracledb';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 20;
@@ -19,9 +25,11 @@ export async function GET(request) {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
+        const userId = session.id || session.ID || session.USER_ID;
+
         // Build dynamic WHERE clause
-        let conditions = [];
-        let bindParams = {};
+        let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)`];
+        let bindParams = { userId };
 
         if (deviceFilter) {
             conditions.push(`s.device_id = :deviceId`);
@@ -110,6 +118,13 @@ export async function GET(request) {
 }
 
 export async function PATCH(request) {
+    const session = await getSession(request);
+    if (!session || (session.authType === 'api-key' && !session.IS_ADMIN)) {
+        // Only admins or logged in users can patch sessions, or specific keys if we want.
+        // For now, let's just require a session.
+        if (!session) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     let connection;
     try {
         const body = await request.json();
@@ -125,16 +140,18 @@ export async function PATCH(request) {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
-        // Update the session type
-        // Assuming V_SESSIONS is an updatable view or there's a Sessions table
-        // We'll try to update the base table directly if we can identify it, 
-        // but for now we'll try updating through a standard SQL query.
-        // Based on common patterns in this project, the table is likely SESSION_DATA or SESSIONS
-        const query = `UPDATE V_SESSIONS SET session_type = :type WHERE id = :id`;
+        // Update the session type, but only if the user owns the device for this session
+        const userId = session.id || session.ID || session.USER_ID;
+        const query = `
+            UPDATE V_SESSIONS 
+            SET session_type = :type 
+            WHERE id = :id 
+            AND device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)
+        `;
 
         const result = await connection.execute(
             query,
-            { type, id },
+            { type, id, userId },
             { autoCommit: true }
         );
 

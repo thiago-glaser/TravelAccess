@@ -1,6 +1,12 @@
 import oracledb from 'oracledb';
+import { getSession } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized. API Key or Login required.' }, { status: 401 });
+    }
+
     let connection;
     try {
         connection = await oracledb.getConnection({
@@ -9,8 +15,16 @@ export async function GET() {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
-        const devicesQuery = `SELECT device_id, description FROM devices ORDER BY device_id`;
-        const devicesResult = await connection.execute(devicesQuery, [], {
+        // Get devices mapped to this user
+        const userId = session.id || session.ID || session.USER_ID;
+        const devicesQuery = `
+            SELECT d.device_id, d.description 
+            FROM devices d
+            JOIN USER_DEVICES ud ON d.device_id = ud.device_id
+            WHERE ud.user_id = :userId
+            ORDER BY d.device_id
+        `;
+        const devicesResult = await connection.execute(devicesQuery, { userId }, {
             outFormat: oracledb.OUT_FORMAT_OBJECT,
         });
 
