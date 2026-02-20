@@ -7,16 +7,16 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 ## ✨ Key Features
 
 - 🗺️ **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and custom markers.
-- 🧭 **Persistent Navigation**: Sleek top-bar menu with branding and quick access to platform modules.
+- 🔐 **Secure Authentication**: Complete user system with JWT session management, glassmorphism UI, and protected routes.
+- 🔑 **API Key Management**: Generate and revoke secure access keys (with `x-api-key` header support) for external device integration.
+- 📱 **Device Ownership**: Secure mapping where users only see their own devices. One device, one owner enforcement.
+- ⚙️ **Settings Dashboard**: Dedicated space to manage API keys and customize device descriptions/names.
 - 🕒 **Session Management**: Track discrete movement sessions with start/end timing and duration analytics.
 - 📉 **Advanced Reporting**: Generate comprehensive summaries for distance, speed, and altitude trends.
 - 📊 **Dynamic Analytics**:
   - **Speed Analysis**: Automatic speed calculation between GPS points with interactive SVG charts.
   - **Altitude Profiling**: Track elevation changes over time with detailed altitude charts.
-  - **Distance Tracking**: Accurate distance calculation using the Haversine formula.
-- 🔍 **Advanced Filtering**: Filter data by specific devices and precise date/time ranges.
-- 🛠️ **Data Optimization**: Intelligent filtering to remove redundant GPS points (spatial denoising).
-- 📱 **Responsive Design**: Fully responsive dashboard built with Tailwind CSS.
+- 🔍 **Privacy First**: Multi-tenant data isolation ensures users never see data from devices they don't own.
 - 🐳 **Docker Ready**: Production-grade Docker and Docker Compose configuration for instant deployment.
 
 ---
@@ -24,8 +24,9 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 ## 🚀 Tech Stack
 
 - **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
+- **Security**: [Bcrypt.js](https://github.com/dcodeIO/bcrypt.js) (Hashing), [JSON Web Tokens](https://jwt.io/) (Auth)
 - **Mapping**: [Leaflet](https://leafletjs.com/), [React Leaflet](https://react-leaflet.js.org/)
-- **Backend**: Next.js API Routes
+- **Backend**: Next.js API Routes (Serverless)
 - **Database**: [Oracle Database](https://www.oracle.com/database/) (via `oracledb`)
 - **Infrastructure**: [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/)
 
@@ -36,62 +37,57 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+)
-- [Docker](https://www.docker.com/get-started) (optional, for containerized setup)
+- [Docker](https://www.docker.com/get-started) (optional)
 - Oracle Database (local or cloud instance)
 
 ### Local Development
 
-1. **Clone the repository**:
+1. **Clone & Install**:
    ```bash
    git clone <repository-url>
    cd TravelAccess
-   ```
-
-2. **Install dependencies**:
-   ```bash
    npm install
    ```
 
-3. **Configure Environment Variables**:
-   Copy `.env.example` to `.env.local` and fill in your Oracle DB credentials:
+2. **Configure Environment**:
+   Create a `.env` file from the example:
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
+   ```
+   Required variables: `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECTION_STRING`, and `JWT_SECRET`.
+
+3. **Initialize Database**:
+   Run the setup script to create the necessary tables (`USERS`, `API_KEYS`, `USER_DEVICES`):
+   ```bash
+   node scripts/init-db.js
    ```
 
-4. **Run the development server**:
+4. **Run Server**:
    ```bash
    npm run dev
    ```
-   Access the application at `http://localhost:3000`.
-
-### Docker Setup (Recommended)
-
-To run the entire stack using Docker:
-
-```bash
-docker-compose up --build -d
-```
+   Access at `http://localhost:3000`.
 
 ---
 
-## ⚙️ Configuration
+## 📡 API Security
 
-The application requires the following environment variables:
-
-| Variable | Description |
-| :--- | :--- |
-| `ORACLE_USER` | Your Oracle Database username |
-| `ORACLE_PASSWORD` | Your Oracle Database password |
-| `ORACLE_CONNECTION_STRING` | Database connection string (e.g., `localhost:1521/XEPDB1`) |
-| `NODE_ENV` | `development` or `production` |
+All API endpoints are protected. Authenticate using either:
+1.  **Session Cookie**: Automatically handled for browser users after login.
+2.  **API Key**: For external clients/trackers, include the `x-api-key` header:
+    ```bash
+    curl -H "x-api-key: your_key_here" https://your-domain/api/gps-data
+    ```
 
 ---
 
-## 📡 API Endpoints
+## 📡 Core API Endpoints
 
-- `GET /api/devices`: Retrieve a list of all registered tracking devices.
-- `GET /api/gps-data`: Retrieve GPS coordinates.
-  - **Query Params**: `startDate`, `endDate`, `deviceId`.
+- `GET /api/devices`: List authorized devices for the current user.
+- `GET /api/gps-data`: Search GPS points (filtered by user ownership).
+- `POST /api/auth/login`: Authenticate and start session.
+- `POST /api/auth/api-keys`: Create new access keys.
+- `DELETE /api/auth/api-keys?id=...`: Revoke an API key.
 
 ---
 
@@ -99,24 +95,23 @@ The application requires the following environment variables:
 
 ```text
 TravelAccess/
-├── app/                # Next.js App Router (Pages & APIs)
-│   ├── api/            # Backend API routes
-│   ├── sessions/       # Session management page
-│   └── reports/        # Analytics reporting page
-├── components/         # Reusable React components
-│   ├── MapContainer.js # Main tracking dashboard & logic
-│   ├── MapComponent.js # Leaflet map wrapper
-│   └── Navbar.js       # Top navigation bar
+├── app/                # Next.js App Router
+│   ├── api/            # Secured API Routes (Auth, Devices, GPS)
+│   ├── dashboard/      # User management (Keys, Device Settings)
+│   ├── sessions/       # Session tracking analytics
+│   └── (auth)/         # Login & Register pages
+├── lib/                # Core logic (DB utility, Auth middleware)
+├── scripts/            # Database migration & init scripts
+├── components/         # Reusable UI & Map components
 ├── public/             # Static assets
-├── Dockerfile          # Production build configuration
-└── docker-compose.yml  # Multi-container orchestration
+└── Dockerfile          # Container configuration
 ```
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ---
 

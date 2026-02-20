@@ -43,3 +43,27 @@ export async function POST(request) {
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return Response.json({ success: false, error: 'Key ID is required' }, { status: 400 });
+        }
+
+        const userId = session.id || session.ID || session.USER_ID;
+        const sql = `DELETE FROM API_KEYS WHERE ID = :id AND USER_ID = :userId`;
+        await query(sql, { id, userId });
+
+        return Response.json({ success: true, message: 'API key revoked successfully' });
+    } catch (error) {
+        return Response.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

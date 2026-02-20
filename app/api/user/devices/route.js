@@ -9,7 +9,13 @@ export async function GET(request) {
 
     try {
         const userId = session.id || session.ID || session.USER_ID;
-        const sql = `SELECT DEVICE_ID FROM USER_DEVICES WHERE USER_ID = :userId ORDER BY DEVICE_ID`;
+        const sql = `
+            SELECT ud.DEVICE_ID, d.DESCRIPTION 
+            FROM USER_DEVICES ud
+            LEFT JOIN devices d ON ud.DEVICE_ID = d.DEVICE_ID
+            WHERE ud.USER_ID = :userId 
+            ORDER BY ud.DEVICE_ID
+        `;
         const result = await query(sql, { userId });
 
         return Response.json({ success: true, devices: result.rows });
@@ -25,7 +31,7 @@ export async function POST(request) {
     }
 
     try {
-        const { deviceId } = await request.json();
+        const { deviceId, description } = await request.json();
         if (!deviceId) {
             return Response.json({ success: false, error: 'Device ID is required' }, { status: 400 });
         }
@@ -45,6 +51,18 @@ export async function POST(request) {
             }
         }
 
+        // Ensure device exists in master devices table
+        const deviceExistsResult = await query(`SELECT device_id FROM devices WHERE device_id = :deviceId`, { deviceId });
+        if (deviceExistsResult.rows.length === 0) {
+            await query(
+                `INSERT INTO devices (device_id, description) VALUES (:deviceId, :description)`,
+                { deviceId, description: description || 'New Device' }
+            );
+        } else if (description) {
+            // Update description if provided
+            await query(`UPDATE devices SET description = :description WHERE device_id = :deviceId`, { description, deviceId });
+        }
+
         const sql = `INSERT INTO USER_DEVICES (USER_ID, DEVICE_ID) VALUES (:userId, :deviceId)`;
         await query(sql, { userId, deviceId });
 
@@ -53,6 +71,36 @@ export async function POST(request) {
         if (error.errorNum === 1) {
             return Response.json({ success: false, error: 'Device already added to your account' }, { status: 409 });
         }
+        return Response.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
+export async function PATCH(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const { deviceId, description } = await request.json();
+        const userId = session.id || session.ID || session.USER_ID;
+
+        // Verify ownership first
+        const verifySql = `SELECT 1 FROM USER_DEVICES WHERE USER_ID = :userId AND DEVICE_ID = :deviceId`;
+        const verifyResult = await query(verifySql, { userId, deviceId });
+
+        if (verifyResult.rows.length === 0) {
+            return Response.json({ success: false, error: 'Unauthorized or device not found' }, { status: 403 });
+        }
+
+        // Update description in master table
+        await query(
+            `UPDATE devices SET description = :description WHERE device_id = :deviceId`,
+            { description, deviceId }
+        );
+
+        return Response.json({ success: true, message: 'Description updated successfully' });
+    } catch (error) {
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }

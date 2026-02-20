@@ -49,6 +49,22 @@ export default function ApiKeysPage() {
         }
     };
 
+    const handleRevokeKey = async (id) => {
+        if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return;
+
+        try {
+            const res = await fetch(`/api/auth/api-keys?id=${id}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchKeys();
+            }
+        } catch (err) {
+            console.error('Failed to revoke key');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0f172a] text-white p-8">
             <div className="max-w-4xl mx-auto">
@@ -112,13 +128,14 @@ export default function ApiKeysPage() {
                                         <th className="px-6 py-4 font-medium">Created</th>
                                         <th className="px-6 py-4 font-medium">Last Used</th>
                                         <th className="px-6 py-4 font-medium">Status</th>
+                                        <th className="px-6 py-4 font-medium">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700">
                                     {loading ? (
-                                        <tr><td colSpan="4" className="px-6 py-8 text-center text-slate-500">Loading keys...</td></tr>
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading keys...</td></tr>
                                     ) : keys.length === 0 ? (
-                                        <tr><td colSpan="4" className="px-6 py-8 text-center text-slate-500">No API keys found</td></tr>
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No API keys found</td></tr>
                                     ) : (
                                         keys.map((key) => (
                                             <tr key={key.ID} className="hover:bg-slate-800/50 transition-colors">
@@ -133,6 +150,14 @@ export default function ApiKeysPage() {
                                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${key.IS_ACTIVE ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
                                                         {key.IS_ACTIVE ? 'Active' : 'Inactive'}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => handleRevokeKey(key.ID)}
+                                                        className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                                                    >
+                                                        Revoke
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))
