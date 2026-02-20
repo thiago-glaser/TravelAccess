@@ -70,6 +70,18 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 
 ---
 
+## 💾 Database Schema
+
+The complete database schema, including all **Tables**, **Views**, **Functions**, and **Scheduler Jobs**, is documented in the `database/` directory.
+
+👉 **[View Database Documentation](database/README.md)**
+
+To initialize the database manually:
+1. Connect to your Oracle instance.
+2. Run the SQL scripts in order: `01_tables.sql` → `02_functions_procedures.sql` → `03_views.sql` → `04_jobs.sql`.
+
+---
+
 ## 📡 API Security
 
 All API endpoints are protected. Authenticate using either:
