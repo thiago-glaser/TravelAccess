@@ -1,6 +1,12 @@
 import oracledb from 'oracledb';
+import { getSession } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized. API Key or Login required.' }, { status: 401 });
+    }
+
     let connection;
     try {
         connection = await oracledb.getConnection({

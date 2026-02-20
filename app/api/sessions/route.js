@@ -1,6 +1,12 @@
 import oracledb from 'oracledb';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 20;
@@ -110,6 +116,13 @@ export async function GET(request) {
 }
 
 export async function PATCH(request) {
+    const session = await getSession(request);
+    if (!session || (session.authType === 'api-key' && !session.IS_ADMIN)) {
+        // Only admins or logged in users can patch sessions, or specific keys if we want.
+        // For now, let's just require a session.
+        if (!session) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     let connection;
     try {
         const body = await request.json();

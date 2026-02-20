@@ -5,6 +5,17 @@ import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = require('next/navigation').useRouter();
+
+    // Hide navbar on login and register pages
+    if (pathname === '/login' || pathname === '/register') {
+        return null;
+    }
+
+    const handleLogout = () => {
+        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        router.push('/login');
+    };
 
     return (
         <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
@@ -66,6 +77,31 @@ export default function Navbar() {
                                 Reports
                             </div>
                         </Link>
+                        <Link
+                            href="/dashboard/keys"
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/dashboard/keys'
+                                ? 'text-blue-600 bg-blue-50/80 shadow-sm'
+                                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                                API Keys
+                            </div>
+                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Logout
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>

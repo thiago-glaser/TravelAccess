@@ -1,6 +1,12 @@
 import oracledb from 'oracledb';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
+    const session = await getSession(request);
+    if (!session) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
