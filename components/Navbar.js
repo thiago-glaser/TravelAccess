@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useState, useRef, useEffect } from 'react';
 
 export default function Navbar() {
     const pathname = usePathname();
-    const router = require('next/navigation').useRouter();
+    const router = useRouter();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
