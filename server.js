@@ -6,16 +6,33 @@ const path = require('path');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 443;
 
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, 'certs', 'server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'certs', 'server.crt'))
-};
+const certPath = path.join(__dirname, 'certs');
+
+let httpsOptions = {};
+if (fs.existsSync(path.join(certPath, 'private.key')) && fs.existsSync(path.join(certPath, 'certificate.crt'))) {
+    if (fs.existsSync(path.join(certPath, 'ca_bundle.crt'))) {
+        httpsOptions = {
+            key: fs.readFileSync(path.join(certPath, 'private.key')),
+            cert: fs.readFileSync(path.join(certPath, 'certificate.crt')) + '\n' + fs.readFileSync(path.join(certPath, 'ca_bundle.crt'))
+        };
+    } else {
+        httpsOptions = {
+            key: fs.readFileSync(path.join(certPath, 'private.key')),
+            cert: fs.readFileSync(path.join(certPath, 'certificate.crt'))
+        };
+    }
+} else {
+    httpsOptions = {
+        key: fs.readFileSync(path.join(certPath, 'server.key')),
+        cert: fs.readFileSync(path.join(certPath, 'server.crt'))
+    };
+}
 
 app.prepare().then(() => {
     createServer(httpsOptions, async (req, res) => {
