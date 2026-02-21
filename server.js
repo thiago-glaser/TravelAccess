@@ -16,12 +16,16 @@ const certPath = path.join(__dirname, 'certs');
 
 let httpsOptions = {};
 if (fs.existsSync(path.join(certPath, 'private.key')) && fs.existsSync(path.join(certPath, 'certificate.crt'))) {
-    httpsOptions = {
-        key: fs.readFileSync(path.join(certPath, 'private.key')),
-        cert: fs.readFileSync(path.join(certPath, 'certificate.crt'))
-    };
     if (fs.existsSync(path.join(certPath, 'ca_bundle.crt'))) {
-        httpsOptions.ca = fs.readFileSync(path.join(certPath, 'ca_bundle.crt'));
+        httpsOptions = {
+            key: fs.readFileSync(path.join(certPath, 'private.key')),
+            cert: fs.readFileSync(path.join(certPath, 'certificate.crt')) + '\n' + fs.readFileSync(path.join(certPath, 'ca_bundle.crt'))
+        };
+    } else {
+        httpsOptions = {
+            key: fs.readFileSync(path.join(certPath, 'private.key')),
+            cert: fs.readFileSync(path.join(certPath, 'certificate.crt'))
+        };
     }
 } else {
     httpsOptions = {
