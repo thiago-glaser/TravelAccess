@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import dynamic from 'next/dynamic';
 
 const MapContainer = dynamic(() => import('@/components/MapContainer'), {
     ssr: false,
     loading: () => <div className="w-full h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-500">Loading Map...</p></div>,
 });
+
+import SessionPointsList from '@/components/SessionPointsList';
 
 export default function SessionsPage() {
     const [sessions, setSessions] = useState([]);
@@ -21,6 +23,16 @@ export default function SessionsPage() {
     const [modalMode, setModalMode] = useState('single'); // 'single' or 'multi'
     const [devices, setDevices] = useState([]);
     const [filters, setFilters] = useState({ deviceId: '', year: '', month: '' });
+    const [expandedSessionIds, setExpandedSessionIds] = useState([]);
+
+    const toggleExpandSession = (e, sessionId) => {
+        e.stopPropagation(); // Prevents the map modal from opening
+        setExpandedSessionIds(prev =>
+            prev.includes(sessionId)
+                ? prev.filter(id => id !== sessionId)
+                : [...prev, sessionId]
+        );
+    };
 
     // Robust UTC parsing and formatting
     const parseUTC = (dateVal) => {
@@ -448,6 +460,7 @@ export default function SessionsPage() {
                                                         onChange={toggleSelectAll}
                                                     />
                                                 </th>
+                                                <th className="px-2 py-4 w-10"></th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Device</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Start Time</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">End Time</th>
@@ -458,60 +471,82 @@ export default function SessionsPage() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 text-left">
                                             {sessions.map((session) => (
-                                                <tr
-                                                    key={session.id}
-                                                    onClick={() => handleRowClick(session)}
-                                                    className={`hover:bg-blue-50/50 transition-colors group cursor-pointer ${selectedSessionIds.includes(session.id) ? 'bg-blue-50/30' : ''}`}
-                                                >
-                                                    <td className="px-4 py-4 w-10" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                                            checked={selectedSessionIds.includes(session.id)}
-                                                            onChange={(e) => toggleSelectSession(e, session)}
-                                                        />
-                                                    </td>
-                                                    <td className="px-2 py-4 whitespace-nowrap">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-gray-900">{session.description || 'Unknown Device'}</span>
-                                                            <span className="text-xs text-gray-500 font-mono">{session.deviceId}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                                        {session.startTime ? parseUTC(session.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }) : 'N/A'}
-                                                    </td>
-                                                    <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                                        {session.endTime ? parseUTC(session.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }) : (
-                                                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
-                                                                Active Now
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-2 py-4 text-sm text-gray-600">
-                                                        <div className="max-w-[220px] truncate" title={session.locationStart}>
-                                                            {session.locationStart || '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 py-4 text-sm text-gray-600">
-                                                        <div className="max-w-[220px] truncate" title={session.locationEnd}>
-                                                            {session.locationEnd || '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 py-4 whitespace-nowrap">
-                                                        <button
-                                                            onClick={(e) => toggleSessionType(e, session.id, session.type)}
-                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${session.type === 'P' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
-                                                                session.type === 'B' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
-                                                                    'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                                }`}
-                                                            title="Click to toggle between Personal and Business"
-                                                        >
-                                                            {session.type === 'P' ? 'Personal' :
-                                                                session.type === 'B' ? 'Business' :
-                                                                    (session.type || 'Standard')}
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                <Fragment key={session.id}>
+                                                    <tr
+                                                        onClick={() => handleRowClick(session)}
+                                                        className={`hover:bg-blue-50/50 transition-colors group cursor-pointer ${selectedSessionIds.includes(session.id) ? 'bg-blue-50/30' : ''}`}
+                                                    >
+                                                        <td className="px-4 py-4 w-10" onClick={(e) => e.stopPropagation()}>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                                checked={selectedSessionIds.includes(session.id)}
+                                                                onChange={(e) => toggleSelectSession(e, session)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-2 py-4 w-10" onClick={(e) => toggleExpandSession(e, session.id)}>
+                                                            <button
+                                                                className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors cursor-pointer"
+                                                                title="Expand session details"
+                                                            >
+                                                                {expandedSessionIds.includes(session.id) ? (
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
+                                                                ) : (
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                        <td className="px-2 py-4 whitespace-nowrap">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-bold text-gray-900">{session.description || 'Unknown Device'}</span>
+                                                                <span className="text-xs text-gray-500 font-mono">{session.deviceId}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                            {session.startTime ? parseUTC(session.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }) : 'N/A'}
+                                                        </td>
+                                                        <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                            {session.endTime ? parseUTC(session.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }) : (
+                                                                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
+                                                                    Active Now
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-2 py-4 text-sm text-gray-600">
+                                                            <div className="max-w-[220px] truncate" title={session.locationStart}>
+                                                                {session.locationStart || '-'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-4 text-sm text-gray-600">
+                                                            <div className="max-w-[220px] truncate" title={session.locationEnd}>
+                                                                {session.locationEnd || '-'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-4 whitespace-nowrap">
+                                                            <button
+                                                                onClick={(e) => toggleSessionType(e, session.id, session.type)}
+                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${session.type === 'P' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                                                                    session.type === 'B' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
+                                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                    }`}
+                                                                title="Click to toggle between Personal and Business"
+                                                            >
+                                                                {session.type === 'P' ? 'Personal' :
+                                                                    session.type === 'B' ? 'Business' :
+                                                                        (session.type || 'Standard')}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {expandedSessionIds.includes(session.id) && (
+                                                        <tr>
+                                                            <td colSpan="8" className="p-0 bg-gray-50/80">
+                                                                <div className="py-2 px-6 border-b border-gray-200">
+                                                                    <SessionPointsList session={session} />
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </Fragment>
                                             ))}
                                         </tbody>
                                     </table>

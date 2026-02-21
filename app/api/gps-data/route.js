@@ -32,7 +32,7 @@ export async function GET(request) {
         // Get location data with filters restricted by user
         const userId = session.id || session.ID || session.USER_ID;
         let query = `
-            SELECT ld.id, ld.device_id, ld.timestamp_utc, ld.latitude, ld.longitude, ld.altitude
+            SELECT ld.id, ld.device_id, TO_CHAR(ld.timestamp_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as TIMESTAMP_UTC, ld.latitude, ld.longitude, ld.altitude
             FROM location_data ld
             JOIN USER_DEVICES ud ON ld.device_id = ud.device_id
             WHERE ud.user_id = :userId

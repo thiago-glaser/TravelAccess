@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { parseUTC } from '@/lib/gpsUtils';
 
 // Calculate distance between two points in meters using Haversine formula
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -84,8 +85,8 @@ const calculateAverageSpeed = (locations) => {
     );
 
     // Calculate time difference in seconds
-    const time1 = new Date(point1.date).getTime();
-    const time2 = new Date(point2.date).getTime();
+    const time1 = parseUTC(point1.date).getTime();
+    const time2 = parseUTC(point2.date).getTime();
     const timeDiffSeconds = (time2 - time1) / 1000;
 
     // Calculate speed in km/h
@@ -93,12 +94,8 @@ const calculateAverageSpeed = (locations) => {
 
     console.log(`Point ${i}: speed=${speedKmH.toFixed(2)} km/h, distance=${distance.toFixed(2)}m, time=${timeDiffSeconds.toFixed(2)}s`);
 
-    // Use helper to get local date
-    const localDate = (() => {
-      const d = new Date(locations[i].date);
-      const utcDate = isNaN(d.getTime()) ? new Date(locations[i].date + 'Z') : d;
-      return new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
-    })();
+    // Use parseUTC to get local date
+    const localDate = parseUTC(locations[i].date);
 
     speeds.push({
       index: i,
@@ -199,12 +196,8 @@ export default function MapContainer({ initialFilters = null, isModal = false })
       const device = devices.find(d => d.id === location.deviceId);
       const deviceName = device ? device.description : location.deviceId;
 
-      // Use helper to get local date
-      const localDate = (() => {
-        const d = new Date(location.date);
-        const utcDate = isNaN(d.getTime()) ? new Date(location.date + 'Z') : d;
-        return new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
-      })();
+      // Use correct UTC parsing to get local date
+      const localDate = parseUTC(location.date);
 
       // Create popup content
       const popupContent = `
@@ -248,7 +241,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
   useEffect(() => {
     // Sort locations by date in ascending order (oldest first)
     const sortedLocations = [...locations].sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
+      return parseUTC(a.date).getTime() - parseUTC(b.date).getTime();
     });
     console.log('Sorted locations from', sortedLocations[0]?.date, 'to', sortedLocations[sortedLocations.length - 1]?.date);
 
@@ -264,9 +257,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
     // Process altitude data
     const altitudes = filtered.map((loc, i) => {
-      const d = new Date(loc.date);
-      const utcDate = isNaN(d.getTime()) ? new Date(loc.date + 'Z') : d;
-      const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+      const localDate = parseUTC(loc.date);
 
       return {
         index: i,
