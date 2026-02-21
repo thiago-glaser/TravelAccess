@@ -36,7 +36,7 @@ RUN mkdir -p /opt/oracle && \
     ldconfig || true
 
 # Set Oracle environment variables
-ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_15:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_15
 
 WORKDIR /app
 
