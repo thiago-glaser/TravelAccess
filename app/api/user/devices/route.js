@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth';
+import { getSession, verifyDeviceOwnership } from '@/lib/auth';
 import { query } from '@/lib/db';
 
 export async function GET(request) {
@@ -83,13 +83,11 @@ export async function PATCH(request) {
 
     try {
         const { deviceId, description } = await request.json();
-        const userId = session.id || session.ID || session.USER_ID;
 
         // Verify ownership first
-        const verifySql = `SELECT 1 FROM USER_DEVICES WHERE USER_ID = :userId AND DEVICE_ID = :deviceId`;
-        const verifyResult = await query(verifySql, { userId, deviceId });
+        const isOwner = await verifyDeviceOwnership(session, deviceId);
 
-        if (verifyResult.rows.length === 0) {
+        if (!isOwner) {
             return Response.json({ success: false, error: 'Unauthorized or device not found' }, { status: 403 });
         }
 

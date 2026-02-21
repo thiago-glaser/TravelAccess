@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, verifyDeviceOwnership } from '@/lib/auth';
 
 export async function POST(request) {
     try {
@@ -18,10 +18,8 @@ export async function POST(request) {
         const startTime = Date.now();
         const endUtc = timestamp_utc ? new Date(timestamp_utc) : new Date();
 
-        const userId = session.id || session.ID || session.USER_ID;
-        const checkSql = `SELECT 1 FROM USER_DEVICES WHERE USER_ID = :userId AND DEVICE_ID = :deviceId`;
-        const checkResult = await query(checkSql, { userId, deviceId: device_id });
-        if (!checkResult.rows || checkResult.rows.length === 0) {
+        const isOwner = await verifyDeviceOwnership(session, device_id);
+        if (!isOwner) {
             return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
         }
 
