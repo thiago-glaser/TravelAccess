@@ -12,22 +12,13 @@ export async function GET(request) {
     const endDate = searchParams.get('endDate');
     const deviceId = searchParams.get('deviceId');
 
-    // Log Oracle connection parameters
-    console.log('🔍 Oracle Connection Parameters:');
-    console.log(`   User: ${process.env.ORACLE_USER}`);
-    console.log(`   Connection String: ${process.env.ORACLE_CONNECTION_STRING}`);
-    console.log(`   Password: ${process.env.ORACLE_PASSWORD ? '***set***' : 'NOT SET'}`);
-    console.log('');
-
     let connection;
     try {
-        console.log('⏳ Attempting Oracle connection...');
         connection = await oracledb.getConnection({
             user: process.env.ORACLE_USER,
             password: process.env.ORACLE_PASSWORD,
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
-        console.log('✅ Oracle connection successful!\n');
 
         // Get location data with filters restricted by user
         const userId = session.id || session.ID || session.USER_ID;
@@ -86,7 +77,6 @@ export async function GET(request) {
             date: row.TIMESTAMP_UTC,
         }));
 
-        console.log(`✅ Found ${locations.length} location records\n`);
         return Response.json({ success: true, data: locations });
     } catch (error) {
         console.error('❌ Database error:', error);

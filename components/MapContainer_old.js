@@ -146,7 +146,6 @@ export default function MapContainer() {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      console.log('Google Maps API loaded');
       setGoogleLoaded(true);
     };
     script.onerror = () => {
@@ -166,7 +165,7 @@ export default function MapContainer() {
     setTimeout(() => {
       const startInput = document.getElementById('startDate');
       const endInput = document.getElementById('endDate');
-      
+
       if (startInput) startInput.value = thirtyDaysAgo;
       if (endInput) endInput.value = today;
 
@@ -253,7 +252,7 @@ export default function MapContainer() {
                   const endInput = document.getElementById('endDate');
                   if (startInput) startInput.value = '';
                   if (endInput) endInput.value = '';
-                  
+
                   // Reload devices
                   try {
                     const response = await fetch('/api/gps-data?startDate=2000-01-01&endDate=2100-12-31');

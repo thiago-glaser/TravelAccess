@@ -63,9 +63,7 @@ const calculateTotalDistance = (locations) => {
 
 // Calculate average speed for each point using surrounding points (2 before and 2 after)
 const calculateAverageSpeed = (locations) => {
-  console.log('calculateAverageSpeed called with', locations.length, 'locations');
   if (locations.length < 3) {
-    console.log('Not enough points for speed calculation (need at least 3)');
     return []; // Need at least 3 points to calculate meaningful speed
   }
 
@@ -92,8 +90,6 @@ const calculateAverageSpeed = (locations) => {
     // Calculate speed in km/h
     const speedKmH = timeDiffSeconds > 0 ? (distance / timeDiffSeconds) * 3.6 : 0;
 
-    console.log(`Point ${i}: speed=${speedKmH.toFixed(2)} km/h, distance=${distance.toFixed(2)}m, time=${timeDiffSeconds.toFixed(2)}s`);
-
     // Use parseUTC to get local date
     const localDate = parseUTC(locations[i].date);
 
@@ -105,7 +101,6 @@ const calculateAverageSpeed = (locations) => {
     });
   }
 
-  console.log('Calculated speeds:', speeds.length, 'data points');
   return speeds;
 };
 
@@ -243,7 +238,6 @@ export default function MapContainer({ initialFilters = null, isModal = false })
     const sortedLocations = [...locations].sort((a, b) => {
       return parseUTC(a.date).getTime() - parseUTC(b.date).getTime();
     });
-    console.log('Sorted locations from', sortedLocations[0]?.date, 'to', sortedLocations[sortedLocations.length - 1]?.date);
 
     const filtered = filterLocationsByDistance(sortedLocations, 10);
     setFilteredLocations(filtered);
@@ -252,7 +246,6 @@ export default function MapContainer({ initialFilters = null, isModal = false })
     setTotalDistance(distance);
     // Calculate average speed for each point
     const speeds = calculateAverageSpeed(filtered);
-    console.log('Setting speed data:', speeds);
     setSpeedData(speeds);
 
     // Process altitude data
@@ -567,7 +560,6 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         </div>
 
         {/* Speed Chart Section */}
-        {console.log('Rendering speed chart, speedData.length:', speedData.length)}
         {speedData.length > 0 && (
           <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Average Speed Analysis</h2>
