@@ -61,6 +61,23 @@ const calculateTotalDistance = (locations) => {
   return totalDistance;
 };
 
+// Format time duration in milliseconds to a human-readable string
+const formatTimeDuration = (ms) => {
+  if (ms <= 0) return '0s';
+  const seconds = Math.floor((ms / 1000) % 60);
+  const minutes = Math.floor((ms / (1000 * 60)) % 60);
+  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+
+  return parts.join(' ');
+};
+
 // Calculate average speed for each point using surrounding points (2 before and 2 after)
 const calculateAverageSpeed = (locations) => {
   if (locations.length < 3) {
@@ -115,6 +132,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
   const [mapLoaded, setMapLoaded] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState([]);
   const [totalDistance, setTotalDistance] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
   const [speedData, setSpeedData] = useState([]);
   const [altitudeData, setAltitudeData] = useState([]);
 
@@ -241,6 +259,38 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
     const filtered = filterLocationsByDistance(sortedLocations, 10);
     setFilteredLocations(filtered);
+
+    // Calculate total time
+    if (!isModal) {
+      if (filtered.length > 1) {
+        const firstDate = parseUTC(filtered[0].date).getTime();
+        const lastDate = parseUTC(filtered[filtered.length - 1].date).getTime();
+        setTotalTime(lastDate - firstDate);
+      } else {
+        setTotalTime(0);
+      }
+    } else {
+      if (initialFilters) {
+        const filterArray = Array.isArray(initialFilters) ? initialFilters : [initialFilters];
+        let sum = 0;
+        for (const f of filterArray) {
+          if (f.startDate && f.startTime && f.endDate && f.endTime) {
+            const formatTime = (t) => t.split(':').length === 2 ? `${t}:00` : t;
+            const startStr = `${f.startDate}T${formatTime(f.startTime)}`;
+            const endStr = `${f.endDate}T${formatTime(f.endTime)}`;
+            // Add Z to ensure UTC parsing
+            const start = new Date(startStr.endsWith('Z') ? startStr : `${startStr}Z`);
+            const end = new Date(endStr.endsWith('Z') ? endStr : `${endStr}Z`);
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+              sum += Math.max(0, end.getTime() - start.getTime());
+            }
+          }
+        }
+        setTotalTime(sum);
+      } else {
+        setTotalTime(0);
+      }
+    }
 
     // Calculate total distance traveled
     const distance = calculateTotalDistance(filtered);
@@ -524,21 +574,37 @@ export default function MapContainer({ initialFilters = null, isModal = false })
               </div>
 
               {filteredLocations.length > 1 && (
-                <div className="flex items-center gap-2 mt-2 md:mt-0">
-                  <div className="p-2 bg-green-50 rounded-lg">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
+                <div className="flex flex-col md:flex-row gap-4 mt-2 md:mt-0 md:items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-green-50 rounded-lg">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
+                      <span className="text-gray-500 mr-1">Total Distance:</span>
+                      <span className="text-green-700 font-bold">
+                        {totalDistance >= 1000
+                          ? (totalDistance / 1000).toFixed(2) + ' km'
+                          : totalDistance.toFixed(2) + ' m'
+                        }
+                      </span>
+                    </p>
                   </div>
-                  <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
-                    <span className="text-gray-500 mr-1">Total Distance:</span>
-                    <span className="text-green-700 font-bold">
-                      {totalDistance >= 1000
-                        ? (totalDistance / 1000).toFixed(2) + ' km'
-                        : totalDistance.toFixed(2) + ' m'
-                      }
-                    </span>
-                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-purple-50 rounded-lg">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
+                      <span className="text-gray-500 mr-1">Total Time:</span>
+                      <span className="text-purple-700 font-bold">
+                        {formatTimeDuration(totalTime)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
