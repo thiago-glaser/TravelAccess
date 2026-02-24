@@ -8,7 +8,7 @@ export async function GET(request) {
     }
 
     try {
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         const sql = `
             SELECT ud.DEVICE_ID, d.DESCRIPTION 
             FROM USER_DEVICES ud
@@ -36,7 +36,7 @@ export async function POST(request) {
             return Response.json({ success: false, error: 'Device ID is required' }, { status: 400 });
         }
 
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
 
         // Check if device is already owned by another user
         const ownerCheckSql = `SELECT USER_ID FROM USER_DEVICES WHERE DEVICE_ID = :deviceId`;
@@ -117,7 +117,7 @@ export async function DELETE(request) {
             return Response.json({ success: false, error: 'Device ID is required' }, { status: 400 });
         }
 
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         const sql = `DELETE FROM USER_DEVICES WHERE USER_ID = :userId AND DEVICE_ID = :deviceId`;
         const result = await query(sql, { userId, deviceId });
 

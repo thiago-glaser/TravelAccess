@@ -21,7 +21,7 @@ export async function GET(request) {
         });
 
         // Get location data with filters restricted by user
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         let query = `
             SELECT ld.id, ld.device_id, TO_CHAR(ld.timestamp_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as TIMESTAMP_UTC, ld.latitude, ld.longitude, ld.altitude
             FROM location_data ld

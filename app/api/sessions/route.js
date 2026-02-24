@@ -25,7 +25,7 @@ export async function GET(request) {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
 
         // Build dynamic WHERE clause
         let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)`];
@@ -141,7 +141,7 @@ export async function PATCH(request) {
         });
 
         // Update the session type, but only if the user owns the device for this session
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         const query = `
             UPDATE V_SESSIONS 
             SET session_type = :type 

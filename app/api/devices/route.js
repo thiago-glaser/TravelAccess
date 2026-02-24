@@ -16,7 +16,7 @@ export async function GET(request) {
         });
 
         // Get devices mapped to this user
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         const devicesQuery = `
             SELECT d.device_id, d.description 
             FROM devices d

@@ -58,7 +58,7 @@ export async function DELETE(request) {
             return Response.json({ success: false, error: 'Key ID is required' }, { status: 400 });
         }
 
-        const userId = session.id || session.ID || session.USER_ID;
+        const userId = session.USER_ID || session.id || session.ID;
         const sql = `DELETE FROM API_KEYS WHERE ID = :id AND USER_ID = :userId`;
         await query(sql, { id, userId });
 

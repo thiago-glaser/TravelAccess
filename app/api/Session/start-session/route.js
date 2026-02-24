@@ -18,7 +18,7 @@ export async function POST(request) {
         const startTime = Date.now();
         const startUtc = new Date(timestamp_utc);
 
-        const isOwner = true;//await verifyDeviceOwnership(session, device_id);
+        const isOwner = await verifyDeviceOwnership(session, device_id);
         if (!isOwner) {
             return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
         }
