@@ -215,11 +215,11 @@ export default function ManageFuelPage() {
                                 <div className="relative">
                                     <input
                                         type="number"
-                                        step="0.01"
+                                        step="0.001"
                                         min="0"
                                         value={liters}
                                         onChange={(e) => setLiters(e.target.value)}
-                                        placeholder="0.00"
+                                        placeholder="0.000"
                                         className="w-full pr-10 pl-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-slate-600"
                                         required
                                     />
@@ -304,7 +304,7 @@ export default function ManageFuelPage() {
                                                                 ${parseFloat(entry.totalValue).toFixed(2)}
                                                             </div>
                                                             <div className="text-sm font-medium text-emerald-400">
-                                                                {parseFloat(entry.liters).toFixed(2)} Liters
+                                                                {parseFloat(entry.liters).toFixed(3)} Liters
                                                             </div>
                                                         </div>
                                                     </div>
