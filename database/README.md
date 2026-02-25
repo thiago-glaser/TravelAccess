@@ -44,6 +44,7 @@ To set up the database from scratch:
 *   **`DEVICES`**: Master list of known devices.
 *   **`USER_DEVICES`**: Mapping of users to the devices they own.
 *   **`CARS`**: List of cars belonging to users with description and license plate.
+*   **`FUEL`**: Logs of fuel inserted mapping to users and cars, with capability to store receipt blob images.
 *   **`LOCATION_DATA`**: Raw high-frequency GPS telemetry.
 *   **`SESSION_DATA`**: Aggregated travel sessions (trips).
 

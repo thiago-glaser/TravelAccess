@@ -101,6 +101,8 @@ All API endpoints are protected. Authenticate using either:
 - `POST /api/Session/start-session`: Start a new tracking session (requires API key/session & device ownership validation).
 - `POST /api/Session/end-session`: End an active tracking session.
 - `GET`, `POST`, `PATCH`, `DELETE /api/user/cars`: Manage user cars.
+- `GET`, `POST`, `DELETE /api/user/fuel`: Manage fuel logs.
+- `GET /api/user/fuel/[id]/receipt`: Retrieve the receipt image.
 - `POST /api/auth/login`: Authenticate and start session.
 - `POST /api/auth/api-keys`: Create new access keys.
 - `DELETE /api/auth/api-keys?id=...`: Revoke an API key.

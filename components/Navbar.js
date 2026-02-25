@@ -78,7 +78,7 @@ export default function Navbar() {
             setPwdStatus({ loading: false, error: 'An error occurred', success: '' });
         }
     };
-    const isSettingsActive = pathname.startsWith('/dashboard/cars') || pathname.startsWith('/dashboard/devices') || pathname.startsWith('/dashboard/keys') || isPasswordModalOpen;
+    const isSettingsActive = pathname.startsWith('/dashboard/cars') || pathname.startsWith('/dashboard/fuel') || pathname.startsWith('/dashboard/devices') || pathname.startsWith('/dashboard/keys') || isPasswordModalOpen;
     return (
         <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -190,6 +190,16 @@ export default function Navbar() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
                                         Cars
+                                    </Link>
+                                    <Link
+                                        href="/dashboard/fuel"
+                                        onClick={() => setIsSettingsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/fuel' ? 'text-green-600 bg-green-50' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                        Fuel
                                     </Link>
                                     <Link
                                         href="/dashboard/devices"
