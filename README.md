@@ -100,6 +100,7 @@ All API endpoints are protected. Authenticate using either:
 - `POST /api/LocationData`: Insert bulk GPS points (requires API key/session & device ownership validation).
 - `POST /api/Session/start-session`: Start a new tracking session (requires API key/session & device ownership validation).
 - `POST /api/Session/end-session`: End an active tracking session.
+- `GET`, `POST`, `PATCH`, `DELETE /api/user/cars`: Manage user cars.
 - `POST /api/auth/login`: Authenticate and start session.
 - `POST /api/auth/api-keys`: Create new access keys.
 - `DELETE /api/auth/api-keys?id=...`: Revoke an API key.
