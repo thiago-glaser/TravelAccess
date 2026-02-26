@@ -113,16 +113,18 @@ All API endpoints are protected. Authenticate using either:
 
 ```text
 TravelAccess/
-├── app/                # Next.js App Router
-│   ├── api/            # Secured API Routes (Auth, Devices, GPS)
-│   ├── dashboard/      # User management (Keys, Device Settings)
-│   ├── sessions/       # Session tracking analytics
-│   └── (auth)/         # Login & Register pages
-├── lib/                # Core logic (DB utility, Auth middleware)
-├── scripts/            # Database migration & init scripts
-├── components/         # Reusable UI & Map components
-├── public/             # Static assets
-└── Dockerfile          # Container configuration
+├── app/                # Next.js App Router (Pages & API)
+│   ├── api/            # Server-Side API endpoints (GPS, Devices, Auth)
+│   ├── dashboard/      # Protected dashboard for managing keys, cars, and devices
+│   ├── map/            # Real-time and historical GPS mapping interface
+│   ├── reports/        # Analytics and comprehensive travel summaries
+│   ├── login/          # User authentication and login entry
+│   └── register/       # User account creation
+├── components/         # Reusable UI components (MapContainer, Lists, Navbars)
+├── database/           # SQL and PL/SQL schemas for Oracle DB initialization
+├── Dockerfile          # Container configuration for production builds
+├── public/             # Static assets (icons, images)
+└── lib/                # Core helper functions and utilities
 ```
 
 ---
