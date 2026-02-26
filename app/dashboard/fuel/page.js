@@ -303,9 +303,8 @@ export default function ManageFuelPage() {
                                 <div className="p-10 text-center text-slate-500 font-medium italic">No fuel logged yet</div>
                             ) : (
                                 fuelEntries.map((entry) => {
-                                    const rawDate = new Date(entry.timestampUtc); // utc
-                                    // Make it local: Note: if timestampUtc comes as string without 'Z', it might be parsed wrong. We assume DB sends with 'Z' or we display local representation of the internal UTC.
-                                    // Usually Next API sends ISO string e.g. "2023-11-05T10:30:00.000Z"
+                                    // DB sends exactly as "2023-11-05T10:30:00Z"
+                                    const rawDate = new Date(entry.timestampUtc);
                                     const localDate = rawDate.toLocaleString(undefined, {
                                         year: 'numeric', month: 'short', day: 'numeric',
                                         hour: '2-digit', minute: '2-digit'

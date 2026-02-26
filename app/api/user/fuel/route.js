@@ -11,7 +11,7 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
-            SELECT f.ID, f.CAR_ID, f.TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
+            SELECT f.ID, f.CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
                    f.TOTAL_KILOMETERS, f.KILOMETER_PER_LITER, f.PRICE_PER_KILOMETER,
                    c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
                    CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
@@ -77,17 +77,18 @@ export async function POST(request) {
             receiptMime = receiptFile.type;
         }
 
-        const dateObj = new Date(timestampIso);
+        // Construct a strict UTC string without milliseconds/Z, i.e., '2026-02-26 19:00:00'
+        const utcStr = new Date(timestampIso).toISOString().substring(0, 19).replace('T', ' ');
 
         const sql = `
             INSERT INTO FUEL (USER_ID, CAR_ID, TIMESTAMP_UTC, TOTAL_VALUE, LITERS, RECEIPT_IMAGE, RECEIPT_MIME)
-            VALUES (:userId, :carId, :timestampUtc, :totalValue, :liters, :receiptImage, :receiptMime)
+            VALUES (:userId, :carId, TO_DATE(:utcStr, 'YYYY-MM-DD HH24:MI:SS'), :totalValue, :liters, :receiptImage, :receiptMime)
         `;
 
         const binds = {
             userId,
             carId,
-            timestampUtc: { type: oracledb.DATE, dir: oracledb.BIND_IN, val: dateObj },
+            utcStr,
             totalValue,
             liters,
             receiptImage: receiptBuffer ? { type: oracledb.BLOB, dir: oracledb.BIND_IN, val: receiptBuffer } : null,

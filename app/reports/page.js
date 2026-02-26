@@ -55,15 +55,17 @@ export default function ReportsPage() {
     const [progress, setProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState(null);
     const [cars, setCars] = useState([]);
+    const [fuelData, setFuelData] = useState([]);
     const [filters, setFilters] = useState({ carId: '', year: '', month: '', type: '' });
     const [reportData, setReportData] = useState([]);
     const [totals, setTotals] = useState({
         distance: 0,
         duration: 0,
         count: 0,
+        cost: 0,
         breakdown: {
-            P: { distance: 0, duration: 0 },
-            B: { distance: 0, duration: 0 }
+            P: { distance: 0, duration: 0, cost: 0 },
+            B: { distance: 0, duration: 0, cost: 0 }
         }
     });
 
@@ -79,8 +81,21 @@ export default function ReportsPage() {
         }
     };
 
+    const fetchFuel = async () => {
+        try {
+            const response = await fetch('/api/user/fuel');
+            const result = await response.json();
+            if (result.success) {
+                setFuelData(result.fuel);
+            }
+        } catch (err) {
+            console.error('Failed to fetch fuel:', err);
+        }
+    };
+
     useEffect(() => {
         fetchCars();
+        fetchFuel();
     }, []);
 
     const parseUTC = (dateVal) => {
@@ -136,9 +151,18 @@ export default function ReportsPage() {
                         const start = parseUTC(session.startTime);
                         const end = parseUTC(session.endTime) || new Date();
 
-                        // Use correct ISO string format for the API
-                        const startStr = start.toISOString();
-                        const endStr = end.toISOString();
+                        // Use exactly the representation we received from the DB, avoiding Javascript timezone shifting
+                        let startStr = session.startTime || '';
+                        if (startStr.endsWith('Z')) startStr = startStr.substring(0, startStr.length - 1);
+
+                        let endStr = '';
+                        if (session.endTime) {
+                            endStr = session.endTime;
+                            if (endStr.endsWith('Z')) endStr = endStr.substring(0, endStr.length - 1);
+                        } else {
+                            // If active, map the current time to an unzoned UTC string format aligning with DB
+                            endStr = end.toISOString().split('.')[0];
+                        }
 
                         const locUrl = `/api/gps-data?startDate=${startStr}&endDate=${endStr}&deviceId=${session.deviceId}`;
                         const lResponse = await fetch(locUrl);
@@ -158,15 +182,39 @@ export default function ReportsPage() {
                         const distanceMeters = calculateTotalDistance(filteredLocs);
                         const durationMs = end.getTime() - start.getTime();
 
+                        let sessionPricePerKm = 0;
+                        const carFuelLogs = fuelData.filter(f => f.carId === session.carId).sort((a, b) => {
+                            const aTime = a.timestampUtc.endsWith('Z') ? a.timestampUtc : a.timestampUtc + 'Z';
+                            const bTime = b.timestampUtc.endsWith('Z') ? b.timestampUtc : b.timestampUtc + 'Z';
+                            return new Date(aTime).getTime() - new Date(bTime).getTime();
+                        });
+                        if (carFuelLogs.length > 0) {
+                            // The efficiency for a session S is stored in the fuel record F2 that comes AFTER the session S
+                            // Because F2 calculates its efficiency using the distance tracked between F1 and F2.
+                            const applicableLog = carFuelLogs.find(f => {
+                                const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
+                                return new Date(fTimeStr).getTime() > end.getTime();
+                            });
+                            if (applicableLog) {
+                                sessionPricePerKm = parseFloat(applicableLog.pricePerKilometer) || 0;
+                            } else {
+                                // No future fuel log exists for this session yet, so efficiency is not known.
+                                sessionPricePerKm = 0;
+                            }
+                        }
+                        const sessionCost = (distanceMeters / 1000) * sessionPricePerKm;
+
                         return {
                             ...session,
                             distanceKm: distanceMeters / 1000,
                             durationHours: durationMs / (1000 * 60 * 60),
-                            points: filteredLocs.length
+                            points: filteredLocs.length,
+                            pricePerKm: sessionPricePerKm,
+                            cost: sessionCost
                         };
                     } catch (err) {
                         console.error('Error processing session:', session.id, err);
-                        return { ...session, distanceKm: 0, durationHours: 0, error: true };
+                        return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
                     }
                 }));
 
@@ -177,10 +225,11 @@ export default function ReportsPage() {
             // 3. Calculate Totals and Breakdown
             const totalDist = processed.reduce((sum, s) => sum + s.distanceKm, 0);
             const totalDur = processed.reduce((sum, s) => sum + s.durationHours, 0);
+            const totalCost = processed.reduce((sum, s) => sum + (s.cost || 0), 0);
 
             const breakdown = {
-                P: { distance: 0, duration: 0 },
-                B: { distance: 0, duration: 0 }
+                P: { distance: 0, duration: 0, cost: 0 },
+                B: { distance: 0, duration: 0, cost: 0 }
             };
 
             processed.forEach(s => {
@@ -188,6 +237,7 @@ export default function ReportsPage() {
                 if (typeKey) {
                     breakdown[typeKey].distance += s.distanceKm;
                     breakdown[typeKey].duration += s.durationHours;
+                    breakdown[typeKey].cost += (s.cost || 0);
                 }
             });
 
@@ -196,6 +246,7 @@ export default function ReportsPage() {
                 distance: totalDist,
                 duration: totalDur,
                 count: processed.length,
+                cost: totalCost,
                 breakdown
             });
 
@@ -303,7 +354,10 @@ export default function ReportsPage() {
                                 onClick={() => {
                                     setFilters({ carId: '', year: '', month: '', type: '' });
                                     setReportData([]);
-                                    setTotals({ distance: 0, duration: 0, count: 0 });
+                                    setTotals({
+                                        distance: 0, duration: 0, count: 0, cost: 0,
+                                        breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } }
+                                    });
                                 }}
                                 className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
                             >
@@ -339,7 +393,7 @@ export default function ReportsPage() {
 
                 {/* Summary Cards */}
                 {reportData.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Distance</p>
                             <p className="text-3xl font-black text-blue-600 font-mono">{totals.distance.toFixed(2)} <span className="text-sm">KM</span></p>
@@ -352,6 +406,10 @@ export default function ReportsPage() {
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Sessions</p>
                             <p className="text-3xl font-black text-purple-600 font-mono">{totals.count}</p>
                         </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
+                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Est. Cost</p>
+                            <p className="text-3xl font-black text-emerald-600 font-mono">${totals.cost.toFixed(2)}</p>
+                        </div>
                     </div>
                 )}
 
@@ -359,7 +417,7 @@ export default function ReportsPage() {
                 {reportData.length > 0 && !filters.type && (
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Breakdown by Type</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Distance Breakdown */}
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
@@ -419,6 +477,36 @@ export default function ReportsPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Cost Breakdown */}
+                            <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="text-gray-600 font-medium">Cost Distribution</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">Total: ${totals.cost.toFixed(2)}</span>
+                                </div>
+                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                    <div
+                                        className="bg-emerald-500 h-full transition-all duration-500"
+                                        style={{ width: `${totals.cost > 0 ? (totals.breakdown.P.cost / totals.cost) * 100 : 0}%` }}
+                                        title={`Personal: $${totals.breakdown.P.cost.toFixed(2)}`}
+                                    ></div>
+                                    <div
+                                        className="bg-orange-500 h-full transition-all duration-500"
+                                        style={{ width: `${totals.cost > 0 ? (totals.breakdown.B.cost / totals.cost) * 100 : 0}%` }}
+                                        title={`Business: $${totals.breakdown.B.cost.toFixed(2)}`}
+                                    ></div>
+                                </div>
+                                <div className="flex gap-4 mt-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
+                                        <span className="text-xs text-gray-600">Personal (${totals.breakdown.P.cost.toFixed(2)})</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 bg-orange-500 rounded-sm"></div>
+                                        <span className="text-xs text-gray-600">Business (${totals.breakdown.B.cost.toFixed(2)})</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -435,6 +523,7 @@ export default function ReportsPage() {
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Distance</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Duration</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Est. Cost</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -468,6 +557,9 @@ export default function ReportsPage() {
                                                 <td className="px-6 py-4 text-right font-mono text-gray-600">
                                                     {formatDuration(s.durationHours)}
                                                 </td>
+                                                <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
+                                                    ${(s.cost || 0).toFixed(2)}
+                                                </td>
                                             </tr>
                                         ))}
                                         {/* Final Row with Totals */}
@@ -478,6 +570,9 @@ export default function ReportsPage() {
                                             </td>
                                             <td className="px-6 py-6 text-right text-lg text-green-700 font-mono">
                                                 {formatDuration(totals.duration)}
+                                            </td>
+                                            <td className="px-6 py-6 text-right text-xl text-emerald-700 font-mono">
+                                                ${totals.cost.toFixed(2)}
                                             </td>
                                         </tr>
                                     </>

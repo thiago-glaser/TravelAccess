@@ -17,7 +17,11 @@ export async function POST(request, context) {
         }
 
         // 1. Get current fuel record F2
-        const f2Res = await query(`SELECT ID, CAR_ID, TIMESTAMP_UTC, LITERS, TOTAL_VALUE FROM FUEL WHERE ID = :fuelId AND USER_ID = :userId`, { fuelId, userId });
+        const f2Res = await query(`
+            SELECT ID, CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, LITERS, TOTAL_VALUE 
+            FROM FUEL 
+            WHERE ID = :fuelId AND USER_ID = :userId
+        `, { fuelId, userId });
         if (f2Res.rows.length === 0) {
             return Response.json({ success: false, error: 'Fuel record not found or not authorized' }, { status: 404 });
         }
@@ -28,38 +32,42 @@ export async function POST(request, context) {
         const f2Liters = parseFloat(f2.LITERS) || 0;
         const f2TotalValue = parseFloat(f2.TOTAL_VALUE) || 0;
 
+        const f2TimestampISO = f2.TIMESTAMP_UTC; // The ISO string "2026-02-26T19:00:00Z"
+        const f2UtcStr = f2TimestampISO.substring(0, 19).replace('T', ' '); // "2026-02-26 19:00:00"
+
         // 2. Get previous fuel record F1 for the same car
         const f1Res = await query(`
-            SELECT TIMESTAMP_UTC 
+            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
             WHERE CAR_ID = :carId 
               AND USER_ID = :userId 
-              AND TIMESTAMP_UTC < :f2Timestamp 
+              AND TIMESTAMP_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, {
             carId,
             userId,
-            f2Timestamp: { type: oracledb.DATE, val: f2Timestamp }
+            f2UtcStr
         });
 
         if (f1Res.rows.length === 0) {
             return Response.json({ success: false, error: 'Cannot calculate. No previous fuel log found for this car.' }, { status: 400 });
         }
 
-        const f1Timestamp = f1Res.rows[0].TIMESTAMP_UTC;
+        const f1TimestampISO = f1Res.rows[0].TIMESTAMP_UTC;
+        const f1UtcStr = f1TimestampISO.substring(0, 19).replace('T', ' ');
 
-        // 3. Find all sessions for this car within [f1Timestamp, f2Timestamp]
+        // 3. Find all sessions for this car within (f1UtcStr, f2UtcStr)
         const sessionsRes = await query(`
-            SELECT ID, DEVICE_ID, START_UTC, END_UTC 
+            SELECT ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
             FROM V_SESSIONS 
             WHERE CAR_ID = :carId 
-              AND START_UTC >= :f1Timestamp 
-              AND START_UTC <= :f2Timestamp
+              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
+              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
         `, {
             carId,
-            f1Timestamp: { type: oracledb.DATE, val: f1Timestamp },
-            f2Timestamp: { type: oracledb.DATE, val: f2Timestamp }
+            f1UtcStr,
+            f2UtcStr
         });
 
         let totalMeters = 0;
@@ -70,19 +78,21 @@ export async function POST(request, context) {
             const startUtc = s.START_UTC;
             const endUtc = s.END_UTC;
 
-            const sessionEndUtc = endUtc ? endUtc : f2Timestamp;
+            const sessionEndUtc = endUtc ? endUtc : f2TimestampISO;
+            const sStartStr = startUtc.substring(0, 19).replace('T', ' ');
+            const sEndStr = sessionEndUtc.substring(0, 19).replace('T', ' ');
 
             const gpsRes = await query(`
-                SELECT LATITUDE, LONGITUDE, TIMESTAMP_UTC 
+                SELECT LATITUDE, LONGITUDE, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
                 FROM LOCATION_DATA 
                 WHERE DEVICE_ID = :deviceId 
-                  AND TIMESTAMP_UTC >= :startUtc 
-                  AND TIMESTAMP_UTC <= :endUtc
+                  AND TIMESTAMP_UTC >= TO_DATE(:sStartStr, 'YYYY-MM-DD HH24:MI:SS') 
+                  AND TIMESTAMP_UTC <= TO_DATE(:sEndStr, 'YYYY-MM-DD HH24:MI:SS')
                 ORDER BY TIMESTAMP_UTC ASC
             `, {
                 deviceId,
-                startUtc: { type: oracledb.DATE, val: startUtc },
-                endUtc: { type: oracledb.DATE, val: sessionEndUtc }
+                sStartStr,
+                sEndStr
             });
 
             if (gpsRes.rows.length > 1) {
