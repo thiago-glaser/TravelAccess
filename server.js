@@ -65,5 +65,23 @@ app.prepare().then(() => {
                 console.error(`[Job Runner] EXTRACT_POINTS failed:`, e.message);
             });
         }, 5 * 60 * 1000);
+
+        // Run the GEOCODE_PENDING_LOCATIONS job every 6 minutes (360000 ms)
+        setInterval(() => {
+            const https = require('https');
+            console.log(`[Job Runner] Executing GEOCODE_PENDING_LOCATIONS...`);
+
+            https.get(`https://${hostname}:${port}/api/jobs/geocode-locations`, {
+                rejectUnauthorized: false
+            }, (response) => {
+                let data = '';
+                response.on('data', chunk => data += chunk);
+                response.on('end', () => {
+                    console.log(`[Job Runner] GEOCODE_PENDING_LOCATIONS completed with status ${response.statusCode}:`, data);
+                });
+            }).on('error', (e) => {
+                console.error(`[Job Runner] GEOCODE_PENDING_LOCATIONS failed:`, e.message);
+            });
+        }, 6 * 60 * 1000);
     });
 });
