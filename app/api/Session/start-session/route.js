@@ -26,8 +26,8 @@ export async function POST(request) {
         let finalCarId = carId || null;
         if (!finalCarId) {
             const userId = session.USER_ID || session.id || session.ID;
-            const carsResult = await query(`SELECT ID FROM CARS WHERE USER_ID = :userId`, { userId });
-            if (carsResult.rows && carsResult.rows.length === 1) {
+            const carsResult = await query(`SELECT ID FROM CARS WHERE USER_ID = :userId ORDER BY 1`, { userId });
+            if (carsResult.rows && carsResult.rows.length > 0) {
                 finalCarId = carsResult.rows[0].ID;
             }
         }
