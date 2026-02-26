@@ -17,6 +17,7 @@ services:
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - GEOAPIFY_API_KEY=${GEOAPIFY_API_KEY}
     volumes:
       - ./certificates:/app/certs:ro
     restart: unless-stopped
