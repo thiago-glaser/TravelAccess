@@ -183,23 +183,37 @@ export default function ReportsPage() {
                         const durationMs = end.getTime() - start.getTime();
 
                         let sessionPricePerKm = 0;
+                        let isProjected = false;
                         const carFuelLogs = fuelData.filter(f => f.carId === session.carId).sort((a, b) => {
                             const aTime = a.timestampUtc.endsWith('Z') ? a.timestampUtc : a.timestampUtc + 'Z';
                             const bTime = b.timestampUtc.endsWith('Z') ? b.timestampUtc : b.timestampUtc + 'Z';
                             return new Date(aTime).getTime() - new Date(bTime).getTime();
                         });
                         if (carFuelLogs.length > 0) {
+                            const validLogs = carFuelLogs.filter(f => parseFloat(f.pricePerKilometer) > 0);
+
                             // The efficiency for a session S is stored in the fuel record F2 that comes AFTER the session S
                             // Because F2 calculates its efficiency using the distance tracked between F1 and F2.
                             const applicableLog = carFuelLogs.find(f => {
                                 const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
                                 return new Date(fTimeStr).getTime() > end.getTime();
                             });
-                            if (applicableLog) {
-                                sessionPricePerKm = parseFloat(applicableLog.pricePerKilometer) || 0;
+
+                            if (applicableLog && parseFloat(applicableLog.pricePerKilometer) > 0) {
+                                sessionPricePerKm = parseFloat(applicableLog.pricePerKilometer);
                             } else {
-                                // No future fuel log exists for this session yet, so efficiency is not known.
-                                sessionPricePerKm = 0;
+                                // Either NO future log exists (session is after the last fuel log)
+                                // OR the applicable log has 0 efficiency (session is before the first evaluated fuel log)
+                                if (validLogs.length > 0) {
+                                    isProjected = true;
+                                    if (!applicableLog) {
+                                        // Project using easiest recent efficiency for future sessions
+                                        sessionPricePerKm = parseFloat(validLogs[validLogs.length - 1].pricePerKilometer);
+                                    } else {
+                                        // Project backwards using the earliest known efficiency for old sessions
+                                        sessionPricePerKm = parseFloat(validLogs[0].pricePerKilometer);
+                                    }
+                                }
                             }
                         }
                         const sessionCost = (distanceMeters / 1000) * sessionPricePerKm;
@@ -210,7 +224,8 @@ export default function ReportsPage() {
                             durationHours: durationMs / (1000 * 60 * 60),
                             points: filteredLocs.length,
                             pricePerKm: sessionPricePerKm,
-                            cost: sessionCost
+                            cost: sessionCost,
+                            isProjected
                         };
                     } catch (err) {
                         console.error('Error processing session:', session.id, err);
@@ -558,7 +573,7 @@ export default function ReportsPage() {
                                                     {formatDuration(s.durationHours)}
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
-                                                    ${(s.cost || 0).toFixed(2)}
+                                                    ${(s.cost || 0).toFixed(2)}{s.isProjected ? '*' : ''}
                                                 </td>
                                             </tr>
                                         ))}
