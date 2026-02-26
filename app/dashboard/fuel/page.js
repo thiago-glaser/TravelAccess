@@ -141,6 +141,29 @@ export default function ManageFuelPage() {
         }
     };
 
+    const handleCalculateFuel = async (id) => {
+        setSubmitting(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const res = await fetch(`/api/user/fuel/${id}/calculate`, {
+                method: 'POST',
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSuccess('Fuel metrics calculated successfully');
+                fetchFuel();
+            } else {
+                setError(data.error || 'Failed to calculate fuel');
+            }
+        } catch (err) {
+            setError('An error occurred during calculation');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0f172a] text-white p-8">
             <div className="max-w-3xl mx-auto">
@@ -372,8 +395,17 @@ export default function ManageFuelPage() {
                                                     <div className="w-px h-10 bg-slate-700 hidden md:block"></div>
 
                                                     <button
+                                                        onClick={() => handleCalculateFuel(entry.id)}
+                                                        className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg border border-transparent hover:border-blue-400/20 transition-all uppercase tracking-widest"
+                                                        disabled={submitting}
+                                                    >
+                                                        Calculate
+                                                    </button>
+
+                                                    <button
                                                         onClick={() => handleRemoveFuel(entry.id)}
                                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest"
+                                                        disabled={submitting}
                                                     >
                                                         Delete
                                                     </button>
