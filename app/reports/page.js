@@ -54,8 +54,8 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState(null);
-    const [devices, setDevices] = useState([]);
-    const [filters, setFilters] = useState({ deviceId: '', year: '', month: '', type: '' });
+    const [cars, setCars] = useState([]);
+    const [filters, setFilters] = useState({ carId: '', year: '', month: '', type: '' });
     const [reportData, setReportData] = useState([]);
     const [totals, setTotals] = useState({
         distance: 0,
@@ -67,20 +67,20 @@ export default function ReportsPage() {
         }
     });
 
-    const fetchDevices = async () => {
+    const fetchCars = async () => {
         try {
-            const response = await fetch('/api/devices');
+            const response = await fetch('/api/user/cars');
             const result = await response.json();
             if (result.success) {
-                setDevices(result.devices);
+                setCars(result.cars);
             }
         } catch (err) {
-            console.error('Failed to fetch devices:', err);
+            console.error('Failed to fetch cars:', err);
         }
     };
 
     useEffect(() => {
-        fetchDevices();
+        fetchCars();
     }, []);
 
     const parseUTC = (dateVal) => {
@@ -105,7 +105,7 @@ export default function ReportsPage() {
         try {
             // 1. Fetch sessions based on filters
             let sessionUrl = `/api/sessions?page=1&limit=10000`; // High limit for reports
-            if (filters.deviceId) sessionUrl += `&deviceId=${filters.deviceId}`;
+            if (filters.carId) sessionUrl += `&carId=${filters.carId}`;
             if (filters.year) sessionUrl += `&year=${filters.year}`;
             if (filters.month) sessionUrl += `&month=${filters.month}`;
             if (filters.type) sessionUrl += `&type=${filters.type}`;
@@ -232,15 +232,15 @@ export default function ReportsPage() {
                 <div className="bg-white shadow-md rounded-xl p-4 mb-6 border border-gray-100">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Device</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Car</label>
                             <select
-                                value={filters.deviceId}
-                                onChange={(e) => setFilters(prev => ({ ...prev, deviceId: e.target.value }))}
+                                value={filters.carId}
+                                onChange={(e) => setFilters(prev => ({ ...prev, carId: e.target.value }))}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">All Devices</option>
-                                {devices.map(device => (
-                                    <option key={device.id} value={device.id}>{device.description || device.id}</option>
+                                <option value="">All Cars</option>
+                                {cars.map(car => (
+                                    <option key={car.ID} value={car.ID}>{car.DESCRIPTION || car.LICENSE_PLATE || `Car #${car.ID}`}</option>
                                 ))}
                             </select>
                         </div>
@@ -301,7 +301,7 @@ export default function ReportsPage() {
                             </button>
                             <button
                                 onClick={() => {
-                                    setFilters({ deviceId: '', year: '', month: '', type: '' });
+                                    setFilters({ carId: '', year: '', month: '', type: '' });
                                     setReportData([]);
                                     setTotals({ distance: 0, duration: 0, count: 0 });
                                 }}
@@ -429,7 +429,7 @@ export default function ReportsPage() {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Device</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Car</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Start Time</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">End Time</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
@@ -449,8 +449,7 @@ export default function ReportsPage() {
                                         {reportData.map((s) => (
                                             <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900">{s.description || 'Unknown'}</div>
-                                                    <div className="text-xs text-gray-500 font-mono">{s.deviceId}</div>
+                                                    <div className="font-bold text-gray-900">{s.description || 'Unknown Car'}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                     {parseUTC(s.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}

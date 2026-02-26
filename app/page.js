@@ -21,8 +21,8 @@ export default function SessionsPage() {
     const [selectingAllMatching, setSelectingAllMatching] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('single'); // 'single' or 'multi'
-    const [devices, setDevices] = useState([]);
-    const [filters, setFilters] = useState({ deviceId: '', year: '', month: '' });
+    const [cars, setCars] = useState([]);
+    const [filters, setFilters] = useState({ carId: '', year: '', month: '' });
     const [expandedSessionIds, setExpandedSessionIds] = useState([]);
 
     const toggleExpandSession = (e, sessionId) => {
@@ -54,7 +54,7 @@ export default function SessionsPage() {
         setLoading(true);
         try {
             let url = `/api/sessions?page=${page}&limit=${pagination.limit}`;
-            if (filters.deviceId) url += `&deviceId=${filters.deviceId}`;
+            if (filters.carId) url += `&carId=${filters.carId}`;
             if (filters.year) url += `&year=${filters.year}`;
             if (filters.month) url += `&month=${filters.month}`;
 
@@ -73,20 +73,20 @@ export default function SessionsPage() {
         }
     };
 
-    const fetchDevices = async () => {
+    const fetchCars = async () => {
         try {
-            const response = await fetch('/api/devices');
+            const response = await fetch('/api/user/cars');
             const result = await response.json();
             if (result.success) {
-                setDevices(result.devices);
+                setCars(result.cars);
             }
         } catch (err) {
-            console.error('Failed to fetch devices:', err);
+            console.error('Failed to fetch cars:', err);
         }
     };
 
     useEffect(() => {
-        fetchDevices();
+        fetchCars();
     }, []);
 
     useEffect(() => {
@@ -151,7 +151,7 @@ export default function SessionsPage() {
         setSelectingAllMatching(true);
         try {
             let url = `/api/sessions?page=1&limit=1000000`;
-            if (filters.deviceId) url += `&deviceId=${filters.deviceId}`;
+            if (filters.carId) url += `&carId=${filters.carId}`;
             if (filters.year) url += `&year=${filters.year}`;
             if (filters.month) url += `&month=${filters.month}`;
 
@@ -295,19 +295,19 @@ export default function SessionsPage() {
                 <div className="bg-white shadow-md rounded-xl p-4 mb-4 border border-gray-100">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Device Filter</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Car Filter</label>
                             <select
-                                value={filters.deviceId}
+                                value={filters.carId}
                                 onChange={(e) => {
-                                    setFilters(prev => ({ ...prev, deviceId: e.target.value }));
+                                    setFilters(prev => ({ ...prev, carId: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">All Devices</option>
-                                {devices.map(device => (
-                                    <option key={device.id} value={device.id}>
-                                        {device.description || device.id}
+                                <option value="">All Cars</option>
+                                {cars.map(car => (
+                                    <option key={car.ID} value={car.ID}>
+                                        {car.DESCRIPTION || car.LICENSE_PLATE || `Car #${car.ID}`}
                                     </option>
                                 ))}
                             </select>
@@ -368,7 +368,7 @@ export default function SessionsPage() {
                         <div className="flex items-end self-end pb-0.5">
                             <button
                                 onClick={() => {
-                                    setFilters({ deviceId: '', year: '', month: '' });
+                                    setFilters({ carId: '', year: '', month: '' });
                                     setPagination(p => ({ ...p, page: 1, limit: 20 }));
                                     setSelectedSessionIds([]);
                                     setSelectedSessionsData({});
@@ -461,7 +461,7 @@ export default function SessionsPage() {
                                                     />
                                                 </th>
                                                 <th className="px-2 py-4 w-10"></th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Device</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Car</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">Start Time</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">End Time</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title="Starting Location">Start Loc</th>
@@ -498,8 +498,7 @@ export default function SessionsPage() {
                                                         </td>
                                                         <td className="px-2 py-4 whitespace-nowrap">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-bold text-gray-900">{session.description || 'Unknown Device'}</span>
-                                                                <span className="text-xs text-gray-500 font-mono">{session.deviceId}</span>
+                                                                <span className="text-sm font-bold text-gray-900">{session.description || 'Unknown Car'}</span>
                                                             </div>
                                                         </td>
                                                         <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">

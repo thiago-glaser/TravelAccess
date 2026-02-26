@@ -12,7 +12,7 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit')) || 20;
     const offset = (page - 1) * limit;
 
-    const deviceFilter = searchParams.get('deviceId');
+    const carFilter = searchParams.get('carId');
     const yearFilter = searchParams.get('year');
     const monthFilter = searchParams.get('month');
     const typeFilter = searchParams.get('type');
@@ -31,9 +31,9 @@ export async function GET(request) {
         let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)`];
         let bindParams = { userId };
 
-        if (deviceFilter) {
-            conditions.push(`s.device_id = :deviceId`);
-            bindParams.deviceId = deviceFilter;
+        if (carFilter) {
+            conditions.push(`s.car_id = :carId`);
+            bindParams.carId = carFilter;
         }
         if (yearFilter) {
             conditions.push(`EXTRACT(YEAR FROM s.start_utc) = :year`);
@@ -60,8 +60,9 @@ export async function GET(request) {
         const query = `
             SELECT 
                 s.id, 
-                s.device_id, 
-                d.description,
+                s.device_id,
+                s.car_id, 
+                NVL(s.car_description, d.description) as description,
                 TO_CHAR(s.start_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as START_UTC,
                 TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as END_UTC,
                 s.session_type,
@@ -82,6 +83,7 @@ export async function GET(request) {
         const sessions = result.rows.map(row => ({
             id: row.ID,
             deviceId: row.DEVICE_ID,
+            carId: row.CAR_ID,
             description: row.DESCRIPTION,
             startTime: row.START_UTC,
             endTime: row.END_UTC,
