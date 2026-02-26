@@ -16,10 +16,7 @@ The scripts are numbered to ensure correct execution order:
     *   `V_LOCATION_ENRICHED`: Joins location data with geocoded addresses and timezone info.
     *   `V_SESSIONS`: Summarizes session start/end points.
     *   `V_SESSION_CALC`: Complex logic for session start/end location determination.
-4.  **`04_jobs.sql`**: Sets up DBMS_SCHEDULER jobs to run background tasks:
-    *   `JOB_EXTRACT_POINTS`: Runs every 5 minutes to process new GPS data.
-    *   `JOB_GEOCODE_PENDING_LOCATIONS`: Runs every 6 minutes to reverse geocode new locations.
-5.  **`05_indexes.sql`**: Essential performance indexes for high-volume tables (`LOCATION_DATA`, `SESSION_DATA`) and foreign keys.
+4.  **`05_indexes.sql`**: Essential performance indexes for high-volume tables (`LOCATION_DATA`, `SESSION_DATA`) and foreign keys.
 
 ## 🚀 Initialization
 
@@ -32,7 +29,6 @@ To set up the database from scratch:
     @01_tables.sql
     @02_functions_procedures.sql
     @03_views.sql
-    @04_jobs.sql
     @05_indexes.sql
     ```
 
