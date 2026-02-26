@@ -12,6 +12,7 @@ export async function GET(request) {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
             SELECT f.ID, f.CAR_ID, f.TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
+                   f.TOTAL_KILOMETERS, f.KILOMETER_PER_LITER, f.PRICE_PER_KILOMETER,
                    c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
                    CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
             FROM FUEL f
@@ -27,6 +28,9 @@ export async function GET(request) {
             timestampUtc: row.TIMESTAMP_UTC,
             totalValue: row.TOTAL_VALUE,
             liters: row.LITERS,
+            totalKilometers: row.TOTAL_KILOMETERS || 0,
+            kilometerPerLiter: row.KILOMETER_PER_LITER || 0,
+            pricePerKilometer: row.PRICE_PER_KILOMETER || 0,
             carLicensePlate: row.LICENSE_PLATE,
             carDescription: row.CAR_DESCRIPTION,
             hasReceipt: row.HAS_RECEIPT === 1

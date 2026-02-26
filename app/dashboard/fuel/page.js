@@ -309,7 +309,7 @@ export default function ManageFuelPage() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
                                                         <div>
                                                             <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Date</span>
                                                             <div className="text-sm text-slate-300">{localDate}</div>
@@ -318,6 +318,24 @@ export default function ManageFuelPage() {
                                                             <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Car</span>
                                                             <div className="text-sm text-slate-300 font-medium">
                                                                 {entry.carDescription || entry.carLicensePlate || `Car #${entry.carId}`}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Total KM</span>
+                                                            <div className="text-sm text-slate-300 font-medium">
+                                                                {parseFloat(entry.totalKilometers || 0).toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">KM / L</span>
+                                                            <div className="text-sm text-slate-300 font-medium">
+                                                                {parseFloat(entry.kilometerPerLiter || 0).toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Price / KM</span>
+                                                            <div className="text-sm text-slate-300 font-medium">
+                                                                ${parseFloat(entry.pricePerKilometer || 0).toFixed(4)}
                                                             </div>
                                                         </div>
                                                     </div>
