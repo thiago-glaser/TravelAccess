@@ -83,5 +83,23 @@ app.prepare().then(() => {
                 console.error(`[Job Runner] GEOCODE_PENDING_LOCATIONS failed:`, e.message);
             });
         }, 6 * 60 * 1000);
+
+        // Run the MERGE_LOCATION_GEOCODES_JOB job every 5 minutes (300000 ms)
+        setInterval(() => {
+            const https = require('https');
+            console.log(`[Job Runner] Executing MERGE_LOCATION_GEOCODES_JOB...`);
+
+            https.get(`https://${hostname}:${port}/api/jobs/merge-location-geocodes`, {
+                rejectUnauthorized: false
+            }, (response) => {
+                let data = '';
+                response.on('data', chunk => data += chunk);
+                response.on('end', () => {
+                    console.log(`[Job Runner] MERGE_LOCATION_GEOCODES_JOB completed with status ${response.statusCode}:`, data);
+                });
+            }).on('error', (e) => {
+                console.error(`[Job Runner] MERGE_LOCATION_GEOCODES_JOB failed:`, e.message);
+            });
+        }, 5 * 60 * 1000);
     });
 });
