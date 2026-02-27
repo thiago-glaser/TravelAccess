@@ -64,6 +64,9 @@ C.DESCRIPTION AS CAR_DESCRIPTION,
 S.START_UTC,
 S.END_UTC,
 S.SESSION_TYPE,
+S.COST,
+S.DISTANCE,
+S.TIME_TRAVELED,
 fix_mojibake(NVL(l1.formatted_address, 'Unknow location')) LOCATION_START,
 fix_mojibake(NVL(l2.formatted_address, 'Unknow location')) LOCATION_END
 from SESSION_DATA S
