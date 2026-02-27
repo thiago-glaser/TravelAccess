@@ -148,6 +148,17 @@ export default function ReportsPage() {
                 const batch = sessionsList.slice(i, i + batchSize);
                 const batchResults = await Promise.all(batch.map(async (session) => {
                     try {
+                        if (session.cost != null && session.distance != null && session.timeTraveled != null) {
+                            return {
+                                ...session,
+                                distanceKm: session.distance,
+                                durationHours: session.timeTraveled,
+                                cost: session.cost,
+                                isProjected: false,
+                                points: 0
+                            };
+                        }
+
                         const start = parseUTC(session.startTime);
                         const end = parseUTC(session.endTime) || new Date();
 
@@ -217,6 +228,19 @@ export default function ReportsPage() {
                             }
                         }
                         const sessionCost = (distanceMeters / 1000) * sessionPricePerKm;
+
+                        if (!isProjected && session.endTime && sessionCost > 0) {
+                            fetch('/api/sessions', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id: session.id,
+                                    cost: sessionCost,
+                                    distance: distanceMeters / 1000,
+                                    timeTraveled: durationMs / (1000 * 60 * 60)
+                                })
+                            }).catch(err => console.error('Failed to save session metrics:', err));
+                        }
 
                         return {
                             ...session,
@@ -318,7 +342,7 @@ export default function ReportsPage() {
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                             >
                                 <option value="">Any Year</option>
-                                {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                                {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040].map(y => <option key={y} value={y}>{y}</option>)}
                             </select>
                         </div>
                         <div className="w-40">

@@ -67,7 +67,10 @@ export async function GET(request) {
                 TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as END_UTC,
                 s.session_type,
                 s.location_start,
-                s.location_end
+                s.location_end,
+                s.cost,
+                s.distance,
+                s.time_traveled
             FROM V_SESSIONS s
             LEFT JOIN devices d ON s.device_id = d.device_id
             ${whereClause}
@@ -89,7 +92,10 @@ export async function GET(request) {
             endTime: row.END_UTC,
             type: row.SESSION_TYPE,
             locationStart: row.LOCATION_START,
-            locationEnd: row.LOCATION_END
+            locationEnd: row.LOCATION_END,
+            cost: row.COST,
+            distance: row.DISTANCE,
+            timeTraveled: row.TIME_TRAVELED
         }));
 
         return Response.json({
@@ -130,10 +136,10 @@ export async function PATCH(request) {
     let connection;
     try {
         const body = await request.json();
-        const { id, type } = body;
+        const { id, type, cost, distance, timeTraveled } = body;
 
-        if (!id || !type) {
-            return Response.json({ success: false, error: 'ID and type are required' }, { status: 400 });
+        if (!id) {
+            return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
         }
 
         connection = await oracledb.getConnection({
@@ -142,18 +148,42 @@ export async function PATCH(request) {
             connectionString: process.env.ORACLE_CONNECTION_STRING,
         });
 
-        // Update the session type, but only if the user owns the device for this session
+        // Build update statement dynamically based on what was provided
         const userId = session.USER_ID || session.id || session.ID;
+        const updates = [];
+        const bindParams = { id, userId };
+
+        if (type !== undefined) {
+            updates.push('session_type = :type');
+            bindParams.type = type;
+        }
+        if (cost !== undefined) {
+            updates.push('cost = :cost');
+            bindParams.cost = cost;
+        }
+        if (distance !== undefined) {
+            updates.push('distance = :distance');
+            bindParams.distance = distance;
+        }
+        if (timeTraveled !== undefined) {
+            updates.push('time_traveled = :timeTraveled');
+            bindParams.timeTraveled = timeTraveled;
+        }
+
+        if (updates.length === 0) {
+            return Response.json({ success: false, error: 'No fields to update' }, { status: 400 });
+        }
+
         const query = `
             UPDATE V_SESSIONS 
-            SET session_type = :type 
+            SET ${updates.join(', ')}
             WHERE id = :id 
             AND device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)
         `;
 
         const result = await connection.execute(
             query,
-            { type, id, userId },
+            bindParams,
             { autoCommit: true }
         );
 
