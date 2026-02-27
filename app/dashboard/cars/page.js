@@ -14,6 +14,8 @@ export default function ManageCarsPage() {
     const [editLicensePlate, setEditLicensePlate] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [distances, setDistances] = useState({});
+    const [calculatingDistances, setCalculatingDistances] = useState({});
 
     useEffect(() => {
         fetchCars();
@@ -109,6 +111,23 @@ export default function ManageCarsPage() {
             }
         } catch (err) {
             setError('An error occurred');
+        }
+    };
+
+    const handleCalculateDistance = async (carId) => {
+        setCalculatingDistances(prev => ({ ...prev, [carId]: true }));
+        try {
+            const res = await fetch(`/api/user/cars/distance-since-fuel?carId=${carId}`);
+            const data = await res.json();
+            if (data.success) {
+                setDistances(prev => ({ ...prev, [carId]: data.kilometers }));
+            } else {
+                alert(data.error || 'Failed to calculate distance');
+            }
+        } catch (err) {
+            alert('An error occurred while calculating');
+        } finally {
+            setCalculatingDistances(prev => ({ ...prev, [carId]: false }));
         }
     };
 
@@ -231,6 +250,23 @@ export default function ManageCarsPage() {
 
                                             {editingId !== car.ID && (
                                                 <div className="flex items-center gap-3">
+                                                    {distances[car.ID] !== undefined && (
+                                                        <div className="px-4 py-2 text-sm font-semibold text-blue-400 bg-blue-400/10 rounded-lg border border-blue-400/20 whitespace-nowrap">
+                                                            {distances[car.ID].toFixed(2)} km
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleCalculateDistance(car.ID)}
+                                                        disabled={calculatingDistances[car.ID]}
+                                                        title="Calculate kilometers driven since last fuel"
+                                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg border border-transparent hover:border-blue-400/20 transition-all uppercase tracking-widest flex items-center justify-center disabled:opacity-50"
+                                                    >
+                                                        {calculatingDistances[car.ID] ? (
+                                                            <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        ) : (
+                                                            'Calc Dist'
+                                                        )}
+                                                    </button>
                                                     <button
                                                         onClick={() => handleRemoveCar(car.ID)}
                                                         className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest"
