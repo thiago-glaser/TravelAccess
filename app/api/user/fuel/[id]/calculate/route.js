@@ -126,6 +126,16 @@ export async function POST(request, context) {
             fuelId
         });
 
+        // Invalidate the pre-calculated session data for the car so the reports recalculate using the new price
+        // Only invalidate sessions between f1 and f2
+        await query(`
+            UPDATE SESSION_DATA
+            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
+            WHERE CAR_ID = :carId
+              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+        `, { carId, f1UtcStr, f2UtcStr });
+
         return Response.json({ success: true, message: 'Calculated successfully' });
     } catch (e) {
         console.error("Calculate Error:", e);

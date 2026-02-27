@@ -119,11 +119,55 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+
+        // Find the carId and timestamp before deleting the fuel entry
+        const carRes = await query(`
+            SELECT CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
+            FROM FUEL 
+            WHERE ID = :id AND USER_ID = :userId
+        `, { id, userId });
+        if (carRes.rows.length === 0) {
+            return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
+        }
+        const carId = carRes.rows[0].CAR_ID;
+        const deletedTimestampISO = carRes.rows[0].TIMESTAMP_UTC;
+        const deletedUtcStr = deletedTimestampISO.substring(0, 19).replace('T', ' ');
+
+        // Find the prior fuel timestamp for this car (if any)
+        const priorFuelRes = await query(`
+            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
+            FROM FUEL 
+            WHERE CAR_ID = :carId 
+              AND USER_ID = :userId 
+              AND TIMESTAMP_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
+            ORDER BY TIMESTAMP_UTC DESC 
+            FETCH NEXT 1 ROWS ONLY
+        `, { carId, userId, deletedUtcStr });
+
         const sql = `DELETE FROM FUEL WHERE ID = :id AND USER_ID = :userId`;
         const result = await query(sql, { id, userId });
 
-        if (result.rowsAffected === 0) {
-            return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
+        if (result.rowsAffected > 0) {
+            if (priorFuelRes.rows.length > 0) {
+                const priorTimestampISO = priorFuelRes.rows[0].TIMESTAMP_UTC;
+                const priorUtcStr = priorTimestampISO.substring(0, 19).replace('T', ' ');
+
+                await query(`
+                    UPDATE SESSION_DATA
+                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
+                    WHERE CAR_ID = :carId
+                      AND START_UTC > TO_DATE(:priorUtcStr, 'YYYY-MM-DD HH24:MI:SS')
+                      AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
+                `, { carId, priorUtcStr, deletedUtcStr });
+            } else {
+                // If there's no prior fuel, invalidate all sessions up to this deleted fueling point
+                await query(`
+                    UPDATE SESSION_DATA
+                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
+                    WHERE CAR_ID = :carId
+                      AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
+                `, { carId, deletedUtcStr });
+            }
         }
 
         return Response.json({ success: true, message: 'Fuel entry removed successfully' });
