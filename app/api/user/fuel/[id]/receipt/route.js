@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
         const sql = `
             SELECT RECEIPT_IMAGE, RECEIPT_MIME 
             FROM FUEL 
-            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)
+            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
         `;
 
         // We override outFormat just for this query so we get an object

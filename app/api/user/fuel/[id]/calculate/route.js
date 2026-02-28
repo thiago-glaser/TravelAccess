@@ -20,7 +20,7 @@ export async function POST(request, context) {
         const f2Res = await query(`
             SELECT TRIM(ID) AS ID, TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, LITERS, TOTAL_VALUE 
             FROM FUEL 
-            WHERE TRIM(ID) = TRIM(:fuelId) AND TRIM(USER_ID) = TRIM(:userId)
+            WHERE TRIM(ID) = TRIM(:fuelId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
         `, { fuelId, userId });
         if (f2Res.rows.length === 0) {
             return Response.json({ success: false, error: 'Fuel record not found or not authorized' }, { status: 404 });
@@ -42,6 +42,7 @@ export async function POST(request, context) {
             WHERE TRIM(CAR_ID) = TRIM(:carId) 
               AND TRIM(USER_ID) = TRIM(:userId) 
               AND TIMESTAMP_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
+              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, {

@@ -13,7 +13,7 @@ export async function GET(request) {
             SELECT ud.DEVICE_ID, d.DESCRIPTION 
             FROM USER_DEVICES ud
             LEFT JOIN devices d ON ud.DEVICE_ID = d.DEVICE_ID
-            WHERE TRIM(ud.USER_ID) = TRIM(:userId) 
+            WHERE TRIM(ud.USER_ID) = TRIM(:userId) AND (ud.IS_DELETED = 0 OR ud.IS_DELETED IS NULL)
             ORDER BY ud.DEVICE_ID
         `;
         const result = await query(sql, { userId });
@@ -39,7 +39,7 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Check if device is already owned by another user
-        const ownerCheckSql = `SELECT USER_ID FROM USER_DEVICES WHERE DEVICE_ID = :deviceId`;
+        const ownerCheckSql = `SELECT USER_ID FROM USER_DEVICES WHERE DEVICE_ID = :deviceId AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`;
         const ownerResult = await query(ownerCheckSql, { deviceId });
 
         if (ownerResult.rows && ownerResult.rows.length > 0) {
@@ -118,7 +118,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM USER_DEVICES WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
+        const sql = `UPDATE USER_DEVICES SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
         const result = await query(sql, { userId, deviceId });
 
         return Response.json({ success: true, message: 'Device removed successfully' });

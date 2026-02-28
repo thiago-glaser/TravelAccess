@@ -22,7 +22,7 @@ export async function GET(request) {
         const lastFuelRes = await query(`
             SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)
+            WHERE TRIM(CAR_ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, { carId, userId });

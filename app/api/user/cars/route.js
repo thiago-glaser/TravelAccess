@@ -12,7 +12,7 @@ export async function GET(request) {
         const sql = `
             SELECT TRIM(ID) AS ID, DESCRIPTION, LICENSE_PLATE 
             FROM CARS 
-            WHERE TRIM(USER_ID) = TRIM(:userId) 
+            WHERE TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
             ORDER BY ID
         `;
         const result = await query(sql, { userId });
@@ -69,8 +69,8 @@ export async function PATCH(request) {
         // Verify ownership and update
         const sql = `
             UPDATE CARS 
-            SET DESCRIPTION = :description, LICENSE_PLATE = :licensePlate 
-            WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)
+            SET DESCRIPTION = :description, LICENSE_PLATE = :licensePlate, UPDATED_AT = CURRENT_TIMESTAMP
+            WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
         `;
         const result = await query(sql, {
             description: description || null,
@@ -104,7 +104,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`;
+        const sql = `UPDATE CARS SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { carId, userId });
 
         if (result.rowsAffected === 0) {

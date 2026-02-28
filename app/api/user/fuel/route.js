@@ -17,7 +17,7 @@ export async function GET(request) {
                    CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
             FROM FUEL f
             JOIN CARS c ON TRIM(f.CAR_ID) = TRIM(c.ID)
-            WHERE TRIM(f.USER_ID) = TRIM(:userId)
+            WHERE TRIM(f.USER_ID) = TRIM(:userId) AND (f.IS_DELETED = 0 OR f.IS_DELETED IS NULL)
             ORDER BY f.TIMESTAMP_UTC DESC
         `;
         const result = await query(sql, { userId });
@@ -63,7 +63,7 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Ensure Car belongs to User
-        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`, { carId, userId });
+        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`, { carId, userId });
         if (carCheckResult.rows.length === 0) {
             return Response.json({ success: false, error: 'Invalid car selected' }, { status: 400 });
         }
@@ -124,7 +124,7 @@ export async function DELETE(request) {
         const carRes = await query(`
             SELECT TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)
+            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
         `, { id, userId });
         if (carRes.rows.length === 0) {
             return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
@@ -140,11 +140,12 @@ export async function DELETE(request) {
             WHERE TRIM(CAR_ID) = TRIM(:carId) 
               AND TRIM(USER_ID) = TRIM(:userId) 
               AND TIMESTAMP_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
+              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, { carId, userId, deletedUtcStr });
 
-        const sql = `DELETE FROM FUEL WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
+        const sql = `UPDATE FUEL SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { id, userId });
 
         if (result.rowsAffected > 0) {
