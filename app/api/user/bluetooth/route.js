@@ -52,7 +52,7 @@ export async function POST(request) {
             name,
             description: description || null,
             address,
-            carId: carId ? parseInt(carId, 10) : null
+            carId: carId ? String(carId) : null
         });
 
         return Response.json({ success: true, message: 'Bluetooth device added successfully' });
@@ -86,7 +86,7 @@ export async function PATCH(request) {
             name,
             description: description || null,
             address,
-            carId: carId ? parseInt(carId, 10) : null,
+            carId: carId ? String(carId) : null,
             id,
             userId
         });
