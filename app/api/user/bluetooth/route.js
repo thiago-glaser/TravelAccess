@@ -10,10 +10,10 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
-            SELECT b.ID, b.NAME, b.DESCRIPTION, b.ADDRESS, b.CAR_ID, c.DESCRIPTION as CAR_DESCRIPTION
+            SELECT TRIM(b.ID) AS ID, b.NAME, b.DESCRIPTION, b.ADDRESS, TRIM(b.CAR_ID) AS CAR_ID, c.DESCRIPTION AS CAR_DESCRIPTION
             FROM BLUETOOTH b
-            LEFT JOIN CARS c ON b.CAR_ID = c.ID
-            WHERE b.USER_ID = :userId 
+            LEFT JOIN CARS c ON TRIM(b.CAR_ID) = TRIM(c.ID)
+            WHERE TRIM(b.USER_ID) = TRIM(:userId)
             ORDER BY b.ID
         `;
         const result = await query(sql, { userId });
@@ -40,7 +40,7 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Check if device already exists for this user to avoid duplicates
-        const existingCheck = await query(`SELECT ID FROM BLUETOOTH WHERE USER_ID = :userId AND ADDRESS = :address`, { userId, address });
+        const existingCheck = await query(`SELECT ID FROM BLUETOOTH WHERE TRIM(USER_ID) = TRIM(:userId) AND ADDRESS = :address`, { userId, address });
 
         if (existingCheck.rows && existingCheck.rows.length > 0) {
             return Response.json({ success: true, message: 'Bluetooth device already exists (silent success)' });
@@ -80,7 +80,7 @@ export async function PATCH(request) {
         const sql = `
             UPDATE BLUETOOTH 
             SET NAME = :name, DESCRIPTION = :description, ADDRESS = :address, CAR_ID = :carId 
-            WHERE ID = :id AND USER_ID = :userId
+            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)
         `;
         const result = await query(sql, {
             name,
@@ -116,7 +116,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM BLUETOOTH WHERE ID = :id AND USER_ID = :userId`;
+        const sql = `DELETE FROM BLUETOOTH WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { id, userId });
 
         if (result.rowsAffected === 0) {

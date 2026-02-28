@@ -75,11 +75,11 @@ export async function GET(request) {
                 user = byEmail.rows[0];
                 // Link Google account to existing user
                 await query(
-                    `UPDATE USERS SET GOOGLE_ID = :googleId, GOOGLE_AVATAR_URL = :avatar WHERE ID = :id`,
+                    `UPDATE USERS SET GOOGLE_ID = :googleId, GOOGLE_AVATAR_URL = :avatar WHERE TRIM(ID) = TRIM(:id)`,
                     { googleId, avatar: picture || null, id: user.ID }
                 );
                 // Refresh data
-                const refreshed = await query(`SELECT * FROM USERS WHERE ID = :id`, { id: user.ID });
+                const refreshed = await query(`SELECT * FROM USERS WHERE TRIM(ID) = TRIM(:id)`, { id: user.ID });
                 user = refreshed.rows[0];
             }
         }
@@ -120,7 +120,7 @@ export async function GET(request) {
             const newId = insertResult.outBinds?.id?.[0];
             if (!newId) throw new Error('Failed to create new user in database');
 
-            const newUser = await query(`SELECT * FROM USERS WHERE ID = :id`, { id: newId });
+            const newUser = await query(`SELECT * FROM USERS WHERE TRIM(ID) = TRIM(:id)`, { id: newId });
             user = newUser.rows?.[0];
         }
 

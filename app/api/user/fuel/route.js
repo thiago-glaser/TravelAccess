@@ -11,13 +11,13 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
-            SELECT f.ID, f.CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
+            SELECT TRIM(f.ID) AS ID, TRIM(f.CAR_ID) AS CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
                    f.TOTAL_KILOMETERS, f.KILOMETER_PER_LITER, f.PRICE_PER_KILOMETER,
                    c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
                    CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
             FROM FUEL f
-            JOIN CARS c ON f.CAR_ID = c.ID
-            WHERE f.USER_ID = :userId
+            JOIN CARS c ON TRIM(f.CAR_ID) = TRIM(c.ID)
+            WHERE TRIM(f.USER_ID) = TRIM(:userId)
             ORDER BY f.TIMESTAMP_UTC DESC
         `;
         const result = await query(sql, { userId });
@@ -63,7 +63,7 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Ensure Car belongs to User
-        const carCheckResult = await query(`SELECT ID FROM CARS WHERE ID = :carId AND USER_ID = :userId`, { carId, userId });
+        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`, { carId, userId });
         if (carCheckResult.rows.length === 0) {
             return Response.json({ success: false, error: 'Invalid car selected' }, { status: 400 });
         }
@@ -122,9 +122,9 @@ export async function DELETE(request) {
 
         // Find the carId and timestamp before deleting the fuel entry
         const carRes = await query(`
-            SELECT CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
+            SELECT TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE ID = :id AND USER_ID = :userId
+            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)
         `, { id, userId });
         if (carRes.rows.length === 0) {
             return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
@@ -137,14 +137,14 @@ export async function DELETE(request) {
         const priorFuelRes = await query(`
             SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE CAR_ID = :carId 
-              AND USER_ID = :userId 
+            WHERE TRIM(CAR_ID) = TRIM(:carId) 
+              AND TRIM(USER_ID) = TRIM(:userId) 
               AND TIMESTAMP_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, { carId, userId, deletedUtcStr });
 
-        const sql = `DELETE FROM FUEL WHERE ID = :id AND USER_ID = :userId`;
+        const sql = `DELETE FROM FUEL WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { id, userId });
 
         if (result.rowsAffected > 0) {
@@ -155,7 +155,7 @@ export async function DELETE(request) {
                 await query(`
                     UPDATE SESSION_DATA
                     SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
-                    WHERE CAR_ID = :carId
+                    WHERE TRIM(CAR_ID) = TRIM(:carId)
                       AND START_UTC > TO_DATE(:priorUtcStr, 'YYYY-MM-DD HH24:MI:SS')
                       AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
                 `, { carId, priorUtcStr, deletedUtcStr });
@@ -164,7 +164,7 @@ export async function DELETE(request) {
                 await query(`
                     UPDATE SESSION_DATA
                     SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
-                    WHERE CAR_ID = :carId
+                    WHERE TRIM(CAR_ID) = TRIM(:carId)
                       AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
                 `, { carId, deletedUtcStr });
             }

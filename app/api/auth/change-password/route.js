@@ -18,7 +18,7 @@ export async function POST(request) {
 
         // Fetch user to check current password if it exists (for non-Google users that have a password logic)
         // If a user has no password (e.g., registered via Google), we might skip currentPassword check or require it
-        const userSql = `SELECT PASSWORD_HASH FROM USERS WHERE ID = :id`;
+        const userSql = `SELECT PASSWORD_HASH FROM USERS WHERE TRIM(ID) = TRIM(:id)`;
         const userResult = await query(userSql, { id: session.id });
 
         if (!userResult.rows || userResult.rows.length === 0) {
@@ -40,7 +40,7 @@ export async function POST(request) {
 
         // Apply new password
         const newHash = await hashPassword(newPassword);
-        const updateSql = `UPDATE USERS SET PASSWORD_HASH = :hash WHERE ID = :id`;
+        const updateSql = `UPDATE USERS SET PASSWORD_HASH = :hash WHERE TRIM(ID) = TRIM(:id)`;
         await query(updateSql, { hash: newHash, id: session.id });
 
         return NextResponse.json({ success: true, message: 'Password updated successfully' });

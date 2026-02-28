@@ -13,7 +13,7 @@ export async function GET(request) {
             SELECT ud.DEVICE_ID, d.DESCRIPTION 
             FROM USER_DEVICES ud
             LEFT JOIN devices d ON ud.DEVICE_ID = d.DEVICE_ID
-            WHERE ud.USER_ID = :userId 
+            WHERE TRIM(ud.USER_ID) = TRIM(:userId) 
             ORDER BY ud.DEVICE_ID
         `;
         const result = await query(sql, { userId });
@@ -118,7 +118,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM USER_DEVICES WHERE USER_ID = :userId AND DEVICE_ID = :deviceId`;
+        const sql = `DELETE FROM USER_DEVICES WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
         const result = await query(sql, { userId, deviceId });
 
         return Response.json({ success: true, message: 'Device removed successfully' });

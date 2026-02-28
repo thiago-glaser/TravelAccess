@@ -10,9 +10,9 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
-            SELECT ID, DESCRIPTION, LICENSE_PLATE 
+            SELECT TRIM(ID) AS ID, DESCRIPTION, LICENSE_PLATE 
             FROM CARS 
-            WHERE USER_ID = :userId 
+            WHERE TRIM(USER_ID) = TRIM(:userId) 
             ORDER BY ID
         `;
         const result = await query(sql, { userId });
@@ -70,7 +70,7 @@ export async function PATCH(request) {
         const sql = `
             UPDATE CARS 
             SET DESCRIPTION = :description, LICENSE_PLATE = :licensePlate 
-            WHERE ID = :carId AND USER_ID = :userId
+            WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)
         `;
         const result = await query(sql, {
             description: description || null,
@@ -104,7 +104,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM CARS WHERE ID = :carId AND USER_ID = :userId`;
+        const sql = `DELETE FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { carId, userId });
 
         if (result.rowsAffected === 0) {

@@ -8,7 +8,7 @@ export async function GET(request) {
     }
 
     try {
-        const sql = `SELECT ID, DESCRIPTION, IS_ACTIVE, CREATED_AT, LAST_USED FROM API_KEYS WHERE USER_ID = :userId`;
+        const sql = `SELECT TRIM(ID) AS ID, DESCRIPTION, IS_ACTIVE, CREATED_AT, LAST_USED FROM API_KEYS WHERE TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { userId: session.id || session.ID || session.USER_ID });
 
         return Response.json({ success: true, apiKeys: result.rows });
@@ -59,7 +59,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `DELETE FROM API_KEYS WHERE ID = :id AND USER_ID = :userId`;
+        const sql = `DELETE FROM API_KEYS WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         await query(sql, { id, userId });
 
         return Response.json({ success: true, message: 'API key revoked successfully' });

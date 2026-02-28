@@ -22,7 +22,7 @@ export async function GET(request) {
         const lastFuelRes = await query(`
             SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE CAR_ID = :carId AND USER_ID = :userId
+            WHERE TRIM(CAR_ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
         `, { carId, userId });
@@ -37,9 +37,9 @@ export async function GET(request) {
         // 2. Find all sessions for this car where START_UTC > last_fuel_timestamp
         // We use V_SESSIONS as done in the fuel calculation
         const sessionsRes = await query(`
-            SELECT ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
+            SELECT TRIM(ID) AS ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
             FROM V_SESSIONS 
-            WHERE CAR_ID = :carId 
+            WHERE TRIM(CAR_ID) = TRIM(:carId) 
               AND START_UTC > TO_DATE(:lastFuelUtcStr, 'YYYY-MM-DD HH24:MI:SS')
         `, {
             carId,

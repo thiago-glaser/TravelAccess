@@ -10,7 +10,7 @@ export async function GET(request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const sql = `SELECT USERNAME, EMAIL, GOOGLE_AVATAR_URL FROM USERS WHERE ID = :id`;
+        const sql = `SELECT USERNAME, EMAIL, GOOGLE_AVATAR_URL FROM USERS WHERE TRIM(ID) = TRIM(:id)`;
         const result = await query(sql, { id: session.id });
 
         if (!result.rows || result.rows.length === 0) {

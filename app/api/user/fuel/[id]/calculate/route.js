@@ -18,9 +18,9 @@ export async function POST(request, context) {
 
         // 1. Get current fuel record F2
         const f2Res = await query(`
-            SELECT ID, CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, LITERS, TOTAL_VALUE 
+            SELECT TRIM(ID) AS ID, TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, LITERS, TOTAL_VALUE 
             FROM FUEL 
-            WHERE ID = :fuelId AND USER_ID = :userId
+            WHERE TRIM(ID) = TRIM(:fuelId) AND TRIM(USER_ID) = TRIM(:userId)
         `, { fuelId, userId });
         if (f2Res.rows.length === 0) {
             return Response.json({ success: false, error: 'Fuel record not found or not authorized' }, { status: 404 });
@@ -39,8 +39,8 @@ export async function POST(request, context) {
         const f1Res = await query(`
             SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
             FROM FUEL 
-            WHERE CAR_ID = :carId 
-              AND USER_ID = :userId 
+            WHERE TRIM(CAR_ID) = TRIM(:carId) 
+              AND TRIM(USER_ID) = TRIM(:userId) 
               AND TIMESTAMP_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
             ORDER BY TIMESTAMP_UTC DESC 
             FETCH NEXT 1 ROWS ONLY
@@ -59,9 +59,9 @@ export async function POST(request, context) {
 
         // 3. Find all sessions for this car within (f1UtcStr, f2UtcStr)
         const sessionsRes = await query(`
-            SELECT ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
+            SELECT TRIM(ID) AS ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
             FROM V_SESSIONS 
-            WHERE CAR_ID = :carId 
+            WHERE TRIM(CAR_ID) = TRIM(:carId) 
               AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
               AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
         `, {
@@ -118,7 +118,7 @@ export async function POST(request, context) {
             SET TOTAL_KILOMETERS = :totalKilometers,
                 KILOMETER_PER_LITER = :kilometerPerLiter,
                 PRICE_PER_KILOMETER = :pricePerKilometer
-            WHERE ID = :fuelId
+            WHERE TRIM(ID) = TRIM(:fuelId)
         `, {
             totalKilometers,
             kilometerPerLiter,
@@ -131,7 +131,7 @@ export async function POST(request, context) {
         await query(`
             UPDATE SESSION_DATA
             SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
-            WHERE CAR_ID = :carId
+            WHERE TRIM(CAR_ID) = TRIM(:carId)
               AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
               AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
         `, { carId, f1UtcStr, f2UtcStr });
