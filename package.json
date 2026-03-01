@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync": "node scripts/schedule_sync.js"
   },
   "dependencies": {
     "@google/maps": "^1.1.3",

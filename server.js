@@ -101,5 +101,30 @@ app.prepare().then(() => {
                 console.error(`[Job Runner] MERGE_LOCATION_GEOCODES_JOB failed:`, e.message);
             });
         }, 5 * 60 * 1000);
+
+        // Run the DB Link Sync job every 5 minutes (300000 ms)
+        setInterval(async () => {
+            console.log(`[Job Runner] Executing DB_LINK_SYNC...`);
+            try {
+                const { syncTableViaDbLink } = require(path.join(__dirname, 'scripts', 'sync_dblink.js'));
+                const SYNC_TABLES = [
+                    'USERS', 'API_KEYS', 'DEVICES', 'USER_DEVICES', 'CARS',
+                    'BLUETOOTH', 'FUEL', 'LOCATION', 'LOCATION_DATA',
+                    'LOCATION_GEOCODE', 'SESSION_DATA', 'PARAMETER'
+                ];
+                let totalAffected = 0;
+                for (const table of SYNC_TABLES) {
+                    try {
+                        const affected = await syncTableViaDbLink(table);
+                        if (affected) totalAffected += affected;
+                    } catch (e) {
+                        console.error(`[Job Runner] DB_LINK_SYNC failed for ${table}:`, e.message);
+                    }
+                }
+                console.log(`[Job Runner] DB_LINK_SYNC completed. Total transferred: ${totalAffected}`);
+            } catch (e) {
+                console.error(`[Job Runner] DB_LINK_SYNC failed to initialize:`, e.message);
+            }
+        }, 5 * 60 * 1000);
     });
 });
