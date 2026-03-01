@@ -33,7 +33,7 @@ export async function GET(request) {
         let bindParams = { userId };
 
         if (carFilter) {
-            conditions.push(`s.car_id = :carId`);
+            conditions.push(`TRIM(s.car_id) = :carId`);
             bindParams.carId = carFilter;
         }
         if (yearFilter) {
