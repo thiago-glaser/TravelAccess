@@ -37,12 +37,12 @@ export async function GET(request) {
             bindParams.carId = carFilter;
         }
         if (yearFilter) {
-            conditions.push(`EXTRACT(YEAR FROM FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE :tz) = :year`);
+            conditions.push(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE CAST(:tz AS VARCHAR2(50)), 'YYYY')) = :year`);
             bindParams.year = parseInt(yearFilter);
             bindParams.tz = tzFilter;
         }
         if (monthFilter) {
-            conditions.push(`EXTRACT(MONTH FROM FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE :tz) = :month`);
+            conditions.push(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE CAST(:tz AS VARCHAR2(50)), 'MM')) = :month`);
             bindParams.month = parseInt(monthFilter);
             bindParams.tz = tzFilter;
         }
