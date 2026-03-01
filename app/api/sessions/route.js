@@ -59,9 +59,9 @@ export async function GET(request) {
         const dataBindParams = { ...bindParams, offset, limit };
         const query = `
             SELECT 
-                s.id, 
-                s.device_id,
-                s.car_id, 
+                TRIM(s.id) as id, 
+                TRIM(s.device_id) as device_id,
+                TRIM(s.car_id) as car_id, 
                 NVL(s.car_description, d.description) as description,
                 TO_CHAR(s.start_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as START_UTC,
                 TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as END_UTC,
@@ -177,8 +177,8 @@ export async function PATCH(request) {
         const query = `
             UPDATE V_SESSIONS 
             SET ${updates.join(', ')}
-            WHERE id = :id 
-            AND device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)
+            WHERE TRIM(id) = TRIM(:id) 
+            AND TRIM(device_id) IN (SELECT TRIM(device_id) FROM USER_DEVICES WHERE TRIM(user_id) = TRIM(:userId))
         `;
 
         const result = await connection.execute(
