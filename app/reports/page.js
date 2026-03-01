@@ -124,6 +124,7 @@ export default function ReportsPage() {
             if (filters.year) sessionUrl += `&year=${filters.year}`;
             if (filters.month) sessionUrl += `&month=${filters.month}`;
             if (filters.type) sessionUrl += `&type=${filters.type}`;
+            sessionUrl += `&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
 
             const sResponse = await fetch(sessionUrl);
             const sResult = await sResponse.json();

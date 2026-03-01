@@ -57,6 +57,7 @@ export default function SessionsPage() {
             if (filters.carId) url += `&carId=${filters.carId}`;
             if (filters.year) url += `&year=${filters.year}`;
             if (filters.month) url += `&month=${filters.month}`;
+            url += `&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
 
             const response = await fetch(url);
             const result = await response.json();
@@ -154,6 +155,7 @@ export default function SessionsPage() {
             if (filters.carId) url += `&carId=${filters.carId}`;
             if (filters.year) url += `&year=${filters.year}`;
             if (filters.month) url += `&month=${filters.month}`;
+            url += `&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
 
             const response = await fetch(url);
             const result = await response.json();

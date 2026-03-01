@@ -16,6 +16,7 @@ export async function GET(request) {
     const yearFilter = searchParams.get('year');
     const monthFilter = searchParams.get('month');
     const typeFilter = searchParams.get('type');
+    const tzFilter = searchParams.get('tz') || 'UTC';
 
     let connection;
     try {
@@ -36,12 +37,14 @@ export async function GET(request) {
             bindParams.carId = carFilter;
         }
         if (yearFilter) {
-            conditions.push(`EXTRACT(YEAR FROM s.start_utc) = :year`);
+            conditions.push(`EXTRACT(YEAR FROM FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE :tz) = :year`);
             bindParams.year = parseInt(yearFilter);
+            bindParams.tz = tzFilter;
         }
         if (monthFilter) {
-            conditions.push(`EXTRACT(MONTH FROM s.start_utc) = :month`);
+            conditions.push(`EXTRACT(MONTH FROM FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE :tz) = :month`);
             bindParams.month = parseInt(monthFilter);
+            bindParams.tz = tzFilter;
         }
         if (typeFilter) {
             conditions.push(`s.session_type = :sessionType`);
@@ -63,8 +66,8 @@ export async function GET(request) {
                 TRIM(s.device_id) as device_id,
                 TRIM(s.car_id) as car_id, 
                 NVL(s.car_description, d.description) as description,
-                TO_CHAR(s.start_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as START_UTC,
-                TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS') as END_UTC,
+                TO_CHAR(s.start_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as START_UTC,
+                TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as END_UTC,
                 s.session_type,
                 s.location_start,
                 s.location_end,
