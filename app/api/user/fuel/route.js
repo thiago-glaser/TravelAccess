@@ -11,7 +11,7 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
         const sql = `
-            SELECT TRIM(f.ID) AS ID, TRIM(f.CAR_ID) AS CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
+            SELECT TRIM(f.ID) AS ID, TRIM(f.CAR_ID) AS CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
                    f.TOTAL_KILOMETERS, f.KILOMETER_PER_LITER, f.PRICE_PER_KILOMETER,
                    c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
                    CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
