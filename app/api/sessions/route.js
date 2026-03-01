@@ -1,4 +1,4 @@
-import oracledb from 'oracledb';
+import { getConnection, oracledb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
@@ -20,11 +20,7 @@ export async function GET(request) {
 
     let connection;
     try {
-        connection = await oracledb.getConnection({
-            user: process.env.ORACLE_USER,
-            password: process.env.ORACLE_PASSWORD,
-            connectionString: process.env.ORACLE_CONNECTION_STRING,
-        });
+        connection = await getConnection();
 
         const userId = session.USER_ID || session.id || session.ID;
 
@@ -145,11 +141,7 @@ export async function PATCH(request) {
             return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
         }
 
-        connection = await oracledb.getConnection({
-            user: process.env.ORACLE_USER,
-            password: process.env.ORACLE_PASSWORD,
-            connectionString: process.env.ORACLE_CONNECTION_STRING,
-        });
+        connection = await getConnection();
 
         // Build update statement dynamically based on what was provided
         const userId = session.USER_ID || session.id || session.ID;

@@ -12,6 +12,12 @@ services:
       - ORACLE_USER=${ORACLE_USER}
       - ORACLE_PASSWORD=${ORACLE_PASSWORD}
       - ORACLE_CONNECTION_STRING=${ORACLE_CONNECTION_STRING}
+      - USE_CLOUD_DB=${USE_CLOUD_DB}
+      - CLOUD_ORACLE_USER=${CLOUD_ORACLE_USER}
+      - CLOUD_ORACLE_PASSWORD=${CLOUD_ORACLE_PASSWORD}
+      - CLOUD_ORACLE_CONNECTION_STRING=${CLOUD_ORACLE_CONNECTION_STRING}
+      - CLOUD_ORACLE_WALLET_DIR=/app/oracle_wallet
+      - CLOUD_ORACLE_WALLET_PASSWORD=${CLOUD_ORACLE_WALLET_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
@@ -20,6 +26,7 @@ services:
       - GEOAPIFY_API_KEY=${GEOAPIFY_API_KEY}
     volumes:
       - ./certificates:/app/certs:ro
+      - ./oracle_wallet:/app/oracle_wallet:ro
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-check-certificate", "--quiet", "--tries=1", "--spider", "https://localhost:443" ]

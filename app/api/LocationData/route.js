@@ -1,4 +1,4 @@
-import { oracledb } from '@/lib/db';
+import { getConnection } from '@/lib/db';
 import { getSession, verifyDeviceOwnership } from '@/lib/auth';
 
 export async function POST(request) {
@@ -17,11 +17,7 @@ export async function POST(request) {
         }
 
         const startTime = Date.now();
-        connection = await oracledb.getConnection({
-            user: process.env.ORACLE_USER,
-            password: process.env.ORACLE_PASSWORD,
-            connectionString: process.env.ORACLE_CONNECTION_STRING,
-        });
+        connection = await getConnection();
 
         const isOwner = await verifyDeviceOwnership(session, device_id, connection);
         if (!isOwner) {

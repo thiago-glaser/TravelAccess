@@ -1,4 +1,4 @@
-import oracledb from 'oracledb';
+import { getConnection, oracledb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
@@ -14,11 +14,7 @@ export async function GET(request) {
 
     let connection;
     try {
-        connection = await oracledb.getConnection({
-            user: process.env.ORACLE_USER,
-            password: process.env.ORACLE_PASSWORD,
-            connectionString: process.env.ORACLE_CONNECTION_STRING,
-        });
+        connection = await getConnection();
 
         // Get location data with filters restricted by user
         const userId = session.USER_ID || session.id || session.ID;
