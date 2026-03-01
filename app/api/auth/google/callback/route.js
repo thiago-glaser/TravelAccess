@@ -105,7 +105,7 @@ export async function GET(request) {
 
             const insertSql = `
                 INSERT INTO USERS (USERNAME, PASSWORD_HASH, EMAIL, GOOGLE_ID, GOOGLE_AVATAR_URL, CREATED_AT, IS_ADMIN)
-                VALUES (:username, NULL, :email, :googleId, :avatar, CURRENT_TIMESTAMP, 0)
+                VALUES (:username, NULL, :email, :googleId, :avatar, SYS_EXTRACT_UTC(SYSTIMESTAMP), 0)
                 RETURNING ID INTO :id
             `;
 

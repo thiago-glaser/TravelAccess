@@ -79,7 +79,7 @@ export async function PATCH(request) {
         // Verify ownership and update
         const sql = `
             UPDATE BLUETOOTH 
-            SET NAME = :name, DESCRIPTION = :description, ADDRESS = :address, CAR_ID = :carId, UPDATED_AT = CURRENT_TIMESTAMP
+            SET NAME = :name, DESCRIPTION = :description, ADDRESS = :address, CAR_ID = :carId, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
             WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
         `;
         const result = await query(sql, {
@@ -116,7 +116,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE BLUETOOTH SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
+        const sql = `UPDATE BLUETOOTH SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { id, userId });
 
         if (result.rowsAffected === 0) {

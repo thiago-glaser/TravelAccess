@@ -145,7 +145,7 @@ export async function DELETE(request) {
             FETCH NEXT 1 ROWS ONLY
         `, { carId, userId, deletedUtcStr });
 
-        const sql = `UPDATE FUEL SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
+        const sql = `UPDATE FUEL SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         const result = await query(sql, { id, userId });
 
         if (result.rowsAffected > 0) {

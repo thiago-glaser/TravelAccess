@@ -59,7 +59,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE API_KEYS SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
+        const sql = `UPDATE API_KEYS SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
         await query(sql, { id, userId });
 
         return Response.json({ success: true, message: 'API key revoked successfully' });

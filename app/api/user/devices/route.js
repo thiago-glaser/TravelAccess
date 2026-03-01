@@ -118,7 +118,7 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE USER_DEVICES SET IS_DELETED = 1, UPDATED_AT = CURRENT_TIMESTAMP WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
+        const sql = `UPDATE USER_DEVICES SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
         const result = await query(sql, { userId, deviceId });
 
         return Response.json({ success: true, message: 'Device removed successfully' });
