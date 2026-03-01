@@ -25,7 +25,7 @@ export async function POST(request) {
 
         const updateSql = `
             UPDATE SESSION_DATA
-            SET END_UTC = :endUtc
+            SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
             WHERE DEVICE_ID = :deviceId AND END_UTC IS NULL
             AND START_UTC = (SELECT MAX(START_UTC) FROM SESSION_DATA WHERE DEVICE_ID = :deviceId AND END_UTC IS NULL)
         `;

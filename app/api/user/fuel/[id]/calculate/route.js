@@ -131,7 +131,7 @@ export async function POST(request, context) {
         // Only invalidate sessions between f1 and f2
         await query(`
             UPDATE SESSION_DATA
-            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL
+            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
             WHERE TRIM(CAR_ID) = TRIM(:carId)
               AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
               AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')

@@ -177,8 +177,10 @@ export async function PATCH(request) {
             return Response.json({ success: false, error: 'No fields to update' }, { status: 400 });
         }
 
+        updates.push('updated_at = SYS_EXTRACT_UTC(SYSTIMESTAMP)');
+
         const query = `
-            UPDATE V_SESSIONS 
+            UPDATE SESSION_DATA 
             SET ${updates.join(', ')}
             WHERE TRIM(id) = TRIM(:id) 
             AND TRIM(device_id) IN (SELECT TRIM(device_id) FROM USER_DEVICES WHERE TRIM(user_id) = TRIM(:userId))
