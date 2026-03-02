@@ -2,10 +2,16 @@ param(
     [Parameter(Mandatory)][string]$RemoteUser,
     [Parameter(Mandatory)][string]$RemoteHost,
     [Parameter(Mandatory)][string]$SshKeyPath,
-    [string]$RemoteDir = "~/TravelAccess"
+    [Parameter(Mandatory)][string]$DockerHubUser,
+    [string]$ImageName = "travelaccess",
+    [string]$Tag = "latest",
+    [string]$RemoteDir = "~/TravelAccess",
+    [switch]$SkipRuntimeFiles,  # skip certs/wallet/env upload (already on server)
+    [switch]$SkipBuild          # skip local build+push (re-deploy same image)
 )
 
 $LocalDir = $PSScriptRoot
+$FullImage = "${DockerHubUser}/${ImageName}:${Tag}"
 
 function Write-Step {
     param($msg)
@@ -18,171 +24,223 @@ function Write-OK { param($msg) Write-Host "  [OK]   $msg" -ForegroundColor Gree
 function Write-Warn { param($msg) Write-Host "  [WARN] $msg" -ForegroundColor Yellow }
 function Write-Fail { param($msg) Write-Host "  [FAIL] $msg" -ForegroundColor Red }
 
-# Runs a command via SSH. Output streams directly to terminal.
-# Do NOT assign to a variable for commands whose output you want visible.
-# Check $LASTEXITCODE after calling.
 function Invoke-SSH {
     param([string]$Cmd)
-    $sshArgs = @("-o", "StrictHostKeyChecking=no")
-    if ($SshKeyPath) { $sshArgs = @("-i", $SshKeyPath) + $sshArgs }
-    $sshArgs += "$RemoteUser@$RemoteHost", $Cmd
-    & ssh @sshArgs
-    # intentionally no return — $LASTEXITCODE reflects ssh exit code
+    & ssh -i $script:LocalKeyPath -o StrictHostKeyChecking=no "$RemoteUser@$RemoteHost" $Cmd
 }
-
-# Captures SSH output as a string (for when you need to parse the result).
-function Invoke-SSH-Capture {
-    param([string]$Cmd)
-    $sshArgs = @("-o", "StrictHostKeyChecking=no")
-    if ($SshKeyPath) { $sshArgs = @("-i", $SshKeyPath) + $sshArgs }
-    $sshArgs += "$RemoteUser@$RemoteHost", $Cmd
-    $out = & ssh @sshArgs 2>&1
-    return $out
-}
-
 function Invoke-SCP {
     param([string]$Src, [string]$Dst, [switch]$Recurse)
-    $scpArgs = @("-o", "StrictHostKeyChecking=no")
-    if ($SshKeyPath) { $scpArgs = @("-i", $SshKeyPath) + $scpArgs }
+    $scpArgs = @("-i", $script:LocalKeyPath, "-o", "StrictHostKeyChecking=no")
     if ($Recurse) { $scpArgs += "-r" }
     $scpArgs += $Src, "${RemoteUser}@${RemoteHost}:${Dst}"
     & scp @scpArgs
-    # intentionally no return — $LASTEXITCODE reflects scp exit code
 }
 
-# ------------------------------------------------------------------
+# ============================================================
 Write-Step "Preflight checks"
+# ============================================================
 
-foreach ($tool in @("ssh", "scp")) {
+foreach ($tool in @("ssh", "scp", "docker")) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
-        Write-Fail "$tool not found. Enable OpenSSH Client in Windows Optional Features."
+        Write-Fail "$tool not found in PATH."
         exit 1
     }
 }
-Write-OK "ssh and scp available"
+Write-OK "ssh, scp, docker available"
 
 if (-not (Test-Path $SshKeyPath)) { Write-Fail "SSH key not found: $SshKeyPath"; exit 1 }
-Write-OK "SSH key found: $SshKeyPath"
+Write-OK "SSH key found"
 
-# ------------------------------------------------------------------
+# Stage key to ~/.ssh/ — Windows OpenSSH rejects quoted IdentityFile paths,
+# so the key must live somewhere without spaces in the path.
+$sshDir = Join-Path $env:USERPROFILE ".ssh"
+$sshConfig = Join-Path $sshDir "config"
+$safeKeyName = "deploy_${RemoteHost}.key"
+$script:LocalKeyPath = Join-Path $sshDir $safeKeyName
+
+if (-not (Test-Path $sshDir)) { New-Item -ItemType Directory -Path $sshDir | Out-Null }
+
+# If the key was staged by a previous run it will be read-locked — unlock it first
+if (Test-Path $script:LocalKeyPath) {
+    icacls $script:LocalKeyPath /grant:r "${env:USERNAME}:(F)" | Out-Null
+}
+Copy-Item -Path $SshKeyPath -Destination $script:LocalKeyPath -Force
+# Lock back to read-only (SSH requires the key file to not be world-readable)
+icacls $script:LocalKeyPath /inheritance:r /grant:r "${env:USERNAME}:(R)" | Out-Null
+Write-OK "Key staged at ~/.ssh/$safeKeyName"
+
+# Update ~/.ssh/config before any SSH call
+$hostBlock = (
+    "",
+    "Host $RemoteHost",
+    "    IdentityFile $($script:LocalKeyPath -replace '\\','/')",
+    "    StrictHostKeyChecking no",
+    "    User $RemoteUser"
+) -join "`n"
+
+$currentConfig = if (Test-Path $sshConfig) { Get-Content $sshConfig -Raw } else { "" }
+if ($currentConfig -match "Host $([regex]::Escape($RemoteHost))") {
+    $esc = [regex]::Escape($RemoteHost)
+    $currentConfig = $currentConfig -replace "(?ms)\r?\nHost $esc[^\r\n]*(?:\r?\n(?!Host )[^\r\n]*)*(\r?\n|$)", "`n"
+    Set-Content -Path $sshConfig -Value $currentConfig.TrimEnd() -Encoding UTF8 -NoNewline
+}
+Add-Content -Path $sshConfig -Value $hostBlock
+Write-OK "~/.ssh/config updated"
+
+Write-Host "  Image : $FullImage" -ForegroundColor White
+
+# ============================================================
 Write-Step "Step 1 - Create remote directory structure"
+# ============================================================
 
 Invoke-SSH "mkdir -p $RemoteDir/certificates/Cloud $RemoteDir/oracle_wallet"
 if ($LASTEXITCODE -ne 0) { Write-Fail "Cannot create remote dirs. Check SSH access."; exit 1 }
 Write-OK "Remote directories ready"
 
-# ------------------------------------------------------------------
-Write-Step "Step 2 - Copy project source"
+# ============================================================
+# Steps 2-4: Runtime-mounted files (only needed once / when changed)
+# ============================================================
 
-$files = @("Dockerfile", "docker-compose.yml", "server.js", "package.json", "package-lock.json", "next.config.mjs", ".env.local", "middleware.js")
-foreach ($f in $files) {
-    $fp = Join-Path $LocalDir $f
-    if (-not (Test-Path $fp)) { Write-Warn "Skipping (not found): $f"; continue }
-    Write-Host "    Uploading $f ..." -ForegroundColor DarkGray
-    Invoke-SCP -Src $fp -Dst "$RemoteDir/"
-    if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $f"; exit 1 }
-}
+if (-not $SkipRuntimeFiles) {
 
-$dirs = @("app", "lib", "components", "public", "scripts", "database")
-foreach ($d in $dirs) {
-    $dp = Join-Path $LocalDir $d
-    if (-not (Test-Path $dp)) { Write-Warn "Skipping dir (not found): $d"; continue }
-    Write-Host "    Uploading $d/ ..." -ForegroundColor DarkGray
-    Invoke-SCP -Src $dp -Dst "$RemoteDir/" -Recurse
-    if ($LASTEXITCODE -ne 0) { Write-Fail "Failed dir: $d"; exit 1 }
-}
-Write-OK "Project source uploaded"
+    Write-Step "Step 2 - Upload .env.local"
+    $envFile = Join-Path $LocalDir ".env.local"
+    if (-not (Test-Path $envFile)) { Write-Fail ".env.local not found"; exit 1 }
+    Invoke-SCP -Src $envFile -Dst "$RemoteDir/"
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upload .env.local"; exit 1 }
+    Write-OK ".env.local uploaded"
 
-# ------------------------------------------------------------------
-Write-Step "Step 3 - Copy Cloud certificates"
-
-$certsDir = Join-Path $LocalDir "certificates\Cloud"
-if (-not (Test-Path $certsDir)) { Write-Fail "Not found: $certsDir"; exit 1 }
-
-foreach ($cf in (Get-ChildItem -Path $certsDir -File)) {
-    Write-Host "    Uploading $($cf.Name) ..." -ForegroundColor DarkGray
-    Invoke-SCP -Src $cf.FullName -Dst "$RemoteDir/certificates/Cloud/"
-    if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $($cf.Name)"; exit 1 }
-}
-Write-OK "Certificates uploaded"
-
-# ------------------------------------------------------------------
-Write-Step "Step 4 - Copy Oracle Wallet"
-
-$walletDir = Join-Path $LocalDir "oracle_wallet"
-if (-not (Test-Path $walletDir)) {
-    Write-Warn "oracle_wallet not found locally - skipping"
-}
-else {
-    foreach ($wf in (Get-ChildItem -Path $walletDir -File)) {
-        Write-Host "    Uploading $($wf.Name) ..." -ForegroundColor DarkGray
-        Invoke-SCP -Src $wf.FullName -Dst "$RemoteDir/oracle_wallet/"
-        if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $($wf.Name)"; exit 1 }
+    Write-Step "Step 3 - Upload Cloud certificates"
+    $certsDir = Join-Path $LocalDir "certificates\Cloud"
+    if (-not (Test-Path $certsDir)) { Write-Fail "Not found: $certsDir"; exit 1 }
+    foreach ($cf in (Get-ChildItem -Path $certsDir -File)) {
+        Write-Host "    $($cf.Name)" -ForegroundColor DarkGray
+        Invoke-SCP -Src $cf.FullName -Dst "$RemoteDir/certificates/Cloud/"
+        if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $($cf.Name)"; exit 1 }
     }
-    Write-OK "Oracle wallet uploaded"
-}
+    Write-OK "Certificates uploaded"
 
-# ------------------------------------------------------------------
-Write-Step "Step 5 - Build and start container on $RemoteHost"
-
-# Detect docker compose version (capture output to parse it)
-$cv = Invoke-SSH-Capture "docker compose version > /dev/null 2>&1 && echo V2 || echo V1"
-if ($cv -match "V2") {
-    $compose = "docker compose"
-    Write-Host "    Docker Compose V2 detected" -ForegroundColor DarkGray
+    Write-Step "Step 4 - Upload Oracle Wallet"
+    $walletDir = Join-Path $LocalDir "oracle_wallet"
+    if (Test-Path $walletDir) {
+        foreach ($wf in (Get-ChildItem -Path $walletDir -File)) {
+            Write-Host "    $($wf.Name)" -ForegroundColor DarkGray
+            Invoke-SCP -Src $wf.FullName -Dst "$RemoteDir/oracle_wallet/"
+            if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $($wf.Name)"; exit 1 }
+        }
+        Write-OK "Oracle wallet uploaded"
+    }
+    else {
+        Write-Warn "oracle_wallet not found locally - skipping"
+    }
 }
 else {
-    $compose = "docker-compose"
-    Write-Host "    Docker Compose V1 detected" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  [SKIP] Runtime files (-SkipRuntimeFiles)" -ForegroundColor DarkGray
 }
 
-# Tear down old container (suppress output)
-Invoke-SSH "cd $RemoteDir && $compose --env-file .env.local down --remove-orphans 2>/dev/null" | Out-Null
+# ============================================================
+Write-Step "Step 5 - Upload docker-compose.yml"
+# ============================================================
 
-# Build with --no-cache to ensure fresh COPY of uploaded source files
-Write-Host "    Running docker build (nice -n 19 - low CPU priority)..." -ForegroundColor DarkGray
-Invoke-SSH "cd $RemoteDir && nice -n 19 $compose --env-file .env.local build --no-cache"
-if ($LASTEXITCODE -ne 0) { Write-Fail "Build failed - see output above"; exit 1 }
-Write-OK "Build succeeded"
+Invoke-SCP -Src (Join-Path $LocalDir "docker-compose.yml") -Dst "$RemoteDir/"
+if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upload docker-compose.yml"; exit 1 }
+Write-OK "docker-compose.yml uploaded"
 
-# Start container
-Invoke-SSH "cd $RemoteDir && $compose --env-file .env.local up -d"
+# ============================================================
+if (-not $SkipBuild) {
+
+    Write-Step "Step 6 - Build image locally"
+    # ============================================================
+    # The build runs on YOUR machine (fast), not the slow VM.
+    # DOCKERHUB_USER is passed so docker-compose.yml tags it correctly.
+    # ============================================================
+
+    # Pass DOCKERHUB_USER into the local build environment
+    $env:DOCKERHUB_USER = $DockerHubUser
+    docker compose `
+        --file (Join-Path $LocalDir "docker-compose.yml") `
+        build
+
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Local build failed"; exit 1 }
+    Write-OK "Image built: $FullImage"
+
+    # ============================================================
+    Write-Step "Step 7 - Push image to Docker Hub"
+    # ============================================================
+
+    Write-Host "    Pushing $FullImage ..." -ForegroundColor DarkGray
+    docker push $FullImage
+    if ($LASTEXITCODE -ne 0) { Write-Fail "docker push failed. Are you logged in? Run: docker login"; exit 1 }
+    Write-OK "Pushed $FullImage"
+}
+else {
+    Write-Host ""
+    Write-Host "  [SKIP] Build + push (-SkipBuild)" -ForegroundColor DarkGray
+    Write-Host "  Using existing image: $FullImage" -ForegroundColor DarkGray
+}
+
+# ============================================================
+Write-Step "Step 8 - Pull image on server and restart"
+# ============================================================
+
+# Ensure DOCKERHUB_USER is set in the remote .env.local
+$remoteEnvLine = "DOCKERHUB_USER=$DockerHubUser"
+Invoke-SSH "grep -q '^DOCKERHUB_USER=' $RemoteDir/.env.local && sed -i 's|^DOCKERHUB_USER=.*|$remoteEnvLine|' $RemoteDir/.env.local || echo '$remoteEnvLine' >> $RemoteDir/.env.local"
+
+# Docker Compose V1 reads '.env' automatically (no --env-file flag support).
+# Copy .env.local -> .env on the server so 'docker compose up' picks it up.
+Invoke-SSH "cp $RemoteDir/.env.local $RemoteDir/.env"
+Write-Host "    .env copied from .env.local on server" -ForegroundColor DarkGray
+
+Write-Host "    Stopping old container ..." -ForegroundColor DarkGray
+Invoke-SSH "cd $RemoteDir && docker compose down --remove-orphans 2>/dev/null; true"
+
+Write-Host "    Pulling $FullImage ..." -ForegroundColor DarkGray
+Invoke-SSH "docker pull $FullImage"
+if ($LASTEXITCODE -ne 0) { Write-Fail "docker pull failed on remote"; exit 1 }
+Write-OK "Image pulled on server"
+
+Write-Host "    Starting container ..." -ForegroundColor DarkGray
+Invoke-SSH "cd $RemoteDir && docker compose up -d"
 if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed"; exit 1 }
 Write-OK "Container started"
 
-# ------------------------------------------------------------------
-Write-Step "Step 6 - Smoke test"
+# ============================================================
+Write-Step "Step 9 - Smoke test"
+# ============================================================
 
 Start-Sleep -Seconds 8
-
 $pingUrl = "https://$RemoteHost"
 Write-Host "    Testing $pingUrl ..." -ForegroundColor DarkGray
 
 $resp = $null
 $smokeErr = $null
-try {
-    $resp = Invoke-WebRequest -Uri $pingUrl -TimeoutSec 15 -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop
-}
-catch {
-    $smokeErr = $_.Exception.Message
-}
+try { $resp = Invoke-WebRequest -Uri $pingUrl -TimeoutSec 15 -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop }
+catch { $smokeErr = $_.Exception.Message }
 
 if ($resp -and $resp.StatusCode -lt 500) {
-    Write-OK "HTTPS $($resp.StatusCode) - site is up"
+    Write-OK "HTTPS $($resp.StatusCode) - site is up  🚀"
 }
 else {
     Write-Warn "Site not reachable yet (may still be starting)"
     if ($smokeErr) { Write-Host "    $smokeErr" -ForegroundColor DarkGray }
-    Write-Host "    Logs: ssh -i '$SshKeyPath' ${RemoteUser}@${RemoteHost} 'docker logs travelaccess-web --tail 50'" -ForegroundColor DarkGray
+    Write-Host "    Logs: ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker logs travelaccess-web --tail 50'" -ForegroundColor DarkGray
 }
 
-# ------------------------------------------------------------------
+# ============================================================
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor DarkGray
 Write-OK "Deployment complete!"
-Write-Host "  URL: https://$RemoteHost" -ForegroundColor White
+Write-Host "  URL  : https://$RemoteHost" -ForegroundColor White
+Write-Host "  Image: $FullImage" -ForegroundColor White
 Write-Host ""
-Write-Host "  Logs  : ssh -i '$SshKeyPath' ${RemoteUser}@${RemoteHost} 'docker logs -f travelaccess-web'" -ForegroundColor DarkGray
-Write-Host "  Stop  : ssh -i '$SshKeyPath' ${RemoteUser}@${RemoteHost} 'cd $RemoteDir && $compose down'" -ForegroundColor DarkGray
+Write-Host "  Useful commands:" -ForegroundColor DarkGray
+Write-Host "  Logs   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker logs -f travelaccess-web'" -ForegroundColor DarkGray
+Write-Host "  Stop   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'cd $RemoteDir && docker compose down'" -ForegroundColor DarkGray
+Write-Host "  Rollback: docker pull ${DockerHubUser}/${ImageName}:<prev-tag> then redeploy" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host "  Fast redeploy (same certs/wallet, fresh build):" -ForegroundColor DarkGray
+Write-Host "  .\deploy.ps1 -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath '...' -DockerHubUser $DockerHubUser -SkipRuntimeFiles" -ForegroundColor DarkGray
 Write-Host "==========================================" -ForegroundColor DarkGray
 Write-Host ""
