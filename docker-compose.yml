@@ -20,12 +20,12 @@ services:
       - CLOUD_ORACLE_WALLET_PASSWORD=${CLOUD_ORACLE_WALLET_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+      - GOOGLE_REDIRECT_URI=https://travel-access.ddns.net/api/auth/google/callback
+      - NEXT_PUBLIC_BASE_URL=https://travel-access.ddns.net
       - JWT_SECRET=${JWT_SECRET}
       - GEOAPIFY_API_KEY=${GEOAPIFY_API_KEY}
     volumes:
-      - ./certificates:/app/certs:ro
+      - ./certificates/Cloud:/app/certs:ro
       - ./oracle_wallet:/app/oracle_wallet:ro
     restart: unless-stopped
     healthcheck:

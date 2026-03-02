@@ -1,3 +1,90 @@
+-- -------------------------------------------------------
+-- sync_lob_fuel
+--
+-- Copies RECEIPT_IMAGE (BLOB) between local FUEL table and
+-- FUEL@CLOUD_LINK using STATIC SQL.
+--
+-- WHY STATIC SQL IS REQUIRED:
+--   Oracle ORA-22992 prevents EXECUTE IMMEDIATE from obtaining
+--   a usable LOB locator from a remote table.  Static SQL with
+--   a hardcoded DB link compiles the distributed transaction
+--   context at parse time, which is the only way DBMS_LOB.COPY
+--   works across a DB link.  Both the table name and the link
+--   name must therefore be literal identifiers.
+-- -------------------------------------------------------
+CREATE OR REPLACE PROCEDURE sync_lob_fuel(
+    p_last_sync IN TIMESTAMP
+)
+AS
+    v_src_lob    BLOB;
+    v_pull_count NUMBER := 0;
+    v_push_count NUMBER := 0;
+BEGIN
+    -- -------------------------------------------------------
+    -- Pull: Cloud -> Local (RECEIPT_IMAGE)
+    --
+    -- DBMS_LOB.COPY raises ORA-65506 when locators cross DB
+    -- boundaries.  Instead we SELECT the remote LOB into a
+    -- local BLOB variable (Oracle materialises the data at
+    -- this point) and then bind that variable to a local
+    -- EXECUTE IMMEDIATE UPDATE, which treats it as a value.
+    -- -------------------------------------------------------
+    FOR rec IN (
+        SELECT ID FROM FUEL@CLOUD_LINK
+        WHERE UPDATED_AT > p_last_sync AND RECEIPT_IMAGE IS NOT NULL
+    ) LOOP
+        BEGIN
+            -- Materialise remote BLOB data into a local variable.
+            -- Static SQL is required; EXECUTE IMMEDIATE cannot
+            -- get a usable remote LOB locator (ORA-22992).
+            SELECT RECEIPT_IMAGE INTO v_src_lob
+            FROM FUEL@CLOUD_LINK WHERE ID = rec.ID;
+
+            -- Write the materialised value to the local row.
+            -- Binding a BLOB variable here sends the data, not
+            -- a locator, so no cross-DB locator error occurs.
+            EXECUTE IMMEDIATE
+                'UPDATE FUEL SET RECEIPT_IMAGE = :1 WHERE ID = :2'
+                USING v_src_lob, rec.ID;
+
+            v_pull_count := v_pull_count + 1;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[Cloud -> Local] FUEL.RECEIPT_IMAGE error for ID=' || rec.ID || ': ' || SQLERRM);
+        END;
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('[Cloud -> Local] LOB FUEL.RECEIPT_IMAGE: copied ' || v_pull_count || ' value(s).');
+
+    -- -------------------------------------------------------
+    -- Push: Local -> Cloud (RECEIPT_IMAGE)
+    --
+    -- Same strategy: read local BLOB into a PL/SQL variable,
+    -- then bind that variable to a remote EXECUTE IMMEDIATE
+    -- UPDATE.  Oracle serialises the LOB data over the DB
+    -- link as a bind value rather than sharing a locator.
+    -- -------------------------------------------------------
+    FOR rec IN (
+        SELECT ID FROM FUEL
+        WHERE UPDATED_AT > p_last_sync AND RECEIPT_IMAGE IS NOT NULL
+    ) LOOP
+        BEGIN
+            SELECT RECEIPT_IMAGE INTO v_src_lob
+            FROM FUEL WHERE ID = rec.ID;
+
+            EXECUTE IMMEDIATE
+                'UPDATE FUEL@CLOUD_LINK SET RECEIPT_IMAGE = :1 WHERE ID = :2'
+                USING v_src_lob, rec.ID;
+
+            v_push_count := v_push_count + 1;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[Local -> Cloud] FUEL.RECEIPT_IMAGE error for ID=' || rec.ID || ': ' || SQLERRM);
+        END;
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('[Local -> Cloud] LOB FUEL.RECEIPT_IMAGE: copied ' || v_push_count || ' value(s).');
+END sync_lob_fuel;
+/
+
 CREATE OR REPLACE PROCEDURE sync_table_via_dblink(
     p_table_name IN VARCHAR2,
     p_db_link    IN VARCHAR2 DEFAULT 'CLOUD_LINK'
@@ -25,6 +112,9 @@ AS
     v_is_first BOOLEAN := TRUE;
     v_is_first_update BOOLEAN := TRUE;
     v_has_columns BOOLEAN := FALSE;
+
+    -- LOB column names collected during column scan; used to dispatch to sync_lob_fuel
+    v_lob_cols     sys.odcivarchar2list := sys.odcivarchar2list();
 BEGIN
     DBMS_OUTPUT.PUT_LINE('--- Starting DB Link Sync for Table: ' || v_table_name || ' ---');
     
@@ -36,7 +126,7 @@ BEGIN
             UPDATED_AT TIMESTAMP DEFAULT SYS_EXTRACT_UTC(SYSTIMESTAMP)
         )';
     EXCEPTION WHEN OTHERS THEN
-        IF SQLCODE != -955 THEN -- ORA-00955: name is already USED by an existing object
+        IF SQLCODE != -955 THEN -- ORA-00955: name is already used by an existing object
             DBMS_OUTPUT.PUT_LINE('Warning creating SYNC_STATE: ' || SQLERRM);
         END IF;
     END;
@@ -80,9 +170,12 @@ BEGIN
         v_pk_cols.EXTEND(1); v_pk_cols(1) := 'ID';
     END IF;
     
+    -- Build PK match condition for MERGE ON clause
     v_match_cond := '';
     FOR i IN 1..v_pk_cols.COUNT LOOP
-        IF i > 1 THEN v_match_cond := v_match_cond || ' AND '; END IF;
+        IF i > 1 THEN
+            v_match_cond := v_match_cond || ' AND ';
+        END IF;
         v_match_cond := v_match_cond || 't.' || v_pk_cols(i) || ' = s.' || v_pk_cols(i);
     END LOOP;
     
@@ -90,41 +183,51 @@ BEGIN
     v_insert_cols := '';
     v_insert_vals := '';
     
+    -- Separate LOB columns from regular columns.
+    -- LOBs cannot appear in MERGE...SELECT from a remote table (ORA-22992).
+    -- They are collected here and synced separately via a cursor loop below.
     FOR r IN (
-        SELECT COLUMN_NAME FROM USER_TAB_COLUMNS 
+        SELECT COLUMN_NAME, DATA_TYPE FROM USER_TAB_COLUMNS 
         WHERE TABLE_NAME = v_table_name 
-          AND COLUMN_NAME NOT IN ('RECEIPT_IMAGE', 'RECEIPT_MIME')
         ORDER BY COLUMN_ID
     ) LOOP
-        v_has_columns := TRUE;
-        
-        DECLARE
-            v_is_pk BOOLEAN := FALSE;
-        BEGIN
-            FOR i IN 1..v_pk_cols.COUNT LOOP
-                IF v_pk_cols(i) = r.COLUMN_NAME THEN
-                    v_is_pk := TRUE;
-                    EXIT;
+        IF r.DATA_TYPE IN ('BLOB', 'CLOB', 'NCLOB') THEN
+            -- Queue for separate LOB copy step
+            v_lob_cols.EXTEND(1);
+            v_lob_cols(v_lob_cols.COUNT) := r.COLUMN_NAME;
+            DBMS_OUTPUT.PUT_LINE('[' || v_table_name || '] LOB column detected (will sync separately): ' || r.COLUMN_NAME);
+        ELSE
+            -- Regular (non-LOB) column: include in MERGE
+            v_has_columns := TRUE;
+            
+            DECLARE
+                v_is_pk BOOLEAN := FALSE;
+            BEGIN
+                FOR i IN 1..v_pk_cols.COUNT LOOP
+                    IF v_pk_cols(i) = r.COLUMN_NAME THEN
+                        v_is_pk := TRUE;
+                        EXIT;
+                    END IF;
+                END LOOP;
+                
+                IF NOT v_is_first THEN
+                    v_insert_cols := v_insert_cols || ', ';
+                    v_insert_vals := v_insert_vals || ', ';
                 END IF;
-            END LOOP;
-            
-            IF NOT v_is_first THEN
-                v_insert_cols := v_insert_cols || ', ';
-                v_insert_vals := v_insert_vals || ', ';
-            END IF;
-            
-            v_insert_cols := v_insert_cols || r.COLUMN_NAME;
-            v_insert_vals := v_insert_vals || 's.' || r.COLUMN_NAME;
-            v_is_first := FALSE;
-            
-            IF NOT v_is_pk THEN
-                IF NOT v_is_first_update THEN
-                    v_update_set := v_update_set || ', ';
+                
+                v_insert_cols := v_insert_cols || r.COLUMN_NAME;
+                v_insert_vals := v_insert_vals || 's.' || r.COLUMN_NAME;
+                v_is_first := FALSE;
+                
+                IF NOT v_is_pk THEN
+                    IF NOT v_is_first_update THEN
+                        v_update_set := v_update_set || ', ';
+                    END IF;
+                    v_update_set := v_update_set || 't.' || r.COLUMN_NAME || ' = s.' || r.COLUMN_NAME;
+                    v_is_first_update := FALSE;
                 END IF;
-                v_update_set := v_update_set || 't.' || r.COLUMN_NAME || ' = s.' || r.COLUMN_NAME;
-                v_is_first_update := FALSE;
-            END IF;
-        END;
+            END;
+        END IF;
     END LOOP;
     
     IF NOT v_has_columns THEN
@@ -132,7 +235,9 @@ BEGIN
         RETURN;
     END IF;
     
-    -- Cloud -> Local (Pull)
+    -- -------------------------------------------------------
+    -- Cloud -> Local (Pull): MERGE non-LOB columns
+    -- -------------------------------------------------------
     v_pull_sql := 'MERGE INTO ' || v_table_name || ' t ' ||
                   'USING (SELECT ' || v_insert_cols || ' FROM ' || v_table_name || '@' || p_db_link || 
                   ' WHERE UPDATED_AT > :1) s ' ||
@@ -153,8 +258,11 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('[Cloud -> Local] MERGE Error: ' || SQLERRM);
         ROLLBACK;
     END;
+
     
-    -- Local -> Cloud (Push)
+    -- -------------------------------------------------------
+    -- Local -> Cloud (Push): MERGE non-LOB columns
+    -- -------------------------------------------------------
     v_push_sql := 'MERGE INTO ' || v_table_name || '@' || p_db_link || ' t ' ||
                   'USING (SELECT ' || v_insert_cols || ' FROM ' || v_table_name || 
                   ' WHERE UPDATED_AT > :1) s ' ||
@@ -175,6 +283,22 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('[Local -> Cloud] MERGE Error: ' || SQLERRM);
         ROLLBACK;
     END;
+
+    -- -------------------------------------------------------
+    -- LOB column sync (both Pull and Push directions)
+    --
+    -- Called AFTER both MERGEs so that remote rows are guaranteed
+    -- to exist before we try to initialise their LOB locators.A
+    -- LOBs require static SQL (see sync_lob_fuel header comment).
+    -- -------------------------------------------------------
+    IF v_lob_cols.COUNT > 0 THEN
+        IF v_table_name = 'FUEL' THEN
+            sync_lob_fuel(v_last_sync);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('[' || v_table_name || '] WARNING: LOB sync skipped.' ||
+                ' Add a static-SQL helper procedure (like sync_lob_fuel) for this table.');
+        END IF;
+    END IF;
     
     -- Update marker
     IF v_max_cloud_date > v_max_local_date THEN
