@@ -177,7 +177,18 @@ Write-OK "docker-compose.yml uploaded"
 # ============================================================
 if (-not $SkipBuild) {
 
-    Write-Step "Step 6 - Build image locally"
+    Write-Step "Step 6 - Run unit tests"
+    # ============================================================
+
+    Write-Host "    Running: npm test ..." -ForegroundColor DarkGray
+    npm test
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "Unit tests failed. Fix them before deploying."
+        exit 1
+    }
+    Write-OK "All tests passed"
+
+    Write-Step "Step 7 - Build image locally"
     # ============================================================
     # The build runs on YOUR machine (fast), not the slow VM.
     # DOCKERHUB_USER is passed so docker-compose.yml tags it correctly.
@@ -193,7 +204,7 @@ if (-not $SkipBuild) {
     Write-OK "Image built: $FullImage"
 
     # ============================================================
-    Write-Step "Step 7 - Push image to Docker Hub"
+    Write-Step "Step 8 - Push image to Docker Hub"
     # ============================================================
 
     Write-Host "    Pushing $FullImage ..." -ForegroundColor DarkGray
@@ -208,7 +219,7 @@ else {
 }
 
 # ============================================================
-Write-Step "Step 8 - Pull image on server and restart"
+Write-Step "Step 9 - Pull image on server and restart"
 # ============================================================
 
 # Ensure DOCKERHUB_USER is set in the remote .env.local
