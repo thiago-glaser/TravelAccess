@@ -40,16 +40,17 @@ param(
 $LocalDir = $PSScriptRoot
 $FullImage = "${DockerHubUser}/${ImageName}:${Tag}"
 
+function TS { Get-Date -Format '[HH:mm:ss]' }
 function Write-Step {
     param($msg)
     Write-Host ""
-    Write-Host "------------------------------------------" -ForegroundColor DarkGray
-    Write-Host "  $msg" -ForegroundColor Cyan
-    Write-Host "------------------------------------------" -ForegroundColor DarkGray
+    Write-Host "$(TS) ------------------------------------------" -ForegroundColor DarkGray
+    Write-Host "$(TS)   $msg" -ForegroundColor Cyan
+    Write-Host "$(TS) ------------------------------------------" -ForegroundColor DarkGray
 }
-function Write-OK { param($msg) Write-Host "  [OK]   $msg" -ForegroundColor Green }
-function Write-Warn { param($msg) Write-Host "  [WARN] $msg" -ForegroundColor Yellow }
-function Write-Fail { param($msg) Write-Host "  [FAIL] $msg" -ForegroundColor Red }
+function Write-OK { param($msg) Write-Host "$(TS) [OK]   $msg" -ForegroundColor Green }
+function Write-Warn { param($msg) Write-Host "$(TS) [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail { param($msg) Write-Host "$(TS) [FAIL] $msg" -ForegroundColor Red }
 
 function Invoke-SSH {
     param([string]$Cmd)
