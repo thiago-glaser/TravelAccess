@@ -245,9 +245,6 @@ Invoke-SSH "cd $RemoteDir && docker compose up -d"
 if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed"; exit 1 }
 Write-OK "Container started"
 
-
-
-
 # ============================================================
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor DarkGray
@@ -264,3 +261,10 @@ Write-Host "  Fast redeploy (same certs/wallet, fresh build):" -ForegroundColor 
 Write-Host "  .\deploy.ps1 -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath '...' -DockerHubUser $DockerHubUser -SkipRuntimeFiles" -ForegroundColor DarkGray
 Write-Host "==========================================" -ForegroundColor DarkGray
 Write-Host ""
+
+# ============================================================
+Write-Step "Live container logs  (Ctrl+C to exit)"
+# ============================================================
+Write-Host "  Streaming: docker logs -f travelaccess-web" -ForegroundColor DarkGray
+Write-Host ""
+Invoke-SSH "docker logs -f --tail 50 travelaccess-web"
