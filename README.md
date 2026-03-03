@@ -129,6 +129,73 @@ TravelAccess/
 
 ---
 
+## 🚢 Deployment
+
+Production deployment is handled by `deploy.ps1`, which builds the Docker image locally, pushes it to Docker Hub, and restarts the container on the remote server.
+
+### Prerequisites
+
+- Docker Desktop (logged in to Docker Hub)
+- SSH key with access to the remote VM
+- `ssh` and `scp` available in your PATH
+
+### Usage
+
+**Full deploy** (build + push + restart):
+```powershell
+.\deploy.ps1 `
+  -RemoteUser <ssh-user> `
+  -RemoteHost <server-hostname> `
+  -SshKeyPath "<path-to-ssh-key>" `
+  -DockerHubUser <dockerhub-username>
+```
+
+**Skip re-uploading certs / wallet / env** (faster redeploy when only code changed):
+```powershell
+.\deploy.ps1 `
+  -RemoteUser <ssh-user> `
+  -RemoteHost <server-hostname> `
+  -SshKeyPath "<path-to-ssh-key>" `
+  -DockerHubUser <dockerhub-username> `
+  -SkipRuntimeFiles
+```
+
+**Restart with an already-pushed image** (no local build):
+```powershell
+.\deploy.ps1 `
+  -RemoteUser <ssh-user> `
+  -RemoteHost <server-hostname> `
+  -SshKeyPath "<path-to-ssh-key>" `
+  -DockerHubUser <dockerhub-username> `
+  -SkipBuild
+```
+
+### Parameters
+
+| Parameter | Required | Default | Description |
+|---|---|---|---|
+| `-RemoteUser` | ✅ | — | SSH username on the remote server |
+| `-RemoteHost` | ✅ | — | Hostname or IP of the remote server |
+| `-SshKeyPath` | ✅ | — | Path to your local SSH private key |
+| `-DockerHubUser` | ✅ | — | Docker Hub username |
+| `-ImageName` | | `travelaccess` | Docker image name |
+| `-Tag` | | `latest` | Docker image tag |
+| `-RemoteDir` | | `~/TravelAccess` | Deployment directory on the server |
+| `-SkipRuntimeFiles` | | `false` | Skip uploading `.env.local`, certs, and wallet |
+| `-SkipBuild` | | `false` | Skip local build and push — redeploy existing image |
+
+### Useful post-deploy commands
+
+```bash
+# Stream live logs
+ssh -i <path-to-ssh-key> <ssh-user>@<server-hostname> 'docker logs -f travelaccess-web'
+
+# Stop the container
+ssh -i <path-to-ssh-key> <ssh-user>@<server-hostname> 'cd ~/TravelAccess && docker compose down'
+```
+
+---
+
 ## 📝 License
 
 This project is licensed under the MIT License.

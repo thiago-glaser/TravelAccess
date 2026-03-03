@@ -1,3 +1,30 @@
+<#
+.SYNOPSIS
+    Builds, pushes, and deploys the TravelAccess Docker image to a remote server.
+
+.EXAMPLE
+    .\deploy.ps1 `
+      -RemoteUser <ssh-user> `
+      -RemoteHost <server-hostname> `
+      -SshKeyPath "<path-to-ssh-key>" `
+      -DockerHubUser <dockerhub-username>
+
+.EXAMPLE (skip re-uploading certs/wallet/env — faster redeploy)
+    .\deploy.ps1 `
+      -RemoteUser <ssh-user> `
+      -RemoteHost <server-hostname> `
+      -SshKeyPath "<path-to-ssh-key>" `
+      -DockerHubUser <dockerhub-username> `
+      -SkipRuntimeFiles
+
+.EXAMPLE (redeploy already-pushed image without rebuilding)
+    .\deploy.ps1 `
+      -RemoteUser <ssh-user> `
+      -RemoteHost <server-hostname> `
+      -SshKeyPath "<path-to-ssh-key>" `
+      -DockerHubUser <dockerhub-username> `
+      -SkipBuild
+#>
 param(
     [Parameter(Mandatory)][string]$RemoteUser,
     [Parameter(Mandatory)][string]$RemoteHost,
