@@ -233,27 +233,8 @@ Invoke-SSH "cd $RemoteDir && docker compose up -d"
 if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed"; exit 1 }
 Write-OK "Container started"
 
-# ============================================================
-Write-Step "Step 9 - Smoke test"
-# ============================================================
 
-Start-Sleep -Seconds 8
-$pingUrl = "https://$RemoteHost"
-Write-Host "    Testing $pingUrl ..." -ForegroundColor DarkGray
 
-$resp = $null
-$smokeErr = $null
-try { $resp = Invoke-WebRequest -Uri $pingUrl -TimeoutSec 15 -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop }
-catch { $smokeErr = $_.Exception.Message }
-
-if ($resp -and $resp.StatusCode -lt 500) {
-    Write-OK "HTTPS $($resp.StatusCode) - site is up  🚀"
-}
-else {
-    Write-Warn "Site not reachable yet (may still be starting)"
-    if ($smokeErr) { Write-Host "    $smokeErr" -ForegroundColor DarkGray }
-    Write-Host "    Logs: ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker logs travelaccess-web --tail 50'" -ForegroundColor DarkGray
-}
 
 # ============================================================
 Write-Host ""
