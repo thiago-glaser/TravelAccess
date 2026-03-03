@@ -127,9 +127,25 @@ export async function POST(request, context) {
             fuelId
         });
 
-        // Invalidate the pre-calculated session data for the car so the reports recalculate using the new price
-        // Only invalidate sessions between f1 and f2. Also reset VALUE_CONFIRMED so the next report
-        // re-saves them with the correct confirmation status based on the updated fuel price.
+        // Invalidate sessions that are affected by F2's updated price:
+        //
+        // 1. Sessions BETWEEN F1 and F2 — these use F2's price directly (confirmed).
+        // 2. Sessions AFTER F2 up to F3 (or all future sessions if no F3) — these
+        //    were using F2's price as a projected/estimated cost and are now stale.
+        //
+        // We need F3 to know the upper bound of the estimated sessions.
+        const f3Res = await query(`
+            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC
+            FROM FUEL
+            WHERE TRIM(CAR_ID) = TRIM(:carId)
+              AND TRIM(USER_ID) = TRIM(:userId)
+              AND TIMESTAMP_UTC > TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
+            ORDER BY TIMESTAMP_UTC ASC
+            FETCH NEXT 1 ROWS ONLY
+        `, { carId, userId, f2UtcStr });
+
+        // --- Invalidate F1 → F2 sessions (confirmed range) ---
         await query(`
             UPDATE SESSION_DATA
             SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
@@ -139,6 +155,33 @@ export async function POST(request, context) {
               AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
               AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
         `, { carId, f1UtcStr, f2UtcStr });
+
+        // --- Invalidate F2 → F3 sessions (estimated range) ---
+        if (f3Res.rows.length > 0) {
+            // There is a next fuel record — invalidate up to F3
+            const f3UtcStr = f3Res.rows[0].TIMESTAMP_UTC.substring(0, 19).replace('T', ' ');
+            await query(`
+                UPDATE SESSION_DATA
+                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                    VALUE_CONFIRMED = 'N',
+                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                WHERE TRIM(CAR_ID) = TRIM(:carId)
+                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+                  AND START_UTC <  TO_DATE(:f3UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+            `, { carId, f2UtcStr, f3UtcStr });
+            console.log(`Invalidated estimated sessions between F2 and F3 (${f2UtcStr} → ${f3UtcStr})`);
+        } else {
+            // No next fuel record — invalidate all future sessions from F2 onwards
+            await query(`
+                UPDATE SESSION_DATA
+                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                    VALUE_CONFIRMED = 'N',
+                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                WHERE TRIM(CAR_ID) = TRIM(:carId)
+                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
+            `, { carId, f2UtcStr });
+            console.log(`Invalidated all future estimated sessions from F2 onwards (${f2UtcStr} → ∞)`);
+        }
 
         return Response.json({ success: true, message: 'Calculated successfully' });
     } catch (e) {
