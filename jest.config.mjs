@@ -2,7 +2,10 @@
 const config = {
     testEnvironment: 'node',
     transform: {
-        '^.+\\.m?js$': ['babel-jest', { configFile: './babel.config.cjs' }],
+        '^.+\\.m?js$': ['babel-jest', {
+            // Inline config — no babel.config.* file needed (avoids Next.js Turbopack conflict)
+            presets: [['@babel/preset-env', { targets: { node: 'current' }, modules: 'commonjs' }]],
+        }],
     },
     moduleNameMapper: {
         // Resolve @/ path alias used throughout the codebase
