@@ -1,8 +1,8 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install dependencies required for node-gyp and Oracle Instant Client
-RUN apk add --no-cache python3 make g++ libaio libnsl libc6-compat
+# Install dependencies required for node-gyp
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -19,28 +19,17 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS runner
+# node-oracledb 6.x defaults to "thin" mode (pure JavaScript),
+# so Oracle Instant Client is NOT needed. Thin mode only requires
+# standard TLS — openssl is included in node:20-slim.
+FROM node:20-slim AS runner
 
-# Install Oracle Instant Client dependencies and OpenSSL for HTTPS
-RUN apk add --no-cache libaio libnsl libc6-compat wget unzip openssl
-
-# Download and install Oracle Instant Client
-RUN mkdir -p /opt/oracle && \
-    cd /opt/oracle && \
-    wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip && \
-    unzip instantclient-basiclite-linuxx64.zip && \
-    rm instantclient-basiclite-linuxx64.zip && \
-    cd instantclient* && \
-    rm -f *jdbc* *occi* *mysql* *jar uidrvci genezi adrci && \
-    echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && \
-    ldconfig || true
-
-# Set Oracle environment variables
-ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_15
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Set to production
 ENV NODE_ENV=production
 
 # Copy built application from builder
@@ -58,16 +47,14 @@ RUN mkdir -p /app/certs && \
     -subj "/C=US/ST=State/L=City/O=TravelAccess/CN=localhost"
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -s /bin/bash -m nextjs
 
 # Change ownership
 RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
-# Expose port
 EXPOSE 443
 
-# Start the application
 CMD ["node", "server.js"]

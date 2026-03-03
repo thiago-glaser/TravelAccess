@@ -2,12 +2,20 @@
 .SYNOPSIS
     Builds, pushes, and deploys the TravelAccess Docker image to a remote server.
 
-.EXAMPLE
+.EXAMPLE (default — build locally, push to Docker Hub, pull on server)
     .\deploy.ps1 `
       -RemoteUser <ssh-user> `
       -RemoteHost <server-hostname> `
       -SshKeyPath "<path-to-ssh-key>" `
       -DockerHubUser <dockerhub-username>
+
+.EXAMPLE (BUILD ON SERVER — best for ARM64 servers; no Docker Hub needed)
+    .\deploy.ps1 `
+      -RemoteUser <ssh-user> `
+      -RemoteHost <server-hostname> `
+      -SshKeyPath "<path-to-ssh-key>" `
+      -DockerHubUser <dockerhub-username> `
+      -BuildOnServer
 
 .EXAMPLE (skip re-uploading certs/wallet/env — faster redeploy)
     .\deploy.ps1 `
@@ -34,7 +42,8 @@ param(
     [string]$Tag = "latest",
     [string]$RemoteDir = "~/TravelAccess",
     [switch]$SkipRuntimeFiles,  # skip certs/wallet/env upload (already on server)
-    [switch]$SkipBuild          # skip local build+push (re-deploy same image)
+    [switch]$SkipBuild,         # skip local build+push (re-deploy same image)
+    [switch]$BuildOnServer      # build Docker image on the server (required for ARM64 servers)
 )
 
 $LocalDir = $PSScriptRoot
@@ -54,7 +63,12 @@ function Write-Fail { param($msg) Write-Host "$(TS) [FAIL] $msg" -ForegroundColo
 
 function Invoke-SSH {
     param([string]$Cmd)
-    & ssh -i $script:LocalKeyPath -o StrictHostKeyChecking=no "$RemoteUser@$RemoteHost" $Cmd
+    & ssh -i $script:LocalKeyPath `
+        -o StrictHostKeyChecking=no `
+        -o ConnectTimeout=15 `
+        -o ServerAliveInterval=10 `
+        -o ServerAliveCountMax=3 `
+        "$RemoteUser@$RemoteHost" $Cmd
 }
 function Invoke-SCP {
     param([string]$Src, [string]$Dst, [switch]$Recurse)
@@ -176,7 +190,64 @@ if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upload docker-compose.yml"; exi
 Write-OK "docker-compose.yml uploaded"
 
 # ============================================================
-if (-not $SkipBuild) {
+if ($BuildOnServer) {
+
+    Write-Step "Step 6 - Upload source code for server-side build"
+    # ============================================================
+    # Used when the server is ARM64 (or any arch that differs from your local machine).
+    # We tar the project (excluding node_modules, .next, .git) and build on the server.
+    # No Docker Hub account required.
+    # ============================================================
+
+    $SrcDir = $RemoteDir + "/src"
+    $TarFile = "/tmp/travelaccess-src.tar.gz"
+
+    Write-Host "    Creating archive of source files (tar - includes uncommitted changes) ..." -ForegroundColor DarkGray
+    $localTar = Join-Path $env:TEMP "travelaccess-src.tar.gz"
+
+    # Use Windows built-in tar (ships with Windows 10+) to archive the working tree.
+    # Excludes heavy/generated dirs that should not be in the build context.
+    # Unlike 'git archive HEAD', this includes uncommitted file changes.
+    $excludes = @(
+        "--exclude=node_modules",
+        "--exclude=.next",
+        "--exclude=.git",
+        "--exclude=oracle_wallet",
+        "--exclude=certificates",
+        "--exclude=*.key",
+        "--exclude=.env*"
+    )
+    & tar -czf $localTar @excludes -C $LocalDir .
+    if ($LASTEXITCODE -ne 0) { Write-Fail "tar failed. Windows 10+ required."; exit 1 }
+    Write-OK "Source archived: $localTar"
+
+    Write-Host "    Uploading archive to server ..." -ForegroundColor DarkGray
+    Invoke-SCP -Src $localTar -Dst $TarFile
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upload source archive"; exit 1 }
+    Remove-Item $localTar -Force
+    Write-OK "Archive uploaded"
+
+    Write-Step "Step 7 - Build Docker image on server"
+    # ============================================================
+
+    # NOTE: We use a single semicolon-joined line here (not a here-string) because
+    # PowerShell here-strings on Windows use CRLF, and the \r chars corrupt every
+    # command token when bash receives them over SSH.
+    $buildCmd = "set -e" +
+    "; mkdir -p $SrcDir" +
+    "; cd $SrcDir" +
+    "; tar -xzf $TarFile" +
+    "; docker build -t ${DockerHubUser}/${ImageName}:${Tag} ." +
+    "; rm -f $TarFile"
+    Invoke-SSH $buildCmd
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Remote docker build failed"; exit 1 }
+    Write-OK "Image built on server: ${DockerHubUser}/${ImageName}:${Tag}"
+
+    Write-Host ""
+    Write-Host "  [SKIP] Step 8 - No Docker Hub push needed (built locally on server)" -ForegroundColor DarkGray
+
+}
+elseif (-not $SkipBuild) {
 
     Write-Step "Step 6 - Run unit tests"
     # ============================================================
@@ -191,11 +262,10 @@ if (-not $SkipBuild) {
 
     Write-Step "Step 7 - Build image locally"
     # ============================================================
-    # The build runs on YOUR machine (fast), not the slow VM.
-    # DOCKERHUB_USER is passed so docker-compose.yml tags it correctly.
+    # The build runs on YOUR machine (same arch as server required!).
+    # Use -BuildOnServer instead if the server is ARM64.
     # ============================================================
 
-    # Pass DOCKERHUB_USER into the local build environment
     $env:DOCKERHUB_USER = $DockerHubUser
     docker compose `
         --file (Join-Path $LocalDir "docker-compose.yml") `
@@ -223,48 +293,87 @@ else {
 Write-Step "Step 9 - Pull image on server and restart"
 # ============================================================
 
-# Ensure DOCKERHUB_USER is set in the remote .env.local
-$remoteEnvLine = "DOCKERHUB_USER=$DockerHubUser"
-Invoke-SSH "grep -q '^DOCKERHUB_USER=' $RemoteDir/.env.local && sed -i 's|^DOCKERHUB_USER=.*|$remoteEnvLine|' $RemoteDir/.env.local || echo '$remoteEnvLine' >> $RemoteDir/.env.local"
+if ($BuildOnServer) {
+    # --- Single SSH session for everything ---
+    # All sub-steps run in one connection (cp + stop + rm + run).
+    # Using semicolons only (no && / ||) to avoid PowerShell 7 operator parsing.
+    # 'docker stop/rm' may fail if no container exists yet — that is fine,
+    # the subsequent docker run is what matters.
+    $runCmd = "docker run -d" +
+    " --name travelaccess-web" +
+    " --restart unless-stopped" +
+    " -p 443:443" +
+    " --env-file $RemoteDir/.env" +
+    " -e CLOUD_ORACLE_WALLET_DIR=/app/oracle_wallet" +
+    " -e TNS_ADMIN=/app/oracle_wallet" +
+    " -e NODE_ENV=production" +
+    " -v $RemoteDir/certificates/Cloud:/app/certs:ro" +
+    " -v $RemoteDir/oracle_wallet:/app/oracle_wallet:ro" +
+    " ${DockerHubUser}/${ImageName}:${Tag}"
 
-# Docker Compose V1 reads '.env' automatically (no --env-file flag support).
-# Copy .env.local -> .env on the server so 'docker compose up' picks it up.
-Invoke-SSH "cp $RemoteDir/.env.local $RemoteDir/.env"
-Write-Host "    .env copied from .env.local on server" -ForegroundColor DarkGray
+    # Safety net: strip surrounding double-quotes from .env values.
+    # Docker --env-file does NOT strip quotes; Next.js does. If .env.local
+    # has KEY="value", Docker would see "value" (with quotes) as the value.
+    # $q avoids PowerShell string-escaping issues when embedding " in a command.
+    $q = '"'
+    $stripQuotes = "sed -i 's/^\([A-Za-z_][A-Za-z_0-9]*\)=$q\(.*\)$q" + '$' + "/\1=\2/' $RemoteDir/.env"
 
-Write-Host "    Stopping old container ..." -ForegroundColor DarkGray
-Invoke-SSH "cd $RemoteDir && docker compose down --remove-orphans 2>/dev/null; true"
+    $step9 = "cp $RemoteDir/.env.local $RemoteDir/.env" +
+    "; $stripQuotes" +
+    "; docker stop travelaccess-web 2>/dev/null" +
+    "; docker rm travelaccess-web 2>/dev/null" +
+    "; $runCmd"
 
-Write-Host "    Pulling $FullImage ..." -ForegroundColor DarkGray
-Invoke-SSH "docker pull $FullImage"
-if ($LASTEXITCODE -ne 0) { Write-Fail "docker pull failed on remote"; exit 1 }
-Write-OK "Image pulled on server"
+    Write-Host "    [9] Copying env, stopping old container, starting new one (single SSH session) ..." -ForegroundColor DarkGray
+    Invoke-SSH $step9
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Step 9 failed"; exit 1 }
+    Write-OK "Container started"
+}
+else {
+    # Standard compose flow
+    $remoteEnvLine = "DOCKERHUB_USER=$DockerHubUser"
+    Write-Host "    [9.1] Updating DOCKERHUB_USER in .env.local ..." -ForegroundColor DarkGray
+    Invoke-SSH "grep -q '^DOCKERHUB_USER=' $RemoteDir/.env.local && sed -i 's|^DOCKERHUB_USER=.*|$remoteEnvLine|' $RemoteDir/.env.local || echo '$remoteEnvLine' >> $RemoteDir/.env.local"
 
-Write-Host "    Starting container ..." -ForegroundColor DarkGray
-Invoke-SSH "cd $RemoteDir && docker compose up -d"
-if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed"; exit 1 }
-Write-OK "Container started"
+    Write-Host "    [9.2] Copying .env.local -> .env ..." -ForegroundColor DarkGray
+    Invoke-SSH "cp $RemoteDir/.env.local $RemoteDir/.env"
+    Write-OK ".env ready on server"
+
+    Write-Host "    [9.3] Running docker compose down ..." -ForegroundColor DarkGray
+    Invoke-SSH "cd $RemoteDir && docker compose down --remove-orphans 2>/dev/null; true"
+    Write-OK "Old container cleared"
+
+    Write-Host "    [9.4] Pulling $FullImage from Docker Hub ..." -ForegroundColor DarkGray
+    Invoke-SSH "docker pull $FullImage"
+    if ($LASTEXITCODE -ne 0) { Write-Fail "docker pull failed on remote"; exit 1 }
+    Write-OK "Image pulled on server"
+
+    Write-Host "    [9.5] Running docker compose up -d ..." -ForegroundColor DarkGray
+    Invoke-SSH "cd $RemoteDir && docker compose up -d"
+    if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed"; exit 1 }
+    Write-OK "Container started"
+}
 
 # ============================================================
 Write-Host ""
-Write-Host "==========================================" -ForegroundColor DarkGray
+Write-Host "=========================================="  -ForegroundColor DarkGray
 Write-OK "Deployment complete!"
 Write-Host "  URL  : https://$RemoteHost" -ForegroundColor White
 Write-Host "  Image: $FullImage" -ForegroundColor White
 Write-Host ""
 Write-Host "  Useful commands:" -ForegroundColor DarkGray
 Write-Host "  Logs   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker logs -f travelaccess-web'" -ForegroundColor DarkGray
-Write-Host "  Stop   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'cd $RemoteDir && docker compose down'" -ForegroundColor DarkGray
-Write-Host "  Rollback: docker pull ${DockerHubUser}/${ImageName}:<prev-tag> then redeploy" -ForegroundColor DarkGray
+Write-Host "  Stop   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker stop travelaccess-web'" -ForegroundColor DarkGray
+Write-Host "  Rollback: rebuild with -BuildOnServer after reverting code" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  Fast redeploy (same certs/wallet, fresh build):" -ForegroundColor DarkGray
-Write-Host "  .\deploy.ps1 -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath '...' -DockerHubUser $DockerHubUser -SkipRuntimeFiles" -ForegroundColor DarkGray
-Write-Host "==========================================" -ForegroundColor DarkGray
+Write-Host "  Fast redeploy (skip certs/wallet, new build on server):" -ForegroundColor DarkGray
+Write-Host "  .\deploy.ps1 -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath '...' -DockerHubUser $DockerHubUser -BuildOnServer -SkipRuntimeFiles" -ForegroundColor DarkGray
+Write-Host "=========================================="  -ForegroundColor DarkGray
 Write-Host ""
 
 # ============================================================
-Write-Step "Live container logs  (Ctrl+C to exit)"
+Write-Step "Live container logs  (Ctrl+C to exit - container keeps running)"
 # ============================================================
-Write-Host "  Streaming: docker logs -f travelaccess-web" -ForegroundColor DarkGray
+Write-Host "  Streaming last 50 lines ..." -ForegroundColor DarkGray
 Write-Host ""
 Invoke-SSH "docker logs -f --tail 50 travelaccess-web"
