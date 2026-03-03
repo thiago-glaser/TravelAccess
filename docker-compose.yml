@@ -1,3 +1,15 @@
+##############################################################################
+# TravelAccess — STANDALONE mode
+#
+# Use this docker-compose only when running TravelAccess WITHOUT the shared
+# Nginx proxy (e.g. local testing, or the only service on the server).
+#
+# For production with multiple services on one server, use the Proxy project:
+#   C:\Code\Proxy
+#
+# In standalone mode the app listens on port 443 with its own TLS.
+# In proxy mode (PORT=3000) the app listens on HTTP 3000 and Nginx handles TLS.
+##############################################################################
 services:
   web:
     build:
@@ -9,6 +21,7 @@ services:
       - "443:443"
     environment:
       - NODE_ENV=production
+      - PORT=443
       - ORACLE_USER=${ORACLE_USER}
       - ORACLE_PASSWORD=${ORACLE_PASSWORD}
       - ORACLE_CONNECTION_STRING=${ORACLE_CONNECTION_STRING}

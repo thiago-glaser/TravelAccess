@@ -1,4 +1,5 @@
-const { createServer } = require('https');
+const { createServer: createHttpServer } = require('http');
+const { createServer: createHttpsServer } = require('https');
 const { parse } = require('url');
 const next = require('next');
 const fs = require('fs');
@@ -6,36 +7,62 @@ const path = require('path');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 443;
 
-// when using middleware `hostname` and `port` must be provided below
+// When running behind the Nginx proxy (PORT=3000) we serve plain HTTP.
+// When running standalone (PORT=443 or unset) we serve HTTPS as before.
+const port = parseInt(process.env.PORT || '443', 10);
+const useHttps = port !== 3000 && process.env.USE_HTTPS !== 'false';
+
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-const certPath = path.join(__dirname, 'certs');
-
-let httpsOptions = {};
-if (fs.existsSync(path.join(certPath, 'private.key')) && fs.existsSync(path.join(certPath, 'certificate.crt'))) {
-    if (fs.existsSync(path.join(certPath, 'ca_bundle.crt'))) {
-        httpsOptions = {
+// ── HTTPS cert resolution (only needed in standalone / legacy mode) ──────────
+function buildHttpsOptions() {
+    const certPath = path.join(__dirname, 'certs');
+    if (
+        fs.existsSync(path.join(certPath, 'private.key')) &&
+        fs.existsSync(path.join(certPath, 'certificate.crt'))
+    ) {
+        const opts = {
             key: fs.readFileSync(path.join(certPath, 'private.key')),
-            cert: fs.readFileSync(path.join(certPath, 'certificate.crt')) + '\n' + fs.readFileSync(path.join(certPath, 'ca_bundle.crt'))
+            cert: fs.readFileSync(path.join(certPath, 'certificate.crt')),
         };
-    } else {
-        httpsOptions = {
-            key: fs.readFileSync(path.join(certPath, 'private.key')),
-            cert: fs.readFileSync(path.join(certPath, 'certificate.crt'))
-        };
+        if (fs.existsSync(path.join(certPath, 'ca_bundle.crt'))) {
+            opts.cert += '\n' + fs.readFileSync(path.join(certPath, 'ca_bundle.crt'));
+        }
+        return opts;
     }
-} else {
-    httpsOptions = {
+    // Fall back to self-signed
+    return {
         key: fs.readFileSync(path.join(certPath, 'server.key')),
-        cert: fs.readFileSync(path.join(certPath, 'server.crt'))
+        cert: fs.readFileSync(path.join(certPath, 'server.crt')),
     };
 }
 
+// ── Internal job runner ──────────────────────────────────────────────────────
+function scheduleJob(name, path, intervalMs) {
+    const http = require(useHttps ? 'https' : 'http');
+    const baseUrl = useHttps
+        ? `https://${hostname}:${port}`
+        : `http://localhost:${port}`;
+
+    setInterval(() => {
+        console.log(`[Job Runner] Executing ${name}...`);
+        http.get(`${baseUrl}${path}`, { rejectUnauthorized: false }, (res) => {
+            let data = '';
+            res.on('data', chunk => (data += chunk));
+            res.on('end', () =>
+                console.log(`[Job Runner] ${name} completed with status ${res.statusCode}:`, data)
+            );
+        }).on('error', (e) => {
+            console.error(`[Job Runner] ${name} failed:`, e.message);
+        });
+    }, intervalMs);
+}
+
+// ── Start ────────────────────────────────────────────────────────────────────
 app.prepare().then(() => {
-    createServer(httpsOptions, async (req, res) => {
+    const requestHandler = async (req, res) => {
         try {
             const parsedUrl = parse(req.url, true);
             await handle(req, res, parsedUrl);
@@ -44,62 +71,20 @@ app.prepare().then(() => {
             res.statusCode = 500;
             res.end('internal server error');
         }
-    }).listen(port, (err) => {
+    };
+
+    const server = useHttps
+        ? createHttpsServer(buildHttpsOptions(), requestHandler)
+        : createHttpServer(requestHandler);
+
+    server.listen(port, (err) => {
         if (err) throw err;
-        console.log(`> Ready on https://${hostname}:${port}`);
+        const proto = useHttps ? 'https' : 'http';
+        console.log(`> Ready on ${proto}://${hostname}:${port}`);
 
-        // Run the EXTRACT_POINTS job every 5 minutes (300000 ms)
-        setInterval(() => {
-            const https = require('https');
-            console.log(`[Job Runner] Executing EXTRACT_POINTS...`);
-
-            https.get(`https://${hostname}:${port}/api/jobs/extract-points`, {
-                rejectUnauthorized: false // Ignore self-signed certs for internal call
-            }, (response) => {
-                let data = '';
-                response.on('data', chunk => data += chunk);
-                response.on('end', () => {
-                    console.log(`[Job Runner] EXTRACT_POINTS completed with status ${response.statusCode}:`, data);
-                });
-            }).on('error', (e) => {
-                console.error(`[Job Runner] EXTRACT_POINTS failed:`, e.message);
-            });
-        }, 5 * 60 * 1000);
-
-        // Run the GEOCODE_PENDING_LOCATIONS job every 6 minutes (360000 ms)
-        setInterval(() => {
-            const https = require('https');
-            console.log(`[Job Runner] Executing GEOCODE_PENDING_LOCATIONS...`);
-
-            https.get(`https://${hostname}:${port}/api/jobs/geocode-locations`, {
-                rejectUnauthorized: false
-            }, (response) => {
-                let data = '';
-                response.on('data', chunk => data += chunk);
-                response.on('end', () => {
-                    console.log(`[Job Runner] GEOCODE_PENDING_LOCATIONS completed with status ${response.statusCode}:`, data);
-                });
-            }).on('error', (e) => {
-                console.error(`[Job Runner] GEOCODE_PENDING_LOCATIONS failed:`, e.message);
-            });
-        }, 6 * 60 * 1000);
-
-        // Run the MERGE_LOCATION_GEOCODES_JOB job every 5 minutes (300000 ms)
-        setInterval(() => {
-            const https = require('https');
-            console.log(`[Job Runner] Executing MERGE_LOCATION_GEOCODES_JOB...`);
-
-            https.get(`https://${hostname}:${port}/api/jobs/merge-location-geocodes`, {
-                rejectUnauthorized: false
-            }, (response) => {
-                let data = '';
-                response.on('data', chunk => data += chunk);
-                response.on('end', () => {
-                    console.log(`[Job Runner] MERGE_LOCATION_GEOCODES_JOB completed with status ${response.statusCode}:`, data);
-                });
-            }).on('error', (e) => {
-                console.error(`[Job Runner] MERGE_LOCATION_GEOCODES_JOB failed:`, e.message);
-            });
-        }, 5 * 60 * 1000);
+        // Background jobs
+        scheduleJob('EXTRACT_POINTS',              '/api/jobs/extract-points',        5 * 60 * 1000);
+        scheduleJob('GEOCODE_PENDING_LOCATIONS',   '/api/jobs/geocode-locations',     6 * 60 * 1000);
+        scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 5 * 60 * 1000);
     });
 });
