@@ -155,7 +155,9 @@ export async function DELETE(request) {
 
                 await query(`
                     UPDATE SESSION_DATA
-                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                        VALUE_CONFIRMED = 'N',
+                        UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
                     WHERE TRIM(CAR_ID) = TRIM(:carId)
                       AND START_UTC > TO_DATE(:priorUtcStr, 'YYYY-MM-DD HH24:MI:SS')
                       AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
@@ -164,7 +166,9 @@ export async function DELETE(request) {
                 // If there's no prior fuel, invalidate all sessions up to this deleted fueling point
                 await query(`
                     UPDATE SESSION_DATA
-                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                        VALUE_CONFIRMED = 'N',
+                        UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
                     WHERE TRIM(CAR_ID) = TRIM(:carId)
                       AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
                 `, { carId, deletedUtcStr });

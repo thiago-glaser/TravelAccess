@@ -149,13 +149,17 @@ export default function ReportsPage() {
                 const batch = sessionsList.slice(i, i + batchSize);
                 const batchResults = await Promise.all(batch.map(async (session) => {
                     try {
+                        // FAST PATH: If all three calculated values are already stored in the DB,
+                        // skip GPS processing entirely. VALUE_CONFIRMED tells us if it was a
+                        // confirmed calculation (fuel calc button) or estimated (projected).
                         if (session.cost != null && session.distance != null && session.timeTraveled != null) {
                             return {
                                 ...session,
                                 distanceKm: session.distance,
                                 durationHours: session.timeTraveled,
                                 cost: session.cost,
-                                isProjected: false,
+                                valueConfirmed: session.valueConfirmed || 'N',
+                                isProjected: (session.valueConfirmed || 'N') === 'N',
                                 points: 0
                             };
                         }
@@ -238,9 +242,23 @@ export default function ReportsPage() {
                                     id: session.id,
                                     cost: sessionCost,
                                     distance: distanceMeters / 1000,
-                                    timeTraveled: durationMs / (1000 * 60 * 60)
+                                    timeTraveled: durationMs / (1000 * 60 * 60),
+                                    valueConfirmed: 'Y'
                                 })
                             }).catch(err => console.error('Failed to save session metrics:', err));
+                        } else if (isProjected && session.endTime && sessionCost > 0) {
+                            // Save estimated values too, so next run can read them from the fast path
+                            fetch('/api/sessions', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id: session.id,
+                                    cost: sessionCost,
+                                    distance: distanceMeters / 1000,
+                                    timeTraveled: durationMs / (1000 * 60 * 60),
+                                    valueConfirmed: 'N'
+                                })
+                            }).catch(err => console.error('Failed to save estimated session metrics:', err));
                         }
 
                         return {
@@ -250,7 +268,8 @@ export default function ReportsPage() {
                             points: filteredLocs.length,
                             pricePerKm: sessionPricePerKm,
                             cost: sessionCost,
-                            isProjected
+                            isProjected,
+                            valueConfirmed: isProjected ? 'N' : 'Y'
                         };
                     } catch (err) {
                         console.error('Error processing session:', session.id, err);
@@ -447,8 +466,13 @@ export default function ReportsPage() {
                             <p className="text-3xl font-black text-purple-600 font-mono">{totals.count}</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
-                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Est. Cost</p>
+                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Total Cost</p>
                             <p className="text-3xl font-black text-emerald-600 font-mono">${totals.cost.toFixed(2)}</p>
+                            {reportData.some(s => s.valueConfirmed === 'N') && (
+                                <p className="text-[10px] text-amber-500 font-semibold mt-1 flex items-center gap-1">
+                                    <span>⚠</span> Some values are estimated
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}
@@ -598,7 +622,13 @@ export default function ReportsPage() {
                                                     {formatDuration(s.durationHours)}
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
-                                                    ${(s.cost || 0).toFixed(2)}{s.isProjected ? '*' : ''}
+                                                    <div>${(s.cost || 0).toFixed(2)}</div>
+                                                    <div className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${s.valueConfirmed === 'Y'
+                                                            ? 'text-emerald-500'
+                                                            : 'text-amber-500'
+                                                        }`}>
+                                                        {s.valueConfirmed === 'Y' ? '✓ Confirmed' : '~ Estimated'}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

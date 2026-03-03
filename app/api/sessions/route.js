@@ -69,8 +69,10 @@ export async function GET(request) {
                 s.location_end,
                 s.cost,
                 s.distance,
-                s.time_traveled
+                s.time_traveled,
+                sd.value_confirmed
             FROM V_SESSIONS s
+            JOIN SESSION_DATA sd ON TRIM(sd.id) = TRIM(s.id)
             LEFT JOIN devices d ON s.device_id = d.device_id
             ${whereClause}
             ORDER BY s.start_utc DESC
@@ -94,7 +96,8 @@ export async function GET(request) {
             locationEnd: row.LOCATION_END,
             cost: row.COST,
             distance: row.DISTANCE,
-            timeTraveled: row.TIME_TRAVELED
+            timeTraveled: row.TIME_TRAVELED,
+            valueConfirmed: row.VALUE_CONFIRMED || 'N'
         }));
 
         return Response.json({
@@ -135,7 +138,7 @@ export async function PATCH(request) {
     let connection;
     try {
         const body = await request.json();
-        const { id, type, cost, distance, timeTraveled } = body;
+        const { id, type, cost, distance, timeTraveled, valueConfirmed } = body;
 
         if (!id) {
             return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
@@ -163,6 +166,10 @@ export async function PATCH(request) {
         if (timeTraveled !== undefined) {
             updates.push('time_traveled = :timeTraveled');
             bindParams.timeTraveled = timeTraveled;
+        }
+        if (valueConfirmed !== undefined) {
+            updates.push('value_confirmed = :valueConfirmed');
+            bindParams.valueConfirmed = valueConfirmed;
         }
 
         if (updates.length === 0) {

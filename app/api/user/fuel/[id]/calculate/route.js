@@ -128,10 +128,13 @@ export async function POST(request, context) {
         });
 
         // Invalidate the pre-calculated session data for the car so the reports recalculate using the new price
-        // Only invalidate sessions between f1 and f2
+        // Only invalidate sessions between f1 and f2. Also reset VALUE_CONFIRMED so the next report
+        // re-saves them with the correct confirmation status based on the updated fuel price.
         await query(`
             UPDATE SESSION_DATA
-            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                VALUE_CONFIRMED = 'N',
+                UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
             WHERE TRIM(CAR_ID) = TRIM(:carId)
               AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
               AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
