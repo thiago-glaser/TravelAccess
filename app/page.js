@@ -24,6 +24,7 @@ export default function SessionsPage() {
     const [cars, setCars] = useState([]);
     const [filters, setFilters] = useState({ carId: '', year: '', month: '' });
     const [expandedSessionIds, setExpandedSessionIds] = useState([]);
+    const [now, setNow] = useState(() => new Date());
 
     const toggleExpandSession = (e, sessionId) => {
         e.stopPropagation(); // Prevents the map modal from opening
@@ -93,6 +94,40 @@ export default function SessionsPage() {
     useEffect(() => {
         fetchSessions(pagination.page);
     }, [pagination.page, pagination.limit, filters]);
+
+    // Tick every second for live session timer
+    useEffect(() => {
+        const interval = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Derive active/last session for the timer widget
+    const activeSession = sessions.find(s => !s.endTime);
+    const lastSession = !activeSession && sessions.length > 0 ? sessions[0] : null;
+
+    const formatElapsed = (ms) => {
+        const totalSec = Math.floor(Math.abs(ms) / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+        if (m > 0) return `${m}m ${s.toString().padStart(2, '0')}s`;
+        return `${s}s`;
+    };
+
+    const formatAgo = (ms) => {
+        const totalSec = Math.floor(ms / 1000);
+        const s = totalSec % 60;
+        const totalMin = Math.floor(totalSec / 60);
+        const m = totalMin % 60;
+        const totalHr = Math.floor(totalMin / 60);
+        const h = totalHr % 24;
+        const days = Math.floor(totalHr / 24);
+        if (days > 0) return `${days}d ${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s ago`;
+        if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s ago`;
+        if (m > 0) return `${m}m ${s.toString().padStart(2, '0')}s ago`;
+        return `${s}s ago`;
+    };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -269,6 +304,36 @@ export default function SessionsPage() {
                         <p className="mt-2 text-lg text-gray-600">
                             View and manage tracked travel sessions across your devices.
                         </p>
+                        {/* Session timer widget */}
+                        {!loading && (activeSession || lastSession) && (
+                            <div className={`mt-3 inline-flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border ${activeSession
+                                ? 'bg-green-50 border-green-200 text-green-800'
+                                : 'bg-gray-50 border-gray-200 text-gray-600'
+                                }`}>
+                                {activeSession ? (
+                                    <>
+                                        <span className="relative flex h-2.5 w-2.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                        </span>
+                                        <span>Session active &mdash;</span>
+                                        <span className="font-mono text-green-700 tabular-nums">
+                                            {formatElapsed(now - parseUTC(activeSession.startTime))}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Last session ended</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {formatAgo(now - parseUTC(lastSession.endTime))}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-3">
                         {selectedSessionIds.length > 0 && (
