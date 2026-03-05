@@ -213,38 +213,17 @@ if ($LASTEXITCODE -ne 0) { Write-Fail "Remote docker build failed"; exit 1 }
 Write-OK "Image built on server: ${ImageName}:${Tag}"
 
 # ============================================================
-Write-Step "Step 7 - Deploy container"
+Write-Step "Step 7 - Start container via Proxy Deploy"
 # ============================================================
 
-# Safety net: strip surrounding double-quotes from .env values.
-# Docker --env-file does NOT strip quotes; Next.js does.
-$stripQuotes = 'sed -i ''s/^\([A-Za-z_][A-Za-z_0-9]*\)="\(.*\)"$/\1=\2/'' ' + "$RemoteDir/.env"
-$runCmd = "docker run -d --name travelaccess-web --restart unless-stopped -p 443:443 --env-file $RemoteDir/.env -e CLOUD_ORACLE_WALLET_DIR=/app/oracle_wallet -e TNS_ADMIN=/app/oracle_wallet -e NODE_ENV=production -v $RemoteDir/certificates/Cloud:/app/certs:ro -v $RemoteDir/oracle_wallet:/app/oracle_wallet:ro ${ImageName}:${Tag}"
-$step7 = "cp $RemoteDir/.env.local $RemoteDir/.env; $stripQuotes; docker stop travelaccess-web 2>/dev/null; docker rm travelaccess-web 2>/dev/null; $runCmd"
+$ProxyDeployScript = "C:\code\proxy\deploy.ps1"
 
-Invoke-SSH $step7
-if ($LASTEXITCODE -ne 0) { Write-Fail "Step 7 failed"; exit 1 }
-Write-OK "Container started"
-
-# ============================================================
-Write-Host ""
-Write-Host "==========================================" -ForegroundColor DarkGray
-Write-OK "Deployment complete!"
-Write-Host "  URL: https://$RemoteHost" -ForegroundColor White
-Write-Host ""
-Write-Host "  Useful commands:" -ForegroundColor DarkGray
-Write-Host "  Logs   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker logs -f travelaccess-web'" -ForegroundColor DarkGray
-Write-Host "  Stop   : ssh -i '$($script:LocalKeyPath)' ${RemoteUser}@${RemoteHost} 'docker stop travelaccess-web'" -ForegroundColor DarkGray
-Write-Host "  Rollback: revert code, re-run deploy.ps1" -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  Fast redeploy (skip certs/wallet upload):" -ForegroundColor DarkGray
-Write-Host "  .\deploy.ps1 -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath '...' -SkipRuntimeFiles" -ForegroundColor DarkGray
-Write-Host "==========================================" -ForegroundColor DarkGray
-Write-Host ""
-
-# ============================================================
-Write-Step "Live container logs  (Ctrl+C to exit - container keeps running)"
-# ============================================================
-Write-Host "  Streaming last 50 lines ..." -ForegroundColor DarkGray
-Write-Host ""
-Invoke-SSH "docker logs -f --tail 50 travelaccess-web"
+if (Test-Path $ProxyDeployScript) {
+    Write-Host "    Delegating to Proxy deployment script..." -ForegroundColor DarkGray
+    & $ProxyDeployScript -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath $SshKeyPath
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Proxy deploy failed"; exit 1 }
+}
+else {
+    Write-Fail "Could not find proxy deploy script at $ProxyDeployScript"
+    exit 1
+}
