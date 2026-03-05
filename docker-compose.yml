@@ -15,7 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ${DOCKERHUB_USER}/travelaccess:latest
+    image: travelaccess:latest
     container_name: travelaccess-web
     ports:
       - "443:443"
