@@ -3,13 +3,13 @@
     Deploys the TravelAccess application to a remote server by building the Docker image
     directly on the server (no Docker Hub required).
 
-.EXAMPLE (full deploy — uploads source + builds on server)
+.EXAMPLE (full deploy - uploads source + builds on server)
     .\deploy.ps1 `
       -RemoteUser <ssh-user> `
       -RemoteHost <server-hostname> `
       -SshKeyPath "<path-to-ssh-key>"
 
-.EXAMPLE (skip re-uploading certs/wallet/env — faster redeploy when only code changed)
+.EXAMPLE (skip re-uploading certs/wallet/env - faster redeploy when only code changed)
     .\deploy.ps1 `
       -RemoteUser <ssh-user> `
       -RemoteHost <server-hostname> `
@@ -78,7 +78,7 @@ Write-OK "ssh, scp, docker, tar available"
 if (-not (Test-Path $SshKeyPath)) { Write-Fail "SSH key not found: $SshKeyPath"; exit 1 }
 Write-OK "SSH key found"
 
-# Stage key to ~/.ssh/ — Windows OpenSSH rejects quoted IdentityFile paths,
+# Stage key to ~/.ssh/ - Windows OpenSSH rejects quoted IdentityFile paths,
 # so the key must live somewhere without spaces in the path.
 $sshDir = Join-Path $env:USERPROFILE ".ssh"
 $safeKeyName = "deploy_${RemoteHost}.key"
@@ -104,7 +104,7 @@ for ($attempt = 1; $attempt -le 3; $attempt++) {
         -o ConnectTimeout=10 `
         "$RemoteUser@$RemoteHost" "echo ok" 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { $connected = $true; break }
-    Write-Warn "SSH attempt $attempt/3 failed (exit $LASTEXITCODE) — retrying in 3s ..."
+    Write-Warn "SSH attempt $attempt/3 failed (exit $LASTEXITCODE) - retrying in 3s ..."
     Start-Sleep -Seconds 3
 }
 if (-not $connected) {
@@ -172,7 +172,7 @@ else {
 Write-Step "Step 5 - Upload source code for server-side build"
 # ============================================================
 # We tar the project (excluding node_modules, .next, .git) and build on the server.
-# This works on any server architecture (ARM64, x86, etc.) — no Docker Hub needed.
+# This works on any server architecture (ARM64, x86, etc.) - no Docker Hub needed.
 
 $SrcDir = $RemoteDir + "/src"
 $TarFile = "/tmp/travelaccess-src.tar.gz"
@@ -218,26 +218,9 @@ Write-Step "Step 7 - Deploy container"
 
 # Safety net: strip surrounding double-quotes from .env values.
 # Docker --env-file does NOT strip quotes; Next.js does.
-$q = '"'
-$stripQuotes = "sed -i 's/^\([A-Za-z_][A-Za-z_0-9]*\)=$q\(.*\)$q" + '$' + "/\1=\2/' $RemoteDir/.env"
-
-$runCmd = "docker run -d" +
-" --name travelaccess-web" +
-" --restart unless-stopped" +
-" -p 443:443" +
-" --env-file $RemoteDir/.env" +
-" -e CLOUD_ORACLE_WALLET_DIR=/app/oracle_wallet" +
-" -e TNS_ADMIN=/app/oracle_wallet" +
-" -e NODE_ENV=production" +
-" -v $RemoteDir/certificates/Cloud:/app/certs:ro" +
-" -v $RemoteDir/oracle_wallet:/app/oracle_wallet:ro" +
-" ${ImageName}:${Tag}"
-
-$step7 = "cp $RemoteDir/.env.local $RemoteDir/.env" +
-"; $stripQuotes" +
-"; docker stop travelaccess-web 2>/dev/null" +
-"; docker rm travelaccess-web 2>/dev/null" +
-"; $runCmd"
+$stripQuotes = 'sed -i ''s/^\([A-Za-z_][A-Za-z_0-9]*\)="\(.*\)"$/\1=\2/'' ' + "$RemoteDir/.env"
+$runCmd = "docker run -d --name travelaccess-web --restart unless-stopped -p 443:443 --env-file $RemoteDir/.env -e CLOUD_ORACLE_WALLET_DIR=/app/oracle_wallet -e TNS_ADMIN=/app/oracle_wallet -e NODE_ENV=production -v $RemoteDir/certificates/Cloud:/app/certs:ro -v $RemoteDir/oracle_wallet:/app/oracle_wallet:ro ${ImageName}:${Tag}"
+$step7 = "cp $RemoteDir/.env.local $RemoteDir/.env; $stripQuotes; docker stop travelaccess-web 2>/dev/null; docker rm travelaccess-web 2>/dev/null; $runCmd"
 
 Invoke-SSH $step7
 if ($LASTEXITCODE -ne 0) { Write-Fail "Step 7 failed"; exit 1 }
