@@ -136,7 +136,7 @@ export async function GET(request) {
             path: '/',
             httpOnly: true,
             sameSite: 'lax',
-            maxAge: 86400, // 24 hours
+            maxAge: 604800, // 7 days
         });
 
         return response;

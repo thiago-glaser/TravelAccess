@@ -33,7 +33,7 @@ export async function POST(request) {
             user: { id: user.ID, username: user.USERNAME }
         });
 
-        response.headers.set('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`);
+        response.headers.set('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800`);
 
         return response;
     } catch (error) {
