@@ -364,10 +364,24 @@ export default function ReportsPage() {
         
         doc.setFontSize(11);
         doc.setTextColor(71, 85, 105); // text-slate-600
+
+        // Column 1: Totals
         doc.text(`Total Distance: ${totals.distance.toFixed(2)} km`, 14, 54);
         doc.text(`Total Duration: ${formatDuration(totals.duration)}`, 14, 60);
         doc.text(`Total Sessions: ${totals.count}`, 14, 66);
         doc.text(`Total Cost: $${totals.cost.toFixed(2)}`, 14, 72);
+
+        // Column 2: Personal Breakdown
+        doc.text('Personal', 80, 54);
+        doc.text(`Distance: ${totals.breakdown.P.distance.toFixed(2)} km`, 80, 60);
+        doc.text(`Duration: ${formatDuration(totals.breakdown.P.duration)}`, 80, 66);
+        doc.text(`Cost: $${totals.breakdown.P.cost.toFixed(2)}`, 80, 72);
+
+        // Column 3: Business Breakdown
+        doc.text('Business', 140, 54);
+        doc.text(`Distance: ${totals.breakdown.B.distance.toFixed(2)} km`, 140, 60);
+        doc.text(`Duration: ${formatDuration(totals.breakdown.B.duration)}`, 140, 66);
+        doc.text(`Cost: $${totals.breakdown.B.cost.toFixed(2)}`, 140, 72);
 
         // Body Table
         const tableData = reportData.map(s => [
@@ -380,14 +394,28 @@ export default function ReportsPage() {
             `$${(s.cost || 0).toFixed(2)}${s.valueConfirmed === 'Y' ? '' : '*'}`
         ]);
 
+        // Push grand total as the last row in the body specifically, and style it using hook
+        tableData.push([
+            'Grand Total', '', '', '', 
+            `${totals.distance.toFixed(2)} km`, 
+            formatDuration(totals.duration), 
+            `$${totals.cost.toFixed(2)}`
+        ]);
+
         autoTable(doc, {
-            startY: 80,
+            startY: 84,
             head: [['Car', 'Start', 'End', 'Type', 'Distance', 'Duration', 'Est. Cost']],
             body: tableData,
             headStyles: { fillColor: [37, 99, 235] }, // bg-blue-600
             styles: { fontSize: 9 },
-            foot: [['Grand Total', '', '', '', `${totals.distance.toFixed(2)} km`, formatDuration(totals.duration), `$${totals.cost.toFixed(2)}`]],
-            footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' }
+            didParseCell: function(data) {
+                // Apply specific styling to the very last row (Grand Total)
+                if (data.row.index === tableData.length - 1) {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [241, 245, 249]; // bg-slate-100
+                    data.cell.styles.textColor = [15, 23, 42]; // text-slate-900
+                }
+            }
         });
         
         const hasProjected = reportData.some(s => s.valueConfirmed !== 'Y');
