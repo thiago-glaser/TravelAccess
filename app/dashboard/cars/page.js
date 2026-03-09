@@ -120,7 +120,7 @@ export default function ManageCarsPage() {
             const res = await fetch(`/api/user/cars/distance-since-fuel?carId=${carId}`);
             const data = await res.json();
             if (data.success) {
-                setDistances(prev => ({ ...prev, [carId]: data.kilometers }));
+                setDistances(prev => ({ ...prev, [carId]: { km: data.kilometers, ms: data.timeMs } }));
             } else {
                 alert(data.error || 'Failed to calculate distance');
             }
@@ -129,6 +129,14 @@ export default function ManageCarsPage() {
         } finally {
             setCalculatingDistances(prev => ({ ...prev, [carId]: false }));
         }
+    };
+
+    const formatDuration = (ms) => {
+        if (!ms) return '0h 0m';
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
     };
 
     return (
@@ -251,8 +259,11 @@ export default function ManageCarsPage() {
                                             {editingId !== car.ID && (
                                                 <div className="flex items-center gap-3">
                                                     {distances[car.ID] !== undefined && (
-                                                        <div className="px-4 py-2 text-sm font-semibold text-blue-400 bg-blue-400/10 rounded-lg border border-blue-400/20 whitespace-nowrap">
-                                                            {distances[car.ID].toFixed(2)} km
+                                                        <div className="px-4 py-2 text-sm font-semibold text-blue-400 bg-blue-400/10 rounded-lg border border-blue-400/20 whitespace-nowrap flex flex-col items-center justify-center">
+                                                            <span>{typeof distances[car.ID] === 'object' ? distances[car.ID].km.toFixed(2) : distances[car.ID].toFixed(2)} km</span>
+                                                            {typeof distances[car.ID] === 'object' && distances[car.ID].ms !== undefined && (
+                                                                <span className="text-xs text-blue-300 mt-0.5">{formatDuration(distances[car.ID].ms)}</span>
+                                                            )}
                                                         </div>
                                                     )}
                                                     <button

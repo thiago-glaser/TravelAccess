@@ -47,6 +47,7 @@ export async function GET(request) {
         });
 
         let totalMeters = 0;
+        let totalMs = 0;
         const nowUtc = new Date().toISOString();
 
         // 3. For each session, fetch location_data and calculate distance
@@ -82,12 +83,19 @@ export async function GET(request) {
                 const filtered = filterLocationsByDistance(locations, 10);
                 const dist = calculateTotalDistance(filtered);
                 totalMeters += dist;
+
+                // Calculate time based on session start and end
+                const tStart = new Date(startUtc + 'Z').getTime();
+                const tEnd = new Date(endUtc ? endUtc + 'Z' : nowUtc).getTime();
+                if (!isNaN(tStart) && !isNaN(tEnd)) {
+                    totalMs += Math.max(0, tEnd - tStart);
+                }
             }
         }
 
         const totalKilometers = totalMeters / 1000;
 
-        return Response.json({ success: true, kilometers: totalKilometers });
+        return Response.json({ success: true, kilometers: totalKilometers, timeMs: totalMs });
     } catch (e) {
         console.error("Calculate Distance Since Fuel Error:", e);
         return Response.json({ success: false, error: e.message || 'Error calculating distance' }, { status: 500 });
