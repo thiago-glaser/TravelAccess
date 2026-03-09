@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Haversine formula for distance calculation (reused from MapContainer)
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -324,6 +326,81 @@ export default function ReportsPage() {
         return `${h}h ${m}m ${s}s`;
     };
 
+    const handleDownloadPDF = () => {
+        if (reportData.length === 0) return;
+
+        const doc = new jsPDF();
+        
+        // Document Title
+        doc.setFontSize(22);
+        doc.setTextColor(30, 41, 59); // text-slate-800
+        doc.text('Travel Analytics Report', 14, 22);
+        
+        // Generation Date
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        
+        // Applied Filters (if any)
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        let filterText = [];
+        if (filters.carId) {
+            const car = cars.find(c => c.ID.toString() === filters.carId.toString());
+            filterText.push(`Car: ${car ? (car.DESCRIPTION || car.LICENSE_PLATE) : filters.carId}`);
+        }
+        if (filters.year) filterText.push(`Year: ${filters.year}`);
+        if (filters.month) filterText.push(`Month: ${filters.month}`);
+        if (filters.type) filterText.push(`Type: ${filters.type === 'P' ? 'Personal' : 'Business'}`);
+        
+        if (filterText.length > 0) {
+            doc.text(`Filters: ${filterText.join(' | ')}`, 14, 36);
+        }
+        
+        // Summary block
+        doc.setFontSize(14);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Summary', 14, 46);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(71, 85, 105); // text-slate-600
+        doc.text(`Total Distance: ${totals.distance.toFixed(2)} km`, 14, 54);
+        doc.text(`Total Duration: ${formatDuration(totals.duration)}`, 14, 60);
+        doc.text(`Total Sessions: ${totals.count}`, 14, 66);
+        doc.text(`Total Cost: $${totals.cost.toFixed(2)}`, 14, 72);
+
+        // Body Table
+        const tableData = reportData.map(s => [
+            s.description || 'Unknown Car',
+            parseUTC(s.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }),
+            s.endTime ? parseUTC(s.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : 'Active',
+            s.type === 'P' ? 'Personal' : s.type === 'B' ? 'Business' : 'Other',
+            `${s.distanceKm.toFixed(2)} km`,
+            formatDuration(s.durationHours),
+            `$${(s.cost || 0).toFixed(2)}${s.valueConfirmed === 'Y' ? '' : '*'}`
+        ]);
+
+        autoTable(doc, {
+            startY: 80,
+            head: [['Car', 'Start', 'End', 'Type', 'Distance', 'Duration', 'Est. Cost']],
+            body: tableData,
+            headStyles: { fillColor: [37, 99, 235] }, // bg-blue-600
+            styles: { fontSize: 9 },
+            foot: [['Grand Total', '', '', '', `${totals.distance.toFixed(2)} km`, formatDuration(totals.duration), `$${totals.cost.toFixed(2)}`]],
+            footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' }
+        });
+        
+        const hasProjected = reportData.some(s => s.valueConfirmed !== 'Y');
+        if (hasProjected) {
+            const tableEnd = doc.lastAutoTable.finalY || 80;
+            doc.setFontSize(8);
+            doc.setTextColor(245, 158, 11); // text-amber-500
+            doc.text('* Some values are estimated based on past/future efficiency records.', 14, tableEnd + 8);
+        }
+
+        doc.save(`Travel_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -422,6 +499,18 @@ export default function ReportsPage() {
                             >
                                 Reset
                             </button>
+                            {reportData.length > 0 && (
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                                    title="Download Report as PDF"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    PDF
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

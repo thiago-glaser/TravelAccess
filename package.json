@@ -18,6 +18,8 @@
     "google-auth-library": "^10.5.0",
     "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "jwks-rsa": "^3.2.2",
     "leaflet": "^1.9.4",
     "next": "16.1.6",

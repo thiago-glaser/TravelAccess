@@ -220,7 +220,7 @@ $ProxyDeployScript = "C:\code\proxy\deploy.ps1"
 
 if (Test-Path $ProxyDeployScript) {
     Write-Host "    Delegating to Proxy deployment script..." -ForegroundColor DarkGray
-    & $ProxyDeployScript -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath $SshKeyPath
+    & $ProxyDeployScript -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath $SshKeyPath -LogContainer travelaccess-web
     if ($LASTEXITCODE -ne 0) { Write-Fail "Proxy deploy failed"; exit 1 }
 }
 else {
