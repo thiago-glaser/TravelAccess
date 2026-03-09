@@ -42,7 +42,8 @@ function Write-Fail { param($msg) Write-Host "$(TS) [FAIL] $msg" -ForegroundColo
 
 function Invoke-SSH {
     param([string]$Cmd)
-    & ssh -i $script:LocalKeyPath `
+    # Added -n to prevent ssh from consuming stdin, which often causes PowerShell scripts to intermittently stall
+    & ssh -n -i $script:LocalKeyPath `
         -o StrictHostKeyChecking=no `
         -o BatchMode=yes `
         -o ConnectTimeout=15 `
@@ -98,7 +99,7 @@ Write-OK "Key staged at ~/.ssh/$safeKeyName"
 Write-Host "    Testing SSH connection to $RemoteHost ..." -ForegroundColor DarkGray
 $connected = $false
 for ($attempt = 1; $attempt -le 3; $attempt++) {
-    & ssh -i $script:LocalKeyPath `
+    & ssh -n -i $script:LocalKeyPath `
         -o StrictHostKeyChecking=no `
         -o BatchMode=yes `
         -o ConnectTimeout=10 `
