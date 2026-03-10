@@ -9,17 +9,22 @@ export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isReportsOpen, setIsReportsOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' });
 
     const dropdownRef = useRef(null);
+    const dropdownReportsRef = useRef(null);
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsSettingsOpen(false);
+            }
+            if (dropdownReportsRef.current && !dropdownReportsRef.current.contains(event.target)) {
+                setIsReportsOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -111,20 +116,51 @@ export default function Navbar() {
                                 Sessions
                             </div>
                         </Link>
-                        <Link
-                            href="/reports"
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/reports'
-                                ? 'text-blue-600 bg-blue-50/80 shadow-sm'
-                                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 2v-6m0 10h.01M3 21h18M3 7h18M3 11h18M3 15h18" />
-                                </svg>
+                        {/* Reports Dropdown */}
+                        <div className="relative" ref={dropdownReportsRef}>
+                            <button
+                                onClick={() => setIsReportsOpen(!isReportsOpen)}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${pathname.startsWith('/reports')
+                                    ? 'text-blue-600 bg-blue-50/80 shadow-sm'
+                                    : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 2v-6m0 10h.01M3 21h18M3 7h18M3 11h18M3 15h18" />
+                                    </svg>
+                                </div>
                                 Reports
-                            </div>
-                        </Link>
+                                <svg className={`w-3 h-3 transition-transform duration-200 ${isReportsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {isReportsOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] transform origin-top transition-all duration-200 animate-in fade-in zoom-in-95">
+                                    <Link
+                                        href="/reports"
+                                        onClick={() => setIsReportsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/reports' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                        </svg>
+                                        Detailed
+                                    </Link>
+                                    <Link
+                                        href="/reports/monthly"
+                                        onClick={() => setIsReportsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/reports/monthly' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Monthly
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
                         <Link
                             href="/map"
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/map'
