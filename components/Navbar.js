@@ -10,6 +10,7 @@ export default function Navbar() {
     const router = useRouter();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isReportsOpen, setIsReportsOpen] = useState(false);
+    const [isDataOpen, setIsDataOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -17,6 +18,7 @@ export default function Navbar() {
 
     const dropdownRef = useRef(null);
     const dropdownReportsRef = useRef(null);
+    const dropdownDataRef = useRef(null);
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -25,6 +27,9 @@ export default function Navbar() {
             }
             if (dropdownReportsRef.current && !dropdownReportsRef.current.contains(event.target)) {
                 setIsReportsOpen(false);
+            }
+            if (dropdownDataRef.current && !dropdownDataRef.current.contains(event.target)) {
+                setIsDataOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -83,7 +88,8 @@ export default function Navbar() {
             setPwdStatus({ loading: false, error: 'An error occurred', success: '' });
         }
     };
-    const isSettingsActive = pathname.startsWith('/dashboard/cars') || pathname.startsWith('/dashboard/fuel') || pathname.startsWith('/dashboard/insurance') || pathname.startsWith('/dashboard/devices') || pathname.startsWith('/dashboard/bluetooth') || pathname.startsWith('/dashboard/keys') || isPasswordModalOpen;
+    const isDataActive = pathname.startsWith('/dashboard/cars') || pathname.startsWith('/dashboard/fuel') || pathname.startsWith('/dashboard/insurance') || pathname.startsWith('/dashboard/devices') || pathname.startsWith('/dashboard/bluetooth');
+    const isSettingsActive = pathname.startsWith('/dashboard/keys') || isPasswordModalOpen;
     return (
         <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,6 +182,82 @@ export default function Navbar() {
                             </div>
                         </Link>
 
+                        {/* Data Dropdown */}
+                        <div className="relative" ref={dropdownDataRef}>
+                            <button
+                                onClick={() => setIsDataOpen(!isDataOpen)}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${isDataActive
+                                    ? 'text-blue-600 bg-blue-50/80 shadow-sm'
+                                    : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                    </svg>
+                                </div>
+                                Data
+                                <svg className={`w-3 h-3 transition-transform duration-200 ${isDataOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {isDataOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] transform origin-top transition-all duration-200 animate-in fade-in zoom-in-95">
+                                    <Link
+                                        href="/dashboard/cars"
+                                        onClick={() => setIsDataOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/cars' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        Cars
+                                    </Link>
+                                    <Link
+                                        href="/dashboard/fuel"
+                                        onClick={() => setIsDataOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/fuel' ? 'text-green-600 bg-green-50' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                        Fuel
+                                    </Link>
+                                    <Link
+                                        href="/dashboard/insurance"
+                                        onClick={() => setIsDataOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/insurance' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                        Insurance
+                                    </Link>
+                                    <Link
+                                        href="/dashboard/devices"
+                                        onClick={() => setIsDataOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/devices' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Devices
+                                    </Link>
+                                    <Link
+                                        href="/dashboard/bluetooth"
+                                        onClick={() => setIsDataOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/bluetooth' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.5 10L10.5 4v16l-5-6M10.5 12l4-4M10.5 12l4 4" />
+                                        </svg>
+                                        Bluetooth
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Settings Dropdown */}
                         <div className="relative" ref={dropdownRef}>
                             <button
@@ -217,56 +299,6 @@ export default function Navbar() {
                                         </svg>
                                         Change Password
                                     </button>
-                                    <Link
-                                        href="/dashboard/cars"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/cars' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
-                                        Cars
-                                    </Link>
-                                    <Link
-                                        href="/dashboard/fuel"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/fuel' ? 'text-green-600 bg-green-50' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                        </svg>
-                                        Fuel
-                                    </Link>
-                                    <Link
-                                        href="/dashboard/insurance"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/insurance' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                        </svg>
-                                        Insurance
-                                    </Link>
-                                    <Link
-                                        href="/dashboard/devices"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/devices' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        Devices
-                                    </Link>
-                                    <Link
-                                        href="/dashboard/bluetooth"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/bluetooth' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.5 10L10.5 4v16l-5-6M10.5 12l4-4M10.5 12l4 4" />
-                                        </svg>
-                                        Bluetooth
-                                    </Link>
                                     <Link
                                         href="/dashboard/keys"
                                         onClick={() => setIsSettingsOpen(false)}
