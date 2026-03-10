@@ -1,8 +1,7 @@
-import { getConnection } from '@/lib/db';
 import { getSession, verifyDeviceOwnership } from '@/lib/auth';
+import { LocationData, sequelize } from '@/lib/models/index.js';
 
 export async function POST(request) {
-    let connection;
     try {
         const session = await getSession(request);
         if (!session) {
@@ -17,46 +16,31 @@ export async function POST(request) {
         }
 
         const startTime = Date.now();
-        connection = await getConnection();
 
-        const isOwner = await verifyDeviceOwnership(session, device_id, connection);
+        // Check if the user owns this device
+        const isOwner = await verifyDeviceOwnership(session, device_id);
         if (!isOwner) {
             return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
         }
 
-        const insertSql = `
-            INSERT INTO LOCATION_DATA (ID, DEVICE_ID, TIMESTAMP_UTC, LATITUDE, LONGITUDE, ALTITUDE)
-            VALUES (Sys_guid(), :deviceId, :timestampUtc, :latitude, :longitude, :altitude)
-        `;
+        // Prepare records for bulk insert
+        const recordsToInsert = locations.map(loc => ({
+            deviceId: device_id,
+            timestampUtc: new Date(loc.timestamp_utc),
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            altitude: loc.altitude
+        }));
 
-        let inserted = 0;
-        for (const loc of locations) {
-            const timestampUtc = new Date(loc.timestamp_utc);
-            await connection.execute(insertSql, {
-                deviceId: device_id,
-                timestampUtc: timestampUtc,
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                altitude: loc.altitude
-            }, { autoCommit: false });
-            inserted++;
-        }
-        await connection.commit();
+        // Insert all locations using Sequelize bulkCreate
+        await LocationData.bulkCreate(recordsToInsert);
 
         const elapsed = Date.now() - startTime;
-        console.log(`Inserted rows: ${inserted} Elapsed time: ${elapsed} ms - Device: ${device_id}`);
+        console.log(`Inserted rows: ${recordsToInsert.length} Elapsed time: ${elapsed} ms - Device: ${device_id}`);
 
-        return Response.json({ inserted }, { status: 201 });
+        return Response.json({ inserted: recordsToInsert.length }, { status: 201 });
     } catch (error) {
         console.error('LocationData insert error:', error);
         return Response.json({ message: "Internal server error" }, { status: 500 });
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error closing connection:', err);
-            }
-        }
     }
 }
