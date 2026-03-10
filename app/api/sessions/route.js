@@ -25,7 +25,7 @@ export async function GET(request) {
         // Build where clauses for the ORM abstraction
         const whereConditions = {
             [Op.and]: [
-                sequelize.literal(`DEVICE_ID IN (SELECT DEVICE_ID FROM USER_DEVICES WHERE RTRIM(LTRIM(USER_ID)) = RTRIM(LTRIM('${userId.trim()}')))`)
+                sequelize.literal(`"SessionView"."DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
             ]
         };
 
@@ -146,7 +146,7 @@ export async function PATCH(request) {
         const [updatedRows] = await SessionData.update(updateData, {
             where: sequelize.and(
                 sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                sequelize.literal(`DEVICE_ID IN (SELECT DEVICE_ID FROM USER_DEVICES WHERE RTRIM(LTRIM(USER_ID)) = RTRIM(LTRIM('${userId.trim()}')))`),
+                sequelize.literal(`"DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
             )
         });
 
