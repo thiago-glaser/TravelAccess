@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { Insurance, Car, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -9,29 +10,45 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT TRIM(i.ID) AS ID, TRIM(i.CAR_ID) AS CAR_ID, TO_CHAR(i.PAYMENT_DATE, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS PAYMENT_DATE, 
-                   i.PERIOD, i.AMOUNT,
-                   c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION
-            FROM INSURANCE i
-            JOIN CARS c ON TRIM(i.CAR_ID) = TRIM(c.ID)
-            WHERE TRIM(i.USER_ID) = TRIM(:userId) AND (i.IS_DELETED = 0 OR i.IS_DELETED IS NULL)
-            ORDER BY i.PAYMENT_DATE DESC
-        `;
-        const result = await query(sql, { userId });
+        
+        const insurancesData = await Insurance.findAll({
+            where: {
+                userId: userId,
+                isDeleted: {
+                    [Op.or]: [0, null]
+                }
+            },
+            attributes: [
+                'id',
+                'carId',
+                'paymentDate',
+                'period',
+                'amount'
+            ],
+            include: [{
+                model: Car,
+                as: 'car',
+                attributes: ['licensePlate', 'description']
+            }],
+            order: [['paymentDate', 'DESC']]
+        });
 
-        const insurances = result.rows.map(row => ({
-            id: row.ID,
-            carId: row.CAR_ID,
-            paymentDate: row.PAYMENT_DATE,
-            period: row.PERIOD,
-            amount: row.AMOUNT,
-            carLicensePlate: row.LICENSE_PLATE,
-            carDescription: row.CAR_DESCRIPTION
-        }));
+        const insurances = insurancesData.map(i => {
+            const raw = i.get({ plain: true });
+            return {
+                id: (raw.id || '').trim(),
+                carId: (raw.carId || '').trim(),
+                paymentDate: raw.paymentDate ? new Date(raw.paymentDate).toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+                period: raw.period,
+                amount: raw.amount,
+                carLicensePlate: raw.car ? raw.car.licensePlate : null,
+                carDescription: raw.car ? raw.car.description : null
+            };
+        });
 
         return Response.json({ success: true, insurances });
     } catch (error) {
+        console.error("GET Insurance error:", error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
@@ -53,27 +70,25 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Ensure Car belongs to User
-        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`, { carId, userId });
-        if (carCheckResult.rows.length === 0) {
+        const carExists = await Car.findOne({
+            where: sequelize.and(
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('Car.ID')), carId.trim()),
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
+
+        if (!carExists) {
             return Response.json({ success: false, error: 'Invalid car selected' }, { status: 400 });
         }
 
-        const utcStr = new Date(paymentDate).toISOString().substring(0, 19).replace('T', ' ');
-
-        const sql = `
-            INSERT INTO INSURANCE (USER_ID, CAR_ID, PAYMENT_DATE, PERIOD, AMOUNT)
-            VALUES (:userId, :carId, TO_DATE(:utcStr, 'YYYY-MM-DD HH24:MI:SS'), :period, :amount)
-        `;
-
-        const binds = {
-            userId,
-            carId,
-            utcStr,
-            period,
-            amount
-        };
-
-        await query(sql, binds);
+        const newInsurance = await Insurance.create({
+            userId: userId,
+            carId: carId,
+            paymentDate: new Date(paymentDate),
+            period: period,
+            amount: amount
+        });
 
         return Response.json({ success: true, message: 'Insurance entry added successfully' });
     } catch (error) {
@@ -98,15 +113,23 @@ export async function DELETE(request) {
 
         const userId = session.USER_ID || session.id || session.ID;
 
-        const sql = `UPDATE INSURANCE SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
-        const result = await query(sql, { id, userId });
+        const [updatedRowsCount] = await Insurance.update(
+            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            { 
+                where: sequelize.and(
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                )
+            }
+        );
 
-        if (result.rowsAffected === 0) {
+        if (updatedRowsCount === 0) {
             return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
         }
 
         return Response.json({ success: true, message: 'Insurance entry removed successfully' });
     } catch (error) {
+        console.error("DELETE Insurance error:", error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
