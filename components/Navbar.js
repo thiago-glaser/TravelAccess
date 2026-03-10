@@ -11,6 +11,7 @@ export default function Navbar() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isReportsOpen, setIsReportsOpen] = useState(false);
     const [isDataOpen, setIsDataOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -107,7 +108,25 @@ export default function Navbar() {
                             </span>
                         </Link>
                     </div>
-                    <div className="flex items-center space-x-1">
+                    
+                    {/* Mobile menu button */}
+                    <div className="flex md:hidden items-center">
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="text-gray-500 hover:text-blue-600 focus:outline-none p-2 rounded-lg transition-colors"
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {isMobileMenuOpen ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Desktop menu */}
+                    <div className="hidden md:flex items-center space-x-1">
                         <Link
                             href="/"
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/'
@@ -338,6 +357,117 @@ export default function Navbar() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile menu panel */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden bg-white border-t border-gray-100 p-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner animate-in slide-in-from-top-2">
+                    <Link
+                        href="/"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Sessions
+                    </Link>
+                    
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Reports</div>
+                    <Link
+                        href="/reports"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/reports' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Detailed Reports
+                    </Link>
+                    <Link
+                        href="/reports/monthly"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/reports/monthly' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Monthly Reports
+                    </Link>
+
+                    <Link
+                        href="/map"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/map' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Map
+                    </Link>
+
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Data</div>
+                    <Link
+                        href="/dashboard/cars"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/cars' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Cars
+                    </Link>
+                    <Link
+                        href="/dashboard/fuel"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/fuel' ? 'text-green-600 bg-green-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Fuel
+                    </Link>
+                    <Link
+                        href="/dashboard/insurance"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/insurance' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Insurance
+                    </Link>
+                    <Link
+                        href="/dashboard/maintenance"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/maintenance' ? 'text-purple-600 bg-purple-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Maintenance
+                    </Link>
+                    <Link
+                        href="/dashboard/devices"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/devices' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Devices
+                    </Link>
+                    <Link
+                        href="/dashboard/bluetooth"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/bluetooth' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Bluetooth
+                    </Link>
+
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Settings</div>
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            setIsPasswordModalOpen(true);
+                            setPwdStatus({ loading: false, error: '', success: '' });
+                            setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                        }}
+                        className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-600 hover:bg-gray-50"
+                    >
+                        Change Password
+                    </button>
+                    <Link
+                        href="/dashboard/keys"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        API Keys
+                    </Link>
+                    
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleLogout();
+                        }}
+                        className="w-full mt-4 text-left px-4 py-3 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all border border-red-100"
+                    >
+                        Logout
+                    </button>
+                </div>
+            )}
 
             {/* Change Password Modal */}
             {isPasswordModalOpen && (
