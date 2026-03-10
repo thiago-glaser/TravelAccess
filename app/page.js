@@ -315,7 +315,7 @@ export default function SessionsPage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <header className="mb-8 flex justify-between items-end">
+                <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                             Device Sessions
@@ -354,7 +354,7 @@ export default function SessionsPage() {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         {selectedSessionIds.length > 0 && (
                             <button
                                 onClick={handleViewSelectedMap}
@@ -379,8 +379,8 @@ export default function SessionsPage() {
                 </header>
 
                 <div className="bg-white shadow-md rounded-xl p-4 mb-4 border border-gray-100">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex-1 min-w-[200px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap items-end gap-4">
+                        <div className="w-full md:flex-1 md:min-w-[200px]">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Car Filter</label>
                             <select
                                 value={filters.carId}
@@ -398,7 +398,7 @@ export default function SessionsPage() {
                                 ))}
                             </select>
                         </div>
-                        <div className="w-32">
+                        <div className="w-full md:w-32">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Year</label>
                             <select
                                 value={filters.year}
@@ -414,7 +414,7 @@ export default function SessionsPage() {
                                 ))}
                             </select>
                         </div>
-                        <div className="w-40">
+                        <div className="w-full md:w-40">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Month</label>
                             <select
                                 value={filters.month}
@@ -435,7 +435,7 @@ export default function SessionsPage() {
                                 ))}
                             </select>
                         </div>
-                        <div className="w-32">
+                        <div className="w-full md:w-32">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Page Size</label>
                             <select
                                 value={pagination.limit === 1000000 ? 'all' : pagination.limit}
@@ -451,7 +451,7 @@ export default function SessionsPage() {
                                 <option value="all">All</option>
                             </select>
                         </div>
-                        <div className="flex items-end self-end pb-0.5">
+                        <div className="w-full sm:w-auto flex items-end md:self-end pb-0.5">
                             <button
                                 onClick={() => {
                                     setFilters({ carId: '', year: '', month: '' });
@@ -637,7 +637,7 @@ export default function SessionsPage() {
                                     </table>
                                 </div>
 
-                                <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
+                                <div className="bg-gray-50 px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-100 gap-4">
                                     <div className="text-sm text-gray-500">
                                         Showing <span className="font-semibold text-gray-900">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-semibold text-gray-900">{pagination.total}</span> sessions
                                     </div>

@@ -11,6 +11,7 @@ export default function Navbar() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isReportsOpen, setIsReportsOpen] = useState(false);
     const [isDataOpen, setIsDataOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -107,7 +108,25 @@ export default function Navbar() {
                             </span>
                         </Link>
                     </div>
-                    <div className="flex items-center space-x-1">
+                    
+                    {/* Mobile menu button */}
+                    <div className="flex md:hidden items-center">
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="text-gray-500 hover:text-blue-600 focus:outline-none p-2 rounded-lg transition-colors"
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {isMobileMenuOpen ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Desktop menu */}
+                    <div className="hidden md:flex items-center space-x-1">
                         <Link
                             href="/"
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/'
@@ -338,6 +357,157 @@ export default function Navbar() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile menu panel */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden bg-white border-t border-gray-100 p-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner animate-in slide-in-from-top-2">
+                    <Link
+                        href="/"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Sessions
+                    </Link>
+                    
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Reports</div>
+                    <Link
+                        href="/reports"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/reports' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Detailed Reports
+                    </Link>
+                    <Link
+                        href="/reports/monthly"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/reports/monthly' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Monthly Reports
+                    </Link>
+
+                    <Link
+                        href="/map"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/map' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        Map
+                    </Link>
+
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Data</div>
+                    <Link
+                        href="/dashboard/cars"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/cars' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Cars
+                    </Link>
+                    <Link
+                        href="/dashboard/fuel"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/fuel' ? 'text-green-600 bg-green-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        Fuel
+                    </Link>
+                    <Link
+                        href="/dashboard/insurance"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/insurance' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Insurance
+                    </Link>
+                    <Link
+                        href="/dashboard/maintenance"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/maintenance' ? 'text-purple-600 bg-purple-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Maintenance
+                    </Link>
+                    <Link
+                        href="/dashboard/devices"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/devices' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Devices
+                    </Link>
+                    <Link
+                        href="/dashboard/bluetooth"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/bluetooth' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.5 10L10.5 4v16l-5-6M10.5 12l4-4M10.5 12l4 4" />
+                        </svg>
+                        Bluetooth
+                    </Link>
+
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Settings</div>
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            setIsPasswordModalOpen(true);
+                            setPwdStatus({ loading: false, error: '', success: '' });
+                            setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-600 hover:bg-gray-50"
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        Change Password
+                    </button>
+                    <Link
+                        href="/dashboard/keys"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        API Keys
+                    </Link>
+                    
+                    <button
+                        onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleLogout();
+                        }}
+                        className="w-full mt-4 flex items-center justify-center gap-2 text-left px-4 py-3 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all border border-red-100"
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            )}
 
             {/* Change Password Modal */}
             {isPasswordModalOpen && (
