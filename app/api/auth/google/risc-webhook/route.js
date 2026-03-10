@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
+import { User, sequelize } from '@/lib/models/index.js';
 
 // Configure the JWKS client to fetch Google's public routing keys.
 // These are used to verify the cryptographic signature of the incoming JWT.
@@ -71,13 +71,11 @@ export async function POST(request) {
 
                         try {
                             // 1. You could look up the TravelAccess userID:
-                            // const userRes = await query(`SELECT ID FROM USERS WHERE GOOGLE_ID = :googleId`, { googleId: googleIdToTarget });
-                            // if(userRes.rows.length > 0) { const userId = userRes.rows[0].ID; ... }
+                            // const user = await User.findOne({ where: { googleId: googleIdToTarget } });
+                            // if(user) { const userId = user.id; ... }
 
                             // 2. Here you would write logic to invalidate their active JWTs, Session tokens,
                             // or even mark them as "IS_ACTIVE = 0" in extreme cases.
-                            // Example pseudo-code (if you had a mechanism to track active session IDs):
-                            // await query(`DELETE FROM ACTIVE_SESSIONS WHERE USER_ID = (SELECT ID FROM USERS WHERE GOOGLE_ID = :googleId)`, { googleId: googleIdToTarget }, { autoCommit: true });
 
                             console.log(`[RISC Webhook] Action complete - User's local sessions should be dropped.`);
                         } catch (dbErr) {

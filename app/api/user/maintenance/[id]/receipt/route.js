@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
-import oracledb from 'oracledb';
+import { Maintenance, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request, { params }) {
     const session = await getSession(request);
@@ -12,30 +12,22 @@ export async function GET(request, { params }) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT RECEIPT_IMAGE, RECEIPT_MIME 
-            FROM MAINTENANCE 
-            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-        `;
 
-        const opts = {
-            outFormat: oracledb.OUT_FORMAT_OBJECT,
-            fetchInfo: { "RECEIPT_IMAGE": { type: oracledb.BUFFER } }
-        };
+        const maintenanceEntry = await Maintenance.findOne({
+            attributes: ['receiptImage', 'receiptMime'],
+            where: sequelize.and(
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
 
-        const result = await query(sql, { id, userId }, opts);
-
-        if (result.rows.length === 0) {
-            return new Response('Not found', { status: 404 });
-        }
-
-        const row = result.rows[0];
-        if (!row.RECEIPT_IMAGE) {
+        if (!maintenanceEntry || !maintenanceEntry.receiptImage) {
             return new Response('No image found', { status: 404 });
         }
 
-        const buffer = row.RECEIPT_IMAGE;
-        const mime = row.RECEIPT_MIME || 'application/octet-stream';
+        const buffer = maintenanceEntry.receiptImage;
+        const mime = maintenanceEntry.receiptMime || 'application/octet-stream';
 
         return new Response(buffer, {
             headers: {

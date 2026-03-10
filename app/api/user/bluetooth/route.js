@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { Bluetooth, Car, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -9,16 +10,35 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT TRIM(b.ID) AS ID, b.NAME, b.DESCRIPTION, b.ADDRESS, TRIM(b.CAR_ID) AS CAR_ID, c.DESCRIPTION AS CAR_DESCRIPTION
-            FROM BLUETOOTH b
-            LEFT JOIN CARS c ON TRIM(b.CAR_ID) = TRIM(c.ID)
-            WHERE TRIM(b.USER_ID) = TRIM(:userId) AND (b.IS_DELETED = 0 OR b.IS_DELETED IS NULL)
-            ORDER BY b.ID
-        `;
-        const result = await query(sql, { userId });
 
-        return Response.json({ success: true, bluetooth: result.rows });
+        const bluetoothData = await Bluetooth.findAll({
+            where: {
+                userId: userId,
+                isDeleted: { [Op.or]: [0, null] }
+            },
+            attributes: ['id', 'name', 'description', 'address', 'carId'],
+            include: [{
+                model: Car,
+                as: 'car',
+                attributes: ['description'],
+                required: false
+            }],
+            order: [['id', 'ASC']]
+        });
+
+        const bluetooth = bluetoothData.map(b => {
+            const raw = b.get({ plain: true });
+            return {
+                ID: (raw.id || '').trim(),
+                NAME: raw.name,
+                DESCRIPTION: raw.description,
+                ADDRESS: raw.address,
+                CAR_ID: raw.carId ? raw.carId.trim() : null,
+                CAR_DESCRIPTION: raw.car ? raw.car.description : null
+            };
+        });
+
+        return Response.json({ success: true, bluetooth });
     } catch (error) {
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -40,14 +60,18 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Check if device already exists for this user to avoid duplicates
-        const existingCheck = await query(`SELECT ID FROM BLUETOOTH WHERE TRIM(USER_ID) = TRIM(:userId) AND ADDRESS = :address AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`, { userId, address });
+        const existingCheck = await Bluetooth.findOne({
+            where: sequelize.and(
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { address: address, isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
 
-        if (existingCheck.rows && existingCheck.rows.length > 0) {
+        if (existingCheck) {
             return Response.json({ success: true, message: 'Bluetooth device already exists (silent success)' });
         }
 
-        const sql = `INSERT INTO BLUETOOTH (USER_ID, NAME, DESCRIPTION, ADDRESS, CAR_ID) VALUES (:userId, :name, :description, :address, :carId)`;
-        await query(sql, {
+        await Bluetooth.create({
             userId,
             name,
             description: description || null,
@@ -76,22 +100,24 @@ export async function PATCH(request) {
 
         const userId = session.USER_ID || session.id || session.ID;
 
-        // Verify ownership and update
-        const sql = `
-            UPDATE BLUETOOTH 
-            SET NAME = :name, DESCRIPTION = :description, ADDRESS = :address, CAR_ID = :carId, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-        `;
-        const result = await query(sql, {
-            name,
-            description: description || null,
-            address,
-            carId: carId ? String(carId) : null,
-            id,
-            userId
-        });
+        const [updatedRowsCount] = await Bluetooth.update(
+            { 
+                name, 
+                description: description || null, 
+                address, 
+                carId: carId ? String(carId) : null,
+                updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP'))
+            },
+            {
+                where: sequelize.and(
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                    { isDeleted: { [Op.or]: [0, null] } }
+                )
+            }
+        );
 
-        if (result.rowsAffected === 0) {
+        if (updatedRowsCount === 0) {
             return Response.json({ success: false, error: 'Bluetooth device not found or not authorized' }, { status: 404 });
         }
 
@@ -116,10 +142,18 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE BLUETOOTH SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
-        const result = await query(sql, { id, userId });
 
-        if (result.rowsAffected === 0) {
+        const [updatedRowsCount] = await Bluetooth.update(
+            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            {
+                where: sequelize.and(
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                )
+            }
+        );
+
+        if (updatedRowsCount === 0) {
             return Response.json({ success: false, error: 'Bluetooth device not found or not authorized' }, { status: 404 });
         }
 

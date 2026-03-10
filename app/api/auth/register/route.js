@@ -1,5 +1,5 @@
 import { hashPassword } from '@/lib/auth';
-import { query, oracledb } from '@/lib/db';
+import { User } from '@/lib/models/index.js';
 
 export async function POST(request) {
     try {
@@ -12,22 +12,16 @@ export async function POST(request) {
         const hashedPassword = await hashPassword(password);
 
         try {
-            const sql = `
-                INSERT INTO USERS(USERNAME, PASSWORD_HASH, EMAIL)
-VALUES(: username, : password_hash, : email)
-                RETURNING ID INTO: id
-    `;
-
-            const result = await query(sql, {
+            await User.create({
                 username,
-                password_hash: hashedPassword,
-                email: email || null,
-                id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT }
+                passwordHash: hashedPassword,
+                email: email || null
             });
 
             return Response.json({ success: true, message: 'User registered successfully' });
         } catch (e) {
-            if (e.errorNum === 1) { // Unique constraint violation
+            // Sequelize Unique Constraint Error
+            if (e.name === 'SequelizeUniqueConstraintError') {
                 return Response.json({ success: false, error: 'Username already exists' }, { status: 409 });
             }
             throw e;

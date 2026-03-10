@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { User, sequelize } from '@/lib/models/index.js';
 
 export async function GET(request) {
     try {
@@ -10,21 +10,21 @@ export async function GET(request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const sql = `SELECT USERNAME, EMAIL, GOOGLE_AVATAR_URL FROM USERS WHERE TRIM(ID) = TRIM(:id)`;
-        const result = await query(sql, { id: session.id });
+        const user = await User.findOne({
+            attributes: ['username', 'email', 'googleAvatarUrl'],
+            where: sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), session.id.trim())
+        });
 
-        if (!result.rows || result.rows.length === 0) {
+        if (!user) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
-
-        const user = result.rows[0];
 
         return NextResponse.json({
             success: true,
             user: {
-                username: user.USERNAME,
-                email: user.EMAIL,
-                googleAvatarUrl: user.GOOGLE_AVATAR_URL
+                username: user.username,
+                email: user.email,
+                googleAvatarUrl: user.googleAvatarUrl
             }
         });
     } catch (error) {
