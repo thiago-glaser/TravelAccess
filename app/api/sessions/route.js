@@ -1,5 +1,6 @@
-import { getConnection, oracledb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { sequelize, UserDevice } from '@/lib/models/index.js';
+import { QueryTypes } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -18,18 +19,15 @@ export async function GET(request) {
     const typeFilter = searchParams.get('type');
     const tzFilter = searchParams.get('tz') || 'UTC';
 
-    let connection;
     try {
-        connection = await getConnection();
-
         const userId = session.USER_ID || session.id || session.ID;
 
-        // Build dynamic WHERE clause
-        let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE user_id = :userId)`];
+        // Build dynamic WHERE clause for Raw Query
+        let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE RTRIM(LTRIM(user_id)) = RTRIM(LTRIM(:userId)))`];
         let bindParams = { userId };
 
         if (carFilter) {
-            conditions.push(`TRIM(s.car_id) = :carId`);
+            conditions.push(`TRIM(s.car_id) = TRIM(:carId)`);
             bindParams.carId = carFilter;
         }
         if (yearFilter) {
@@ -51,11 +49,13 @@ export async function GET(request) {
 
         // Query to get total count
         const countQuery = `SELECT COUNT(*) as TOTAL FROM V_SESSIONS s ${whereClause}`;
-        const countResult = await connection.execute(countQuery, bindParams, { outFormat: oracledb.OUT_FORMAT_OBJECT });
-        const total = countResult.rows[0].TOTAL;
+        const countResult = await sequelize.query(countQuery, {
+            replacements: bindParams,
+            type: QueryTypes.SELECT
+        });
+        const total = countResult[0].TOTAL;
 
         // Query with pagination
-        const dataBindParams = { ...bindParams, offset, limit };
         const query = `
             SELECT 
                 TRIM(s.id) as id, 
@@ -79,12 +79,13 @@ export async function GET(request) {
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
         `;
 
-        const result = await connection.execute(query, dataBindParams, {
-            outFormat: oracledb.OUT_FORMAT_OBJECT,
-            maxRows: limit
+        const dataBindParams = { ...bindParams, offset, limit };
+        const result = await sequelize.query(query, {
+            replacements: dataBindParams,
+            type: QueryTypes.SELECT
         });
 
-        const sessions = result.rows.map(row => ({
+        const sessions = result.map(row => ({
             id: row.ID,
             deviceId: row.DEVICE_ID,
             carId: row.CAR_ID,
@@ -112,30 +113,16 @@ export async function GET(request) {
         });
     } catch (error) {
         console.error('Database error in sessions API:', error);
-        return Response.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error closing connection:', err);
-            }
-        }
+        return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
 export async function PATCH(request) {
     const session = await getSession(request);
     if (!session || (session.authType === 'api-key' && !session.IS_ADMIN)) {
-        // Only admins or logged in users can patch sessions, or specific keys if we want.
-        // For now, let's just require a session.
-        if (!session) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    let connection;
     try {
         const body = await request.json();
         const { id, type, cost, distance, timeTraveled, valueConfirmed } = body;
@@ -144,9 +131,6 @@ export async function PATCH(request) {
             return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
         }
 
-        connection = await getConnection();
-
-        // Build update statement dynamically based on what was provided
         const userId = session.USER_ID || session.id || session.ID;
         const updates = [];
         const bindParams = { id, userId };
@@ -185,30 +169,19 @@ export async function PATCH(request) {
             AND TRIM(device_id) IN (SELECT TRIM(device_id) FROM USER_DEVICES WHERE TRIM(user_id) = TRIM(:userId))
         `;
 
-        const result = await connection.execute(
-            query,
-            bindParams,
-            { autoCommit: true }
-        );
+        const [results, metadata] = await sequelize.query(query, {
+            replacements: bindParams,
+            type: QueryTypes.UPDATE
+        });
 
-        if (result.rowsAffected === 0) {
+        // metadata usually contains the number of rows affected
+        if (metadata === 0) {
             return Response.json({ success: false, error: 'Session not found or update failed' }, { status: 404 });
         }
 
         return Response.json({ success: true });
     } catch (error) {
         console.error('Database error in sessions PATCH API:', error);
-        return Response.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error closing connection:', err);
-            }
-        }
+        return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
