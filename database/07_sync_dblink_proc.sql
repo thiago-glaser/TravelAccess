@@ -85,6 +85,56 @@ BEGIN
 END sync_lob_fuel;
 /
 
+CREATE OR REPLACE PROCEDURE sync_lob_maintenance(
+    p_last_sync IN TIMESTAMP
+)
+AS
+    v_src_lob    BLOB;
+    v_pull_count NUMBER := 0;
+    v_push_count NUMBER := 0;
+BEGIN
+    FOR rec IN (
+        SELECT ID FROM MAINTENANCE@CLOUD_LINK
+        WHERE UPDATED_AT > p_last_sync AND RECEIPT_IMAGE IS NOT NULL
+    ) LOOP
+        BEGIN
+            SELECT RECEIPT_IMAGE INTO v_src_lob
+            FROM MAINTENANCE@CLOUD_LINK WHERE ID = rec.ID;
+
+            EXECUTE IMMEDIATE
+                'UPDATE MAINTENANCE SET RECEIPT_IMAGE = :1 WHERE ID = :2'
+                USING v_src_lob, rec.ID;
+
+            v_pull_count := v_pull_count + 1;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[Cloud -> Local] MAINTENANCE.RECEIPT_IMAGE error for ID=' || rec.ID || ': ' || SQLERRM);
+        END;
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('[Cloud -> Local] LOB MAINTENANCE.RECEIPT_IMAGE: copied ' || v_pull_count || ' value(s).');
+
+    FOR rec IN (
+        SELECT ID FROM MAINTENANCE
+        WHERE UPDATED_AT > p_last_sync AND RECEIPT_IMAGE IS NOT NULL
+    ) LOOP
+        BEGIN
+            SELECT RECEIPT_IMAGE INTO v_src_lob
+            FROM MAINTENANCE WHERE ID = rec.ID;
+
+            EXECUTE IMMEDIATE
+                'UPDATE MAINTENANCE@CLOUD_LINK SET RECEIPT_IMAGE = :1 WHERE ID = :2'
+                USING v_src_lob, rec.ID;
+
+            v_push_count := v_push_count + 1;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[Local -> Cloud] MAINTENANCE.RECEIPT_IMAGE error for ID=' || rec.ID || ': ' || SQLERRM);
+        END;
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('[Local -> Cloud] LOB MAINTENANCE.RECEIPT_IMAGE: copied ' || v_push_count || ' value(s).');
+END sync_lob_maintenance;
+/
+
 CREATE OR REPLACE PROCEDURE sync_table_via_dblink(
     p_table_name IN VARCHAR2,
     p_db_link    IN VARCHAR2 DEFAULT 'CLOUD_LINK'
@@ -294,6 +344,8 @@ BEGIN
     IF v_lob_cols.COUNT > 0 THEN
         IF v_table_name = 'FUEL' THEN
             sync_lob_fuel(v_last_sync);
+        ELSIF v_table_name = 'MAINTENANCE' THEN
+            sync_lob_maintenance(v_last_sync);
         ELSE
             DBMS_OUTPUT.PUT_LINE('[' || v_table_name || '] WARNING: LOB sync skipped.' ||
                 ' Add a static-SQL helper procedure (like sync_lob_fuel) for this table.');
@@ -359,11 +411,11 @@ CREATE OR REPLACE PROCEDURE sync_all_tables_dblink(
     p_db_link IN VARCHAR2 DEFAULT 'CLOUD_LINK'
 )
 AS
-    TYPE t_tables IS VARRAY(13) OF VARCHAR2(50);
+    TYPE t_tables IS VARRAY(14) OF VARCHAR2(50);
     v_tables t_tables := t_tables(
         'USERS', 'API_KEYS', 'DEVICES', 'USER_DEVICES', 'CARS',
         'BLUETOOTH', 'FUEL', 'LOCATION', 'LOCATION_DATA',
-        'LOCATION_GEOCODE', 'SESSION_DATA', 'PARAMETER', 'INSURANCE'
+        'LOCATION_GEOCODE', 'SESSION_DATA', 'PARAMETER', 'INSURANCE', 'MAINTENANCE'
     );
 BEGIN
     DBMS_OUTPUT.PUT_LINE('=== Starting Full Database Sync over DB_LINK: ' || p_db_link || ' ===');
