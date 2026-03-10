@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { sequelize, UserDevice } from '@/lib/models/index.js';
-import { QueryTypes } from 'sequelize';
+import { SessionView, SessionData, Device, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -22,84 +22,80 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
 
-        // Build dynamic WHERE clause for Raw Query
-        let conditions = [`s.device_id IN (SELECT device_id FROM USER_DEVICES WHERE RTRIM(LTRIM(user_id)) = RTRIM(LTRIM(:userId)))`];
-        let bindParams = { userId };
+        // Build where clauses for the ORM abstraction
+        const whereConditions = {
+            [Op.and]: [
+                sequelize.literal(`DEVICE_ID IN (SELECT DEVICE_ID FROM USER_DEVICES WHERE RTRIM(LTRIM(USER_ID)) = RTRIM(LTRIM('${userId.trim()}')))`)
+            ]
+        };
 
         if (carFilter) {
-            conditions.push(`TRIM(s.car_id) = TRIM(:carId)`);
-            bindParams.carId = carFilter;
+            whereConditions[Op.and].push(sequelize.where(sequelize.fn('TRIM', sequelize.col('SessionView.CAR_ID')), carFilter.trim()));
         }
+
         if (yearFilter) {
-            conditions.push(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE CAST(:tz AS VARCHAR2(50)), 'YYYY')) = :year`);
-            bindParams.year = parseInt(yearFilter);
-            bindParams.tz = tzFilter;
+            whereConditions[Op.and].push(
+                sequelize.where(
+                    sequelize.literal(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST("SessionView"."START_UTC" AS TIMESTAMP), 'UTC') AT TIME ZONE CAST('${tzFilter}' AS VARCHAR2(50)), 'YYYY'))`),
+                    parseInt(yearFilter)
+                )
+            );
         }
+
         if (monthFilter) {
-            conditions.push(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST(s.start_utc AS TIMESTAMP), 'UTC') AT TIME ZONE CAST(:tz AS VARCHAR2(50)), 'MM')) = :month`);
-            bindParams.month = parseInt(monthFilter);
-            bindParams.tz = tzFilter;
+            whereConditions[Op.and].push(
+                sequelize.where(
+                    sequelize.literal(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST("SessionView"."START_UTC" AS TIMESTAMP), 'UTC') AT TIME ZONE CAST('${tzFilter}' AS VARCHAR2(50)), 'MM'))`),
+                    parseInt(monthFilter)
+                )
+            );
         }
+
         if (typeFilter) {
-            conditions.push(`s.session_type = :sessionType`);
-            bindParams.sessionType = typeFilter;
+            whereConditions[Op.and].push({ sessionType: typeFilter });
         }
 
-        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
-        // Query to get total count
-        const countQuery = `SELECT COUNT(*) as TOTAL FROM V_SESSIONS s ${whereClause}`;
-        const countResult = await sequelize.query(countQuery, {
-            replacements: bindParams,
-            type: QueryTypes.SELECT
-        });
-        const total = countResult[0].TOTAL;
-
-        // Query with pagination
-        const query = `
-            SELECT 
-                TRIM(s.id) as id, 
-                TRIM(s.device_id) as device_id,
-                TRIM(s.car_id) as car_id, 
-                NVL(s.car_description, d.description) as description,
-                TO_CHAR(s.start_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as START_UTC,
-                TO_CHAR(s.end_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as END_UTC,
-                s.session_type,
-                s.location_start,
-                s.location_end,
-                s.cost,
-                s.distance,
-                s.time_traveled,
-                sd.value_confirmed
-            FROM V_SESSIONS s
-            JOIN SESSION_DATA sd ON TRIM(sd.id) = TRIM(s.id)
-            LEFT JOIN devices d ON s.device_id = d.device_id
-            ${whereClause}
-            ORDER BY s.start_utc DESC
-            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-        `;
-
-        const dataBindParams = { ...bindParams, offset, limit };
-        const result = await sequelize.query(query, {
-            replacements: dataBindParams,
-            type: QueryTypes.SELECT
+        // Use findAndCountAll to execute count and fetch simultaneously
+        const { count: total, rows: results } = await SessionView.findAndCountAll({
+            where: whereConditions,
+            include: [
+                {
+                    model: SessionData,
+                    as: 'sessionData',
+                    attributes: ['valueConfirmed'],
+                    required: true
+                },
+                {
+                    model: Device,
+                    as: 'deviceInfo',
+                    attributes: ['description'],
+                    required: false
+                }
+            ],
+            order: [['startUtc', 'DESC']],
+            offset: offset,
+            limit: limit
         });
 
-        const sessions = result.map(row => ({
-            id: row.ID,
-            deviceId: row.DEVICE_ID,
-            carId: row.CAR_ID,
-            description: row.DESCRIPTION,
-            startTime: row.START_UTC,
-            endTime: row.END_UTC,
-            type: row.SESSION_TYPE,
-            locationStart: row.LOCATION_START,
-            locationEnd: row.LOCATION_END,
-            cost: row.COST,
-            distance: row.DISTANCE,
-            timeTraveled: row.TIME_TRAVELED,
-            valueConfirmed: row.VALUE_CONFIRMED || 'N'
-        }));
+        // Map abstract models into original json response form
+        const sessions = results.map(row => {
+            const description = row.carDescription || (row.deviceInfo ? row.deviceInfo.description : null);
+            return {
+                id: row.id.trim(),
+                deviceId: row.deviceId.trim(),
+                carId: row.carId ? row.carId.trim() : null,
+                description: description,
+                startTime: row.startUtc ? row.startUtc.toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+                endTime: row.endUtc ? row.endUtc.toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+                type: row.sessionType,
+                locationStart: row.locationStart,
+                locationEnd: row.locationEnd,
+                cost: row.cost ? parseFloat(row.cost) : null,
+                distance: row.distance ? parseFloat(row.distance) : null,
+                timeTraveled: row.timeTraveled ? parseFloat(row.timeTraveled) : null,
+                valueConfirmed: row.sessionData ? row.sessionData.valueConfirmed || 'N' : 'N'
+            };
+        });
 
         return Response.json({
             success: true,
@@ -132,50 +128,29 @@ export async function PATCH(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const updates = [];
-        const bindParams = { id, userId };
+        const updateData = {};
 
-        if (type !== undefined) {
-            updates.push('session_type = :type');
-            bindParams.type = type;
-        }
-        if (cost !== undefined) {
-            updates.push('cost = :cost');
-            bindParams.cost = cost;
-        }
-        if (distance !== undefined) {
-            updates.push('distance = :distance');
-            bindParams.distance = distance;
-        }
-        if (timeTraveled !== undefined) {
-            updates.push('time_traveled = :timeTraveled');
-            bindParams.timeTraveled = timeTraveled;
-        }
-        if (valueConfirmed !== undefined) {
-            updates.push('value_confirmed = :valueConfirmed');
-            bindParams.valueConfirmed = valueConfirmed;
-        }
+        if (type !== undefined) updateData.sessionType = type;
+        if (cost !== undefined) updateData.cost = cost;
+        if (distance !== undefined) updateData.distance = distance;
+        if (timeTraveled !== undefined) updateData.timeTraveled = timeTraveled;
+        if (valueConfirmed !== undefined) updateData.valueConfirmed = valueConfirmed;
 
-        if (updates.length === 0) {
+        if (Object.keys(updateData).length === 0) {
             return Response.json({ success: false, error: 'No fields to update' }, { status: 400 });
         }
 
-        updates.push('updated_at = SYS_EXTRACT_UTC(SYSTIMESTAMP)');
+        updateData.updatedAt = sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP'));
 
-        const query = `
-            UPDATE SESSION_DATA 
-            SET ${updates.join(', ')}
-            WHERE TRIM(id) = TRIM(:id) 
-            AND TRIM(device_id) IN (SELECT TRIM(device_id) FROM USER_DEVICES WHERE TRIM(user_id) = TRIM(:userId))
-        `;
-
-        const [results, metadata] = await sequelize.query(query, {
-            replacements: bindParams,
-            type: QueryTypes.UPDATE
+        // We update SessionData directly using ORM mapping
+        const [updatedRows] = await SessionData.update(updateData, {
+            where: sequelize.and(
+                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                sequelize.literal(`DEVICE_ID IN (SELECT DEVICE_ID FROM USER_DEVICES WHERE RTRIM(LTRIM(USER_ID)) = RTRIM(LTRIM('${userId.trim()}')))`),
+            )
         });
 
-        // metadata usually contains the number of rows affected
-        if (metadata === 0) {
+        if (updatedRows === 0) {
             return Response.json({ success: false, error: 'Session not found or update failed' }, { status: 404 });
         }
 
