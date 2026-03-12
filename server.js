@@ -83,8 +83,8 @@ app.prepare().then(() => {
         console.log(`> Ready on ${proto}://${hostname}:${port}`);
 
         // Background jobs
-        scheduleJob('EXTRACT_POINTS',              '/api/jobs/extract-points',        5 * 60 * 1000);
-        scheduleJob('GEOCODE_PENDING_LOCATIONS',   '/api/jobs/geocode-locations',     6 * 60 * 1000);
-        scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 5 * 60 * 1000);
+
+        scheduleJob('GEOCODE_PENDING_LOCATIONS', '/api/jobs/geocode-locations', 1 * 60 * 1000);
+        scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 1 * 60 * 1000);
     });
 });

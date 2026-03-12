@@ -6,14 +6,13 @@ This directory contains the SQL scripts required to initialize the Oracle Databa
 
 The scripts are numbered to ensure correct execution order:
 
-1.  **`01_tables.sql`**: Creates all necessary tables (`USERS`, `DEVICES`, `LOCATION`, `SESSION_DATA`, etc.) and primary/foreign key constraints.
+1.  **`01_tables.sql`**: Creates all necessary tables (`USERS`, `DEVICES`, `SESSION_DATA`, etc.) and primary/foreign key constraints.
 2.  **`02_functions_procedures.sql`**: Defines stored procedures and functions for data processing, such as:
     *   `CALCULATE_DISTANCE_TRAVELED`: Computes distance between points.
     *   `EXTRACT_POINTS`: Processes raw GPS data into session segments.
     *   `GEOCODE_...`: Procedures for reverse geocoding coordinates.
     *   `FIX_MOJIBAKE`: Utility to fix character encoding issues.
 3.  **`03_views.sql`**: Creates analytical views:
-    *   `V_LOCATION_ENRICHED`: Joins location data with geocoded addresses and timezone info.
     *   `V_SESSIONS`: Summarizes session start/end points.
     *   `V_SESSION_CALC`: Complex logic for session start/end location determination.
 4.  **`05_indexes.sql`**: Essential performance indexes for high-volume tables (`LOCATION_DATA`, `SESSION_DATA`) and foreign keys.

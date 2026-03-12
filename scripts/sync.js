@@ -5,7 +5,7 @@ const fs = require('fs');
 // The tables we want to sync (order doesn't matter tightly anymore since you removed FKs)
 const SYNC_TABLES = [
     'USERS', 'API_KEYS', 'DEVICES', 'USER_DEVICES', 'CARS',
-    'BLUETOOTH', 'FUEL', 'LOCATION', 'LOCATION_DATA',
+    'BLUETOOTH', 'FUEL', 'LOCATION_DATA',
     'LOCATION_GEOCODE', 'SESSION_DATA', 'PARAMETER'
 ];
 

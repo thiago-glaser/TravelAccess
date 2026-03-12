@@ -411,10 +411,10 @@ CREATE OR REPLACE PROCEDURE sync_all_tables_dblink(
     p_db_link IN VARCHAR2 DEFAULT 'CLOUD_LINK'
 )
 AS
-    TYPE t_tables IS VARRAY(14) OF VARCHAR2(50);
+    TYPE t_tables IS VARRAY(13) OF VARCHAR2(50);
     v_tables t_tables := t_tables(
         'USERS', 'API_KEYS', 'DEVICES', 'USER_DEVICES', 'CARS',
-        'BLUETOOTH', 'FUEL', 'LOCATION', 'LOCATION_DATA',
+        'BLUETOOTH', 'FUEL', 'LOCATION_DATA',
         'LOCATION_GEOCODE', 'SESSION_DATA', 'PARAMETER', 'INSURANCE', 'MAINTENANCE'
     );
 BEGIN
