@@ -60,7 +60,7 @@ export async function POST(request, context) {
         const sessions = await SessionView.findAll({
             attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
             where: {
-                carId: { carId: carId },
+                carId: carId,
                 startUtc: {
                     [Op.gt]: f1Timestamp,
                     [Op.lt]: f2Timestamp
@@ -133,7 +133,7 @@ export async function POST(request, context) {
             updatedAt: new Date()
         }, {
             where: {
-                carId: { carId: carId },
+                carId: carId,
                 startUtc: {
                     [Op.gt]: f1Timestamp,
                     [Op.lt]: f2Timestamp
@@ -153,7 +153,7 @@ export async function POST(request, context) {
                 updatedAt: new Date()
             }, {
                 where: {
-                    carId: { carId: carId },
+                    carId: carId,
                     startUtc: {
                         [Op.gte]: f2Timestamp,
                         [Op.lt]: f3Timestamp
@@ -171,7 +171,7 @@ export async function POST(request, context) {
                 updatedAt: new Date()
             }, {
                 where: {
-                    carId: { carId: carId },
+                    carId: carId,
                     startUtc: {
                         [Op.gte]: f2Timestamp
                     }
