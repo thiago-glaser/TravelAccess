@@ -30,7 +30,7 @@ export async function GET(request) {
         };
 
         if (carFilter) {
-            whereConditions[Op.and].push(sequelize.where(sequelize.fn('TRIM', sequelize.col('SessionView.CAR_ID')), carFilter.trim()));
+            whereConditions[Op.and].push({ carId: carFilter.trim() });
         }
 
         if (yearFilter) {
@@ -140,12 +140,12 @@ export async function PATCH(request) {
             return Response.json({ success: false, error: 'No fields to update' }, { status: 400 });
         }
 
-        updateData.updatedAt = sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP'));
+        updateData.updatedAt = new Date();
 
         // We update SessionData directly using ORM mapping
         const [updatedRows] = await SessionData.update(updateData, {
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
+                { id: id.trim() },
                 sequelize.literal(`"DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
             )
         });

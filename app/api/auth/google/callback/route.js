@@ -61,7 +61,7 @@ export async function GET(request) {
         if (!user) {
             // 3b. Try by email to link an existing local account
             user = await User.findOne({
-                where: sequelize.where(sequelize.fn('LOWER', sequelize.col('EMAIL')), email.toLowerCase())
+                where: { email }
             });
 
             if (user) {

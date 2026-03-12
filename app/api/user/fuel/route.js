@@ -81,8 +81,8 @@ export async function POST(request) {
         // Ensure Car belongs to User
         const carExists = await Car.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), carId.trim()),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { id: carId.trim() },
+                { userId: userId.trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -136,8 +136,8 @@ export async function DELETE(request) {
         // Find the carId and timestamp before deleting the fuel entry
         const deletedFuel = await Fuel.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { id: id.trim() },
+                { userId: userId.trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -152,8 +152,8 @@ export async function DELETE(request) {
         // Find the prior fuel timestamp for this car (if any)
         const priorFuel = await Fuel.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { carId: carId },
+                { userId: userId.trim() },
                 { timestampUtc: { [Op.lt]: deletedTimestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
@@ -162,18 +162,18 @@ export async function DELETE(request) {
 
         // Delete the fuel entry
         const [updatedRowsCount] = await Fuel.update(
-            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                    { id: id.trim() },
+                    { userId: userId.trim() }
                 )
             }
         );
 
         if (updatedRowsCount > 0) {
             let sessionCondition = {
-                carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                carId: { carId: carId },
                 startUtc: { [Op.lt]: deletedTimestamp }
             };
 

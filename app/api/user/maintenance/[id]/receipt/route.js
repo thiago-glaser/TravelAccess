@@ -16,8 +16,8 @@ export async function GET(request, { params }) {
         const maintenanceEntry = await Maintenance.findOne({
             attributes: ['receiptImage', 'receiptMime'],
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { id: id.trim() },
+                { userId: userId.trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });

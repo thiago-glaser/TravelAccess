@@ -89,8 +89,8 @@ export async function POST(request) {
         // Let's use raw where to ensure trim if needed
         const carExists = await Car.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('Car.ID')), carId.trim()),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { id: carId.trim() },
+                { userId: userId.trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -142,11 +142,11 @@ export async function DELETE(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         await Maintenance.update(
-            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            { isDeleted: 1, updatedAt: new Date() },
             { 
                 where: sequelize.and(
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                    { id: id.trim() },
+                    { userId: userId.trim() }
                 )
             }
         );

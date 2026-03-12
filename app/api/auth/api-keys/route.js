@@ -76,11 +76,11 @@ export async function DELETE(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         await ApiKey.update(
-            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                    { id: id.trim() },
+                    { userId: userId.trim() }
                 )
             }
         );

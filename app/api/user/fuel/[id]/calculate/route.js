@@ -23,8 +23,8 @@ export async function POST(request, context) {
         // 1. Get current fuel record F2
         const f2 = await Fuel.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), fuelId.trim()),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { id: fuelId.trim() },
+                { userId: userId.trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -41,8 +41,8 @@ export async function POST(request, context) {
         // 2. Get previous fuel record F1 for the same car
         const f1 = await Fuel.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { carId: carId },
+                { userId: userId.trim() },
                 { timestampUtc: { [Op.lt]: f2Timestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
@@ -60,7 +60,7 @@ export async function POST(request, context) {
         const sessions = await SessionView.findAll({
             attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
             where: {
-                carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                carId: { carId: carId },
                 startUtc: {
                     [Op.gt]: f1Timestamp,
                     [Op.lt]: f2Timestamp
@@ -116,8 +116,8 @@ export async function POST(request, context) {
         // 5. Invalidate sessions that are affected by F2's updated price:
         const f3 = await Fuel.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { carId: carId },
+                { userId: userId.trim() },
                 { timestampUtc: { [Op.gt]: f2Timestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
@@ -133,7 +133,7 @@ export async function POST(request, context) {
             updatedAt: new Date()
         }, {
             where: {
-                carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                carId: { carId: carId },
                 startUtc: {
                     [Op.gt]: f1Timestamp,
                     [Op.lt]: f2Timestamp
@@ -153,7 +153,7 @@ export async function POST(request, context) {
                 updatedAt: new Date()
             }, {
                 where: {
-                    carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                    carId: { carId: carId },
                     startUtc: {
                         [Op.gte]: f2Timestamp,
                         [Op.lt]: f3Timestamp
@@ -171,7 +171,7 @@ export async function POST(request, context) {
                 updatedAt: new Date()
             }, {
                 where: {
-                    carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                    carId: { carId: carId },
                     startUtc: {
                         [Op.gte]: f2Timestamp
                     }

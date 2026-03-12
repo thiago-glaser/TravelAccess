@@ -62,7 +62,7 @@ export async function POST(request) {
         // Check if device already exists for this user to avoid duplicates
         const existingCheck = await Bluetooth.findOne({
             where: sequelize.and(
-                sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                { userId: userId.trim() },
                 { address: address, isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -106,12 +106,12 @@ export async function PATCH(request) {
                 description: description || null, 
                 address, 
                 carId: carId ? String(carId) : null,
-                updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP'))
+                updatedAt: new Date()
             },
             {
                 where: sequelize.and(
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim()),
+                    { id: id.trim() },
+                    { userId: userId.trim() },
                     { isDeleted: { [Op.or]: [0, null] } }
                 )
             }
@@ -144,11 +144,11 @@ export async function DELETE(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         const [updatedRowsCount] = await Bluetooth.update(
-            { isDeleted: 1, updatedAt: sequelize.fn('SYS_EXTRACT_UTC', sequelize.fn('SYSTIMESTAMP')) },
+            { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), id.trim()),
-                    sequelize.where(sequelize.fn('TRIM', sequelize.col('USER_ID')), userId.trim())
+                    { id: id.trim() },
+                    { userId: userId.trim() }
                 )
             }
         );

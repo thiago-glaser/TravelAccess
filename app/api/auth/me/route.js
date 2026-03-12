@@ -12,7 +12,7 @@ export async function GET(request) {
 
         const user = await User.findOne({
             attributes: ['username', 'email', 'googleAvatarUrl'],
-            where: sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), session.id.trim())
+            where: { id: session.id.trim() }
         });
 
         if (!user) {

@@ -18,7 +18,7 @@ export async function POST(request) {
 
         // Fetch user to check current password if it exists
         const user = await User.findOne({
-            where: sequelize.where(sequelize.fn('TRIM', sequelize.col('ID')), session.id.trim())
+            where: { id: session.id.trim() }
         });
 
         if (!user) {
