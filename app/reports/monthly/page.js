@@ -58,6 +58,7 @@ export default function MonthlyReportsPage() {
     const [error, setError] = useState(null);
     const [cars, setCars] = useState([]);
     const [fuelData, setFuelData] = useState([]);
+    const [insuranceData, setInsuranceData] = useState([]);
     const [filters, setFilters] = useState({ carId: '', year: new Date().getFullYear().toString(), type: '' });
     const [reportData, setReportData] = useState([]);
     const [totals, setTotals] = useState({
@@ -65,6 +66,9 @@ export default function MonthlyReportsPage() {
         duration: 0,
         count: 0,
         cost: 0,
+        insurance: 0,
+        personalInsurance: 0,
+        businessInsurance: 0,
         breakdown: {
             P: { distance: 0, duration: 0, cost: 0 },
             B: { distance: 0, duration: 0, cost: 0 }
@@ -95,9 +99,22 @@ export default function MonthlyReportsPage() {
         }
     };
 
+    const fetchInsurance = async () => {
+        try {
+            const response = await fetch('/api/user/insurance');
+            const result = await response.json();
+            if (result.success) {
+                setInsuranceData(result.insurances);
+            }
+        } catch (err) {
+            console.error('Failed to fetch insurance:', err);
+        }
+    };
+
     useEffect(() => {
         fetchCars();
         fetchFuel();
+        fetchInsurance();
     }, []);
 
     const parseUTC = (dateVal) => {
@@ -141,7 +158,7 @@ export default function MonthlyReportsPage() {
             const sessionsList = sResult.data;
             if (sessionsList.length === 0) {
                 setReportData([]);
-                setTotals({ distance: 0, duration: 0, count: 0, cost: 0, breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } } });
+                setTotals({ distance: 0, duration: 0, count: 0, cost: 0, insurance: 0, breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } } });
                 setLoading(false);
                 return;
             }
@@ -291,6 +308,23 @@ export default function MonthlyReportsPage() {
                 B: { distance: 0, duration: 0, cost: 0 }
             };
 
+            let insuranceTotal = 0;
+            const reportMonthNames = Array.from(new Set(groupedData.map(s => s.monthDisplay)));
+            insuranceData.forEach(ins => {
+                let matchesCar = filters.carId ? ins.carId === filters.carId : true;
+                let matchesMonth = false;
+                
+                if (filters.year) {
+                    matchesMonth = ins.period.includes(filters.year.toString());
+                } else {
+                    matchesMonth = reportMonthNames.includes(ins.period);
+                }
+                
+                if (matchesCar && matchesMonth) {
+                    insuranceTotal += parseFloat(ins.amount || 0);
+                }
+            });
+
             groupedData.forEach(s => {
                 const typeKey = s.type === 'P' || s.type === 'B' ? s.type : null;
                 if (typeKey) {
@@ -300,8 +334,20 @@ export default function MonthlyReportsPage() {
                 }
             });
 
+            const pInsurance = totalDist > 0 ? insuranceTotal * (breakdown.P.distance / totalDist) : 0;
+            const bInsurance = totalDist > 0 ? insuranceTotal * (breakdown.B.distance / totalDist) : 0;
+
             setReportData(groupedData);
-            setTotals({ distance: totalDist, duration: totalDur, count: totalCount, cost: totalCost, breakdown });
+            setTotals({ 
+                distance: totalDist, 
+                duration: totalDur, 
+                count: totalCount, 
+                cost: totalCost, 
+                insurance: insuranceTotal, 
+                personalInsurance: pInsurance,
+                businessInsurance: bInsurance,
+                breakdown 
+            });
 
         } catch (err) {
             setError(err.message);
@@ -352,11 +398,17 @@ export default function MonthlyReportsPage() {
         doc.text(`Distance: ${totals.breakdown.P.distance.toFixed(2)} km`, 80, 60);
         doc.text(`Duration: ${formatDuration(totals.breakdown.P.duration)}`, 80, 66);
         doc.text(`Cost: $${totals.breakdown.P.cost.toFixed(2)}`, 80, 72);
+        const pInsurance = totals.distance > 0 ? totals.insurance * (totals.breakdown.P.distance / totals.distance) : 0;
+        doc.text(`Insurance: $${pInsurance.toFixed(2)}`, 80, 78);
 
         doc.text('Business', 140, 54);
         doc.text(`Distance: ${totals.breakdown.B.distance.toFixed(2)} km`, 140, 60);
         doc.text(`Duration: ${formatDuration(totals.breakdown.B.duration)}`, 140, 66);
         doc.text(`Cost: $${totals.breakdown.B.cost.toFixed(2)}`, 140, 72);
+        const bInsurance = totals.distance > 0 ? totals.insurance * (totals.breakdown.B.distance / totals.distance) : 0;
+        doc.text(`Insurance: $${bInsurance.toFixed(2)}`, 140, 78);
+        
+        doc.text(`Total Insurance: $${totals.insurance.toFixed(2)}`, 14, 78);
 
         const tableData = reportData.map(s => [
             s.monthDisplay,
@@ -375,14 +427,26 @@ export default function MonthlyReportsPage() {
             `$${totals.cost.toFixed(2)}`
         ]);
 
+        if (totals.insurance > 0) {
+            tableData.push([
+                'Prop. Personal Insurance', '', '', '', '', '', 
+                `$${totals.personalInsurance.toFixed(2)}`
+            ]);
+            tableData.push([
+                'Prop. Business Insurance', '', '', '', '', '', 
+                `$${totals.businessInsurance.toFixed(2)}`
+            ]);
+        }
+
         autoTable(doc, {
-            startY: 84,
+            startY: 88,
             head: [['Month', 'Car', 'Type', 'Sessions', 'Distance', 'Duration', 'Est. Cost']],
             body: tableData,
             headStyles: { fillColor: [37, 99, 235] },
             styles: { fontSize: 9 },
             didParseCell: function(data) {
-                if (data.row.index === tableData.length - 1) {
+                const footerRows = totals.insurance > 0 ? 3 : 1;
+                if (data.row.index >= tableData.length - footerRows) {
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fillColor = [241, 245, 249];
                     data.cell.styles.textColor = [15, 23, 42];
@@ -474,7 +538,7 @@ export default function MonthlyReportsPage() {
                                     setFilters({ carId: '', year: '', type: '' });
                                     setReportData([]);
                                     setTotals({
-                                        distance: 0, duration: 0, count: 0, cost: 0,
+                                        distance: 0, duration: 0, count: 0, cost: 0, insurance: 0,
                                         breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } }
                                     });
                                 }}
@@ -539,11 +603,40 @@ export default function MonthlyReportsPage() {
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
                             <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Total Cost</p>
                             <p className="text-3xl font-black text-emerald-600 font-mono">${totals.cost.toFixed(2)}</p>
-                            {reportData.some(s => s.hasProjected) && (
+                            {(reportData.some(s => s.hasProjected) || totals.insurance > 0) && (
                                 <p className="text-[10px] text-amber-500 font-semibold mt-1 flex items-center gap-1">
-                                    <span>⚠</span> Some values are estimated
+                                    <span>⚠</span> Includes dynamic pricing & allocation
                                 </p>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {reportData.length > 0 && totals.insurance > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">Personal Insurance</p>
+                                    <p className="text-3xl font-black text-indigo-600 font-mono">${totals.personalInsurance.toFixed(2)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">Prop. Allocation</p>
+                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-pink-500">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-xs font-bold text-pink-500 uppercase tracking-widest mb-1">Business Insurance</p>
+                                    <p className="text-3xl font-black text-pink-600 font-mono">${totals.businessInsurance.toFixed(2)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">Prop. Allocation</p>
+                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -551,7 +644,7 @@ export default function MonthlyReportsPage() {
                 {reportData.length > 0 && !filters.type && (
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Breakdown by Type</h3>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
                                     <span className="text-gray-600 font-medium">Distance Distribution</span>
@@ -638,6 +731,35 @@ export default function MonthlyReportsPage() {
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="text-gray-600 font-medium">Insurance Allocation</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">Total: ${totals.insurance.toFixed(2)}</span>
+                                </div>
+                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                    <div
+                                        className="bg-indigo-500 h-full transition-all duration-500"
+                                        style={{ width: `${totals.distance > 0 ? (totals.breakdown.P.distance / totals.distance) * 100 : 0}%` }}
+                                        title={`Personal: $${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)}`}
+                                    ></div>
+                                    <div
+                                        className="bg-pink-500 h-full transition-all duration-500"
+                                        style={{ width: `${totals.distance > 0 ? (totals.breakdown.B.distance / totals.distance) * 100 : 0}%` }}
+                                        title={`Business: $${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)}`}
+                                    ></div>
+                                </div>
+                                <div className="flex gap-4 mt-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-sm"></div>
+                                        <span className="text-xs text-gray-600">Personal (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)})</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 bg-pink-500 rounded-sm"></div>
+                                        <span className="text-xs text-gray-600">Business (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)})</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -709,6 +831,28 @@ export default function MonthlyReportsPage() {
                                                 ${totals.cost.toFixed(2)}
                                             </td>
                                         </tr>
+                                        {totals.insurance > 0 && (
+                                            <>
+                                                <tr className="bg-white/50 border-t border-gray-100">
+                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">Prop. Personal Insurance</td>
+                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                        ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
+                                                    </td>
+                                                    <td className="px-6 py-3 text-right text-indigo-600 font-mono font-bold">
+                                                        ${totals.personalInsurance.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-white/50 border-t border-gray-100">
+                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">Prop. Business Insurance</td>
+                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                        ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
+                                                    </td>
+                                                    <td className="px-6 py-3 text-right text-pink-600 font-mono font-bold">
+                                                        ${totals.businessInsurance.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </tbody>

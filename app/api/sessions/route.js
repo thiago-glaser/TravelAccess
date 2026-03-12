@@ -144,10 +144,12 @@ export async function PATCH(request) {
 
         // We update SessionData directly using ORM mapping
         const [updatedRows] = await SessionData.update(updateData, {
-            where: sequelize.and(
-                { id: id.trim() },
-                sequelize.literal(`"DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
-            )
+            where: {
+                [Op.and]: [
+                    sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM('${id.trim()}'))`),
+                    sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                ]
+            }
         });
 
         if (updatedRows === 0) {
