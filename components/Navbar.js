@@ -11,6 +11,7 @@ export default function Navbar() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isReportsOpen, setIsReportsOpen] = useState(false);
     const [isDataOpen, setIsDataOpen] = useState(false);
+    const [isMapsOpen, setIsMapsOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function Navbar() {
     const dropdownRef = useRef(null);
     const dropdownReportsRef = useRef(null);
     const dropdownDataRef = useRef(null);
+    const dropdownMapsRef = useRef(null);
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -31,6 +33,9 @@ export default function Navbar() {
             }
             if (dropdownDataRef.current && !dropdownDataRef.current.contains(event.target)) {
                 setIsDataOpen(false);
+            }
+            if (dropdownMapsRef.current && !dropdownMapsRef.current.contains(event.target)) {
+                setIsMapsOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -186,20 +191,52 @@ export default function Navbar() {
                                 </div>
                             )}
                         </div>
-                        <Link
-                            href="/map"
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === '/map'
-                                ? 'text-blue-600 bg-blue-50/80 shadow-sm'
-                                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        {/* Maps Dropdown */}
+                        <div className="relative" ref={dropdownMapsRef}>
+                            <button
+                                onClick={() => setIsMapsOpen(!isMapsOpen)}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${pathname.startsWith('/map') || pathname.startsWith('/heatmap')
+                                    ? 'text-blue-600 bg-blue-50/80 shadow-sm'
+                                    : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                </div>
+                                Maps
+                                <svg className={`w-3 h-3 transition-transform duration-200 ${isMapsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                 </svg>
-                                Map
-                            </div>
-                        </Link>
+                            </button>
+
+                            {isMapsOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] transform origin-top transition-all duration-200 animate-in fade-in zoom-in-95">
+                                    <Link
+                                        href="/map"
+                                        onClick={() => setIsMapsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/map' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                        Routes
+                                    </Link>
+                                    <Link
+                                        href="/heatmap"
+                                        onClick={() => setIsMapsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/heatmap' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Heat Map
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Data Dropdown */}
                         <div className="relative" ref={dropdownDataRef}>
@@ -394,6 +431,7 @@ export default function Navbar() {
                         Monthly Reports
                     </Link>
 
+                    <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Maps</div>
                     <Link
                         href="/map"
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -402,7 +440,18 @@ export default function Navbar() {
                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
-                        Map
+                        Routes
+                    </Link>
+                    <Link
+                        href="/heatmap"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/heatmap' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Heat Map
                     </Link>
 
                     <div className="text-xs font-bold text-gray-400 uppercase pt-2 px-4">Data</div>

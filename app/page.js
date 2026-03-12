@@ -8,6 +8,11 @@ const MapContainer = dynamic(() => import('@/components/MapContainer'), {
     loading: () => <div className="w-full h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-500">Loading Map...</p></div>,
 });
 
+const HeatMapContainer = dynamic(() => import('@/components/HeatMapContainer'), {
+    ssr: false,
+    loading: () => <div className="w-full h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-500">Loading Heat Map...</p></div>,
+});
+
 import SessionPointsList from '@/components/SessionPointsList';
 
 export default function SessionsPage() {
@@ -20,7 +25,9 @@ export default function SessionsPage() {
     const [selectedSessionsData, setSelectedSessionsData] = useState({}); // Stores full session objects for persistent selection
     const [selectingAllMatching, setSelectingAllMatching] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [modalMode, setModalMode] = useState('single'); // 'single' or 'multi'
+    const [modalMapType, setModalMapType] = useState('routes'); // 'routes' or 'heatmap'
     const [cars, setCars] = useState([]);
     const [filters, setFilters] = useState({ carId: '', year: '', month: '' });
     const [expandedSessionIds, setExpandedSessionIds] = useState([]);
@@ -254,10 +261,11 @@ export default function SessionsPage() {
             endTime: endParts.time
         });
         setModalMode('single');
+        setModalMapType('routes');
         setIsModalOpen(true);
     };
 
-    const handleViewSelectedMap = () => {
+    const handleViewSelectedMap = (mapType = 'routes') => {
         if (selectedSessionIds.length === 0) return;
 
         const selectedSessions = selectedSessionIds.map(id => selectedSessionsData[id]).filter(Boolean);
@@ -287,6 +295,8 @@ export default function SessionsPage() {
 
         setSelectedSession(filtersList);
         setModalMode('multi');
+        setModalMapType(mapType);
+        setIsDropdownOpen(false); // Close dropdown when an option is selected
         setIsModalOpen(true);
     };
 
@@ -356,15 +366,54 @@ export default function SessionsPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         {selectedSessionIds.length > 0 && (
-                            <button
-                                onClick={handleViewSelectedMap}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 animate-in zoom-in duration-200"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A2 2 0 013 15.492V4.508a2 2 0 011.553-1.954L9 1h6l5.447 2.554A2 2 0 0121 5.508v10.984a2 2 0 01-1.553 1.954L15 21H9z" />
-                                </svg>
-                                View {selectedSessionIds.length} on Map
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 animate-in zoom-in duration-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A2 2 0 013 15.492V4.508a2 2 0 011.553-1.954L9 1h6l5.447 2.554A2 2 0 0121 5.508v10.984a2 2 0 01-1.553 1.954L15 21H9z" />
+                                    </svg>
+                                    View {selectedSessionIds.length} on Map
+                                    <svg className={`w-4 h-4 ml-1 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                
+                                {isDropdownOpen && (
+                                    <>
+                                        {/* Invisible overlay to catch clicks outside */}
+                                        <div 
+                                            className="fixed inset-0 z-40" 
+                                            onClick={() => setIsDropdownOpen(false)}
+                                        ></div>
+                                        
+                                        <div className="absolute top-full mt-2 w-full sm:w-48 bg-white border border-gray-100 rounded-lg shadow-xl z-50 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 right-0 sm:right-auto">
+                                            <div className="py-1 flex flex-col">
+                                                <button
+                                                    onClick={() => handleViewSelectedMap('routes')}
+                                                    className="px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A2 2 0 013 15.492V4.508a2 2 0 011.553-1.954L9 1h6l5.447 2.554A2 2 0 0121 5.508v10.984a2 2 0 01-1.553 1.954L15 21H9z" />
+                                                    </svg>
+                                                    Routes
+                                                </button>
+                                                <button
+                                                    onClick={() => handleViewSelectedMap('heatmap')}
+                                                    className="px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full border-t border-gray-50"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    Heat Map
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         )}
                         <button
                             onClick={() => fetchSessions(pagination.page)}
@@ -720,10 +769,17 @@ export default function SessionsPage() {
 
                         <div className="flex-1 overflow-auto relative">
                             {selectedSession && (
-                                <MapContainer
-                                    initialFilters={selectedSession}
-                                    isModal={true}
-                                />
+                                modalMapType === 'heatmap' ? (
+                                    <HeatMapContainer
+                                        initialFilters={selectedSession}
+                                        isModal={true}
+                                    />
+                                ) : (
+                                    <MapContainer
+                                        initialFilters={selectedSession}
+                                        isModal={true}
+                                    />
+                                )
                             )}
                         </div>
                     </div>
