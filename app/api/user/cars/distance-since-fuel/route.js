@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { Fuel, SessionView, LocationData, sequelize } from '@/lib/models/index.js';
 import { calculateTotalDistance, filterLocationsByDistance } from '@/lib/gpsUtils';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -19,65 +20,60 @@ export async function GET(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // 1. Get the most recent fuel record for the given car
-        const lastFuelRes = await query(`
-            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-            FROM FUEL 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-            ORDER BY TIMESTAMP_UTC DESC 
-            FETCH NEXT 1 ROWS ONLY
-        `, { carId, userId });
+        const lastFuel = await Fuel.findOne({
+            where: sequelize.and(
+                { carId: carId.trim() },
+                { userId: userId.trim() },
+                { isDeleted: { [Op.or]: [0, null] } }
+            ),
+            order: [['timestampUtc', 'DESC']]
+        });
 
-        if (lastFuelRes.rows.length === 0) {
+        if (!lastFuel) {
             return Response.json({ success: false, error: 'No fuel log found for this car' }, { status: 404 });
         }
 
-        const lastFuelTimestampISO = lastFuelRes.rows[0].TIMESTAMP_UTC;
-        const lastFuelUtcStr = lastFuelTimestampISO.substring(0, 19).replace('T', ' ');
+        const lastFuelTimestamp = lastFuel.get('timestampUtc');
 
         // 2. Find all sessions for this car where START_UTC > last_fuel_timestamp
         // We use V_SESSIONS as done in the fuel calculation
-        const sessionsRes = await query(`
-            SELECT TRIM(ID) AS ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
-            FROM V_SESSIONS 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) 
-              AND START_UTC > TO_DATE(:lastFuelUtcStr, 'YYYY-MM-DD HH24:MI:SS')
-        `, {
-            carId,
-            lastFuelUtcStr
+        const sessions = await SessionView.findAll({
+            attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
+            where: sequelize.and(
+                { carId: carId.trim() },
+                { startUtc: { [Op.gt]: lastFuelTimestamp } }
+            ),
+            raw: true
         });
 
         let totalMeters = 0;
         let totalMs = 0;
-        const nowUtc = new Date().toISOString();
+        const nowUtc = new Date();
 
         // 3. For each session, fetch location_data and calculate distance
-        for (const s of sessionsRes.rows) {
-            const deviceId = s.DEVICE_ID;
-            const startUtc = s.START_UTC;
-            const endUtc = s.END_UTC;
+        for (const s of sessions) {
+            const deviceId = s.deviceId;
+            const sessionStartUtc = s.startUtc;
+            const sessionEndUtc = s.endUtc || nowUtc;
 
-            const sessionEndUtc = endUtc ? endUtc : nowUtc;
-            const sStartStr = startUtc.substring(0, 19).replace('T', ' ');
-            const sEndStr = sessionEndUtc.substring(0, 19).replace('T', ' ');
-
-            const gpsRes = await query(`
-                SELECT LATITUDE, LONGITUDE, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-                FROM LOCATION_DATA 
-                WHERE DEVICE_ID = :deviceId 
-                  AND TIMESTAMP_UTC >= TO_DATE(:sStartStr, 'YYYY-MM-DD HH24:MI:SS') 
-                  AND TIMESTAMP_UTC <= TO_DATE(:sEndStr, 'YYYY-MM-DD HH24:MI:SS')
-                ORDER BY TIMESTAMP_UTC ASC
-            `, {
-                deviceId,
-                sStartStr,
-                sEndStr
+            const gpsLocations = await LocationData.findAll({
+                attributes: ['latitude', 'longitude', 'timestampUtc'],
+                where: {
+                    deviceId,
+                    timestampUtc: {
+                        [Op.gte]: sessionStartUtc,
+                        [Op.lte]: sessionEndUtc
+                    }
+                },
+                order: [['timestampUtc', 'ASC']],
+                raw: true
             });
 
-            if (gpsRes.rows.length > 1) {
-                const locations = gpsRes.rows.map(row => ({
-                    lat: parseFloat(row.LATITUDE),
-                    lng: parseFloat(row.LONGITUDE),
-                    date: row.TIMESTAMP_UTC
+            if (gpsLocations.length > 1) {
+                const locations = gpsLocations.map(row => ({
+                    lat: Number(row.latitude),
+                    lng: Number(row.longitude),
+                    date: typeof row.timestampUtc === 'string' ? row.timestampUtc : row.timestampUtc.toISOString().substring(0, 19).replace('T', ' ')
                 }));
                 // Use filtering to ignore noise
                 const filtered = filterLocationsByDistance(locations, 10);
@@ -85,8 +81,8 @@ export async function GET(request) {
                 totalMeters += dist;
 
                 // Calculate time based on session start and end
-                const tStart = new Date(startUtc + 'Z').getTime();
-                const tEnd = new Date(endUtc ? endUtc + 'Z' : nowUtc).getTime();
+                const tStart = new Date(sessionStartUtc).getTime();
+                const tEnd = new Date(sessionEndUtc).getTime();
                 if (!isNaN(tStart) && !isNaN(tEnd)) {
                     totalMs += Math.max(0, tEnd - tStart);
                 }

@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/auth';
-import { query, oracledb } from '@/lib/db';
+import { Fuel, SessionView, LocationData, SessionData, sequelize } from '@/lib/models/index.js';
 import { calculateTotalDistance, filterLocationsByDistance } from '@/lib/gpsUtils';
+import { Op } from 'sequelize';
 
 export async function POST(request, context) {
     const session = await getSession(request);
@@ -10,97 +11,90 @@ export async function POST(request, context) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const { id: fuelId } = await context.params;
+
+        // In Next.js 15+, params is a promise
+        const params = await context.params;
+        const fuelId = params.id;
 
         if (!fuelId) {
             return Response.json({ success: false, error: 'Fuel ID is required' }, { status: 400 });
         }
 
         // 1. Get current fuel record F2
-        const f2Res = await query(`
-            SELECT TRIM(ID) AS ID, TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC, LITERS, TOTAL_VALUE 
-            FROM FUEL 
-            WHERE TRIM(ID) = TRIM(:fuelId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-        `, { fuelId, userId });
-        if (f2Res.rows.length === 0) {
+        const f2 = await Fuel.findOne({
+            where: sequelize.and(
+                { id: fuelId.trim() },
+                { userId: userId.trim() },
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
+
+        if (!f2) {
             return Response.json({ success: false, error: 'Fuel record not found or not authorized' }, { status: 404 });
         }
 
-        const f2 = f2Res.rows[0];
-        const carId = f2.CAR_ID;
-        const f2Timestamp = f2.TIMESTAMP_UTC;
-        const f2Liters = parseFloat(f2.LITERS) || 0;
-        const f2TotalValue = parseFloat(f2.TOTAL_VALUE) || 0;
-
-        const f2TimestampISO = f2.TIMESTAMP_UTC; // The ISO string "2026-02-26T19:00:00Z"
-        const f2UtcStr = f2TimestampISO.substring(0, 19).replace('T', ' '); // "2026-02-26 19:00:00"
+        const carId = f2.get('carId').trim();
+        const f2Timestamp = f2.get('timestampUtc'); // This is a Date object
+        const f2Liters = parseFloat(f2.get('liters')) || 0;
+        const f2TotalValue = parseFloat(f2.get('totalValue')) || 0;
 
         // 2. Get previous fuel record F1 for the same car
-        const f1Res = await query(`
-            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-            FROM FUEL 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) 
-              AND TRIM(USER_ID) = TRIM(:userId) 
-              AND TIMESTAMP_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
-              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-            ORDER BY TIMESTAMP_UTC DESC 
-            FETCH NEXT 1 ROWS ONLY
-        `, {
-            carId,
-            userId,
-            f2UtcStr
+        const f1 = await Fuel.findOne({
+            where: sequelize.and(
+                { carId: carId },
+                { userId: userId.trim() },
+                { timestampUtc: { [Op.lt]: f2Timestamp } },
+                { isDeleted: { [Op.or]: [0, null] } }
+            ),
+            order: [['timestampUtc', 'DESC']]
         });
 
-        if (f1Res.rows.length === 0) {
+        if (!f1) {
             return Response.json({ success: false, error: 'Cannot calculate. No previous fuel log found for this car.' }, { status: 400 });
         }
 
-        const f1TimestampISO = f1Res.rows[0].TIMESTAMP_UTC;
-        const f1UtcStr = f1TimestampISO.substring(0, 19).replace('T', ' ');
+        const f1Timestamp = f1.get('timestampUtc');
 
-        // 3. Find all sessions for this car within (f1UtcStr, f2UtcStr)
-        const sessionsRes = await query(`
-            SELECT TRIM(ID) AS ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
-            FROM V_SESSIONS 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) 
-              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
-              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-        `, {
-            carId,
-            f1UtcStr,
-            f2UtcStr
+        // 3. Find all sessions for this car within (f1Timestamp, f2Timestamp)
+        // V_SESSIONS is a view, mapped to SessionView
+        const sessions = await SessionView.findAll({
+            attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
+            where: {
+                carId: carId,
+                startUtc: {
+                    [Op.gt]: f1Timestamp,
+                    [Op.lt]: f2Timestamp
+                }
+            },
+            raw: true
         });
 
         let totalMeters = 0;
 
         // 4. For each session, fetch location_data and calculate distance
-        for (const s of sessionsRes.rows) {
-            const deviceId = s.DEVICE_ID;
-            const startUtc = s.START_UTC;
-            const endUtc = s.END_UTC;
+        for (const s of sessions) {
+            const deviceId = s.deviceId;
+            const sessionStartUtc = s.startUtc;
+            const sessionEndUtc = s.endUtc || f2Timestamp;
 
-            const sessionEndUtc = endUtc ? endUtc : f2TimestampISO;
-            const sStartStr = startUtc.substring(0, 19).replace('T', ' ');
-            const sEndStr = sessionEndUtc.substring(0, 19).replace('T', ' ');
-
-            const gpsRes = await query(`
-                SELECT LATITUDE, LONGITUDE, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-                FROM LOCATION_DATA 
-                WHERE DEVICE_ID = :deviceId 
-                  AND TIMESTAMP_UTC >= TO_DATE(:sStartStr, 'YYYY-MM-DD HH24:MI:SS') 
-                  AND TIMESTAMP_UTC <= TO_DATE(:sEndStr, 'YYYY-MM-DD HH24:MI:SS')
-                ORDER BY TIMESTAMP_UTC ASC
-            `, {
-                deviceId,
-                sStartStr,
-                sEndStr
+            const gpsLocations = await LocationData.findAll({
+                attributes: ['latitude', 'longitude', 'timestampUtc'],
+                where: {
+                    deviceId,
+                    timestampUtc: {
+                        [Op.gte]: sessionStartUtc,
+                        [Op.lte]: sessionEndUtc
+                    }
+                },
+                order: [['timestampUtc', 'ASC']],
+                raw: true
             });
 
-            if (gpsRes.rows.length > 1) {
-                const locations = gpsRes.rows.map(row => ({
-                    lat: parseFloat(row.LATITUDE),
-                    lng: parseFloat(row.LONGITUDE),
-                    date: row.TIMESTAMP_UTC
+            if (gpsLocations.length > 1) {
+                const locations = gpsLocations.map(row => ({
+                    lat: Number(row.latitude),
+                    lng: Number(row.longitude),
+                    date: typeof row.timestampUtc === 'string' ? row.timestampUtc : row.timestampUtc.toISOString().substring(0, 19).replace('T', ' ')
                 }));
                 // Use filtering to ignore noise if necessary
                 const filtered = filterLocationsByDistance(locations, 10);
@@ -114,73 +108,76 @@ export async function POST(request, context) {
         const pricePerKilometer = totalKilometers > 0 ? f2TotalValue / totalKilometers : 0;
 
         // Update F2 with calculated values
-        await query(`
-            UPDATE FUEL 
-            SET TOTAL_KILOMETERS = :totalKilometers,
-                KILOMETER_PER_LITER = :kilometerPerLiter,
-                PRICE_PER_KILOMETER = :pricePerKilometer
-            WHERE TRIM(ID) = TRIM(:fuelId)
-        `, {
-            totalKilometers,
-            kilometerPerLiter,
-            pricePerKilometer,
-            fuelId
+        f2.totalKilometers = totalKilometers;
+        f2.kilometerPerLiter = kilometerPerLiter;
+        f2.pricePerKilometer = pricePerKilometer;
+        await f2.save();
+
+        // 5. Invalidate sessions that are affected by F2's updated price:
+        const f3 = await Fuel.findOne({
+            where: sequelize.and(
+                { carId: carId },
+                { userId: userId.trim() },
+                { timestampUtc: { [Op.gt]: f2Timestamp } },
+                { isDeleted: { [Op.or]: [0, null] } }
+            ),
+            order: [['timestampUtc', 'ASC']]
         });
 
-        // Invalidate sessions that are affected by F2's updated price:
-        //
-        // 1. Sessions BETWEEN F1 and F2 — these use F2's price directly (confirmed).
-        // 2. Sessions AFTER F2 up to F3 (or all future sessions if no F3) — these
-        //    were using F2's price as a projected/estimated cost and are now stale.
-        //
-        // We need F3 to know the upper bound of the estimated sessions.
-        const f3Res = await query(`
-            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC
-            FROM FUEL
-            WHERE TRIM(CAR_ID) = TRIM(:carId)
-              AND TRIM(USER_ID) = TRIM(:userId)
-              AND TIMESTAMP_UTC > TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-            ORDER BY TIMESTAMP_UTC ASC
-            FETCH NEXT 1 ROWS ONLY
-        `, { carId, userId, f2UtcStr });
-
         // --- Invalidate F1 → F2 sessions (confirmed range) ---
-        await query(`
-            UPDATE SESSION_DATA
-            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                VALUE_CONFIRMED = 'N',
-                UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-            WHERE TRIM(CAR_ID) = TRIM(:carId)
-              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-        `, { carId, f1UtcStr, f2UtcStr });
+        await SessionData.update({
+            cost: null,
+            distance: null,
+            timeTraveled: null,
+            valueConfirmed: 'N',
+            updatedAt: new Date()
+        }, {
+            where: {
+                carId: carId,
+                startUtc: {
+                    [Op.gt]: f1Timestamp,
+                    [Op.lt]: f2Timestamp
+                }
+            }
+        });
 
         // --- Invalidate F2 → F3 sessions (estimated range) ---
-        if (f3Res.rows.length > 0) {
+        if (f3) {
             // There is a next fuel record — invalidate up to F3
-            const f3UtcStr = f3Res.rows[0].TIMESTAMP_UTC.substring(0, 19).replace('T', ' ');
-            await query(`
-                UPDATE SESSION_DATA
-                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                    VALUE_CONFIRMED = 'N',
-                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE TRIM(CAR_ID) = TRIM(:carId)
-                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-                  AND START_UTC <  TO_DATE(:f3UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-            `, { carId, f2UtcStr, f3UtcStr });
-            console.log(`Invalidated estimated sessions between F2 and F3 (${f2UtcStr} → ${f3UtcStr})`);
+            const f3Timestamp = f3.get('timestampUtc');
+            await SessionData.update({
+                cost: null,
+                distance: null,
+                timeTraveled: null,
+                valueConfirmed: 'N',
+                updatedAt: new Date()
+            }, {
+                where: {
+                    carId: carId,
+                    startUtc: {
+                        [Op.gte]: f2Timestamp,
+                        [Op.lt]: f3Timestamp
+                    }
+                }
+            });
+            console.log(`Invalidated estimated sessions between F2 and F3`);
         } else {
             // No next fuel record — invalidate all future sessions from F2 onwards
-            await query(`
-                UPDATE SESSION_DATA
-                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                    VALUE_CONFIRMED = 'N',
-                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE TRIM(CAR_ID) = TRIM(:carId)
-                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-            `, { carId, f2UtcStr });
-            console.log(`Invalidated all future estimated sessions from F2 onwards (${f2UtcStr} → ∞)`);
+            await SessionData.update({
+                cost: null,
+                distance: null,
+                timeTraveled: null,
+                valueConfirmed: 'N',
+                updatedAt: new Date()
+            }, {
+                where: {
+                    carId: carId,
+                    startUtc: {
+                        [Op.gte]: f2Timestamp
+                    }
+                }
+            });
+            console.log(`Invalidated all future estimated sessions from F2 onwards`);
         }
 
         return Response.json({ success: true, message: 'Calculated successfully' });

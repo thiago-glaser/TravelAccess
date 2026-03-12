@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
-import { query, oracledb } from '@/lib/db';
+import { User, sequelize } from '@/lib/models/index.js';
 import { generateToken } from '@/lib/auth';
+import { Op } from 'sequelize';
 
 const client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -55,32 +56,19 @@ export async function GET(request) {
         let user = null;
 
         // 3a. Try to find user by Google ID (existing Google Users)
-        const byGoogleId = await query(
-            `SELECT * FROM USERS WHERE GOOGLE_ID = :googleId`,
-            { googleId }
-        );
-
-        if (byGoogleId.rows && byGoogleId.rows.length > 0) {
-            user = byGoogleId.rows[0];
-        }
+        user = await User.findOne({ where: { googleId } });
 
         if (!user) {
             // 3b. Try by email to link an existing local account
-            const byEmail = await query(
-                `SELECT * FROM USERS WHERE LOWER(EMAIL) = LOWER(:email)`,
-                { email }
-            );
+            user = await User.findOne({
+                where: { email }
+            });
 
-            if (byEmail.rows && byEmail.rows.length > 0) {
-                user = byEmail.rows[0];
+            if (user) {
                 // Link Google account to existing user
-                await query(
-                    `UPDATE USERS SET GOOGLE_ID = :googleId, GOOGLE_AVATAR_URL = :avatar WHERE TRIM(ID) = TRIM(:id)`,
-                    { googleId, avatar: picture || null, id: user.ID }
-                );
-                // Refresh data
-                const refreshed = await query(`SELECT * FROM USERS WHERE TRIM(ID) = TRIM(:id)`, { id: user.ID });
-                user = refreshed.rows[0];
+                user.googleId = googleId;
+                user.googleAvatarUrl = picture || null;
+                await user.save();
             }
         }
 
@@ -95,41 +83,36 @@ export async function GET(request) {
 
             // Ensure username uniqueness
             while (true) {
-                const existing = await query(
-                    `SELECT ID FROM USERS WHERE USERNAME = :username`,
-                    { username }
-                );
-                if (!existing.rows || existing.rows.length === 0) break;
+                const existing = await User.findOne({ where: { username }, attributes: ['id'] });
+                if (!existing) break;
                 username = `${baseUsername}${suffix++}`;
             }
 
-            const insertSql = `
-                INSERT INTO USERS (USERNAME, PASSWORD_HASH, EMAIL, GOOGLE_ID, GOOGLE_AVATAR_URL, CREATED_AT, IS_ADMIN)
-                VALUES (:username, NULL, :email, :googleId, :avatar, SYS_EXTRACT_UTC(SYSTIMESTAMP), 0)
-                RETURNING ID INTO :id
-            `;
-
-            const insertResult = await query(insertSql, {
+            user = await User.create({
                 username,
                 email,
                 googleId,
-                avatar: picture || null,
-                id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT },
+                googleAvatarUrl: picture || null,
+                isAdmin: 0
             });
-
-            const newId = insertResult.outBinds?.id?.[0];
-            if (!newId) throw new Error('Failed to create new user in database');
-
-            const newUser = await query(`SELECT * FROM USERS WHERE TRIM(ID) = TRIM(:id)`, { id: newId });
-            user = newUser.rows?.[0];
+            
+            if (!user.id) throw new Error('Failed to create new user in database');
         }
 
         if (!user) {
             return NextResponse.redirect(`${baseUrl}/login?error=google_db_error`);
         }
 
+        // Generate JWT expected token shape (falling back to legacy column names used inside sign)
+        const tokenPayload = {
+            ID: user.id,
+            USERNAME: user.username,
+            IS_ADMIN: user.isAdmin,
+            id: user.id
+        };
+
         // 4. Generate JWT and set the authentication cookie
-        const token = generateToken(user);
+        const token = generateToken(tokenPayload);
 
         const response = NextResponse.redirect(`${baseUrl}/`);
         response.cookies.set('auth_token', token, {

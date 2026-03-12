@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { Car, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -9,15 +10,26 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT TRIM(ID) AS ID, DESCRIPTION, LICENSE_PLATE 
-            FROM CARS 
-            WHERE TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-            ORDER BY ID
-        `;
-        const result = await query(sql, { userId });
 
-        return Response.json({ success: true, cars: result.rows });
+        const carsData = await Car.findAll({
+            where: {
+                userId: userId,
+                isDeleted: { [Op.or]: [0, null] }
+            },
+            attributes: ['id', 'description', 'licensePlate'],
+            order: [['id', 'ASC']]
+        });
+
+        const cars = carsData.map(c => {
+            const raw = c.get({ plain: true });
+            return {
+                ID: (raw.id || '').trim(),
+                DESCRIPTION: raw.description,
+                LICENSE_PLATE: raw.licensePlate
+            };
+        });
+
+        return Response.json({ success: true, cars });
     } catch (error) {
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -38,8 +50,7 @@ export async function POST(request) {
 
         const userId = session.USER_ID || session.id || session.ID;
 
-        const sql = `INSERT INTO CARS (USER_ID, DESCRIPTION, LICENSE_PLATE) VALUES (:userId, :description, :licensePlate)`;
-        await query(sql, {
+        await Car.create({
             userId,
             description: description || null,
             licensePlate: licensePlate || null
@@ -66,20 +77,22 @@ export async function PATCH(request) {
 
         const userId = session.USER_ID || session.id || session.ID;
 
-        // Verify ownership and update
-        const sql = `
-            UPDATE CARS 
-            SET DESCRIPTION = :description, LICENSE_PLATE = :licensePlate, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-            WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-        `;
-        const result = await query(sql, {
-            description: description || null,
-            licensePlate: licensePlate || null,
-            carId,
-            userId
-        });
+        const [updatedRowsCount] = await Car.update(
+            { 
+                description: description || null, 
+                licensePlate: licensePlate || null,
+                updatedAt: new Date()
+            },
+            {
+                where: sequelize.and(
+                    { id: carId.trim() },
+                    { userId: userId.trim() },
+                    { isDeleted: { [Op.or]: [0, null] } }
+                )
+            }
+        );
 
-        if (result.rowsAffected === 0) {
+        if (updatedRowsCount === 0) {
             return Response.json({ success: false, error: 'Car not found or not authorized' }, { status: 404 });
         }
 
@@ -104,10 +117,18 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE CARS SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId)`;
-        const result = await query(sql, { carId, userId });
 
-        if (result.rowsAffected === 0) {
+        const [updatedRowsCount] = await Car.update(
+            { isDeleted: 1, updatedAt: new Date() },
+            {
+                where: sequelize.and(
+                    { id: carId.trim() },
+                    { userId: userId.trim() }
+                )
+            }
+        );
+
+        if (updatedRowsCount === 0) {
             return Response.json({ success: false, error: 'Car not found or not authorized' }, { status: 404 });
         }
 

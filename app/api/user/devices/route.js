@@ -1,5 +1,6 @@
 import { getSession, verifyDeviceOwnership } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { UserDevice, Device, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -9,16 +10,31 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT ud.DEVICE_ID, d.DESCRIPTION 
-            FROM USER_DEVICES ud
-            LEFT JOIN devices d ON ud.DEVICE_ID = d.DEVICE_ID
-            WHERE TRIM(ud.USER_ID) = TRIM(:userId) AND (ud.IS_DELETED = 0 OR ud.IS_DELETED IS NULL)
-            ORDER BY ud.DEVICE_ID
-        `;
-        const result = await query(sql, { userId });
 
-        return Response.json({ success: true, devices: result.rows });
+        const userDevicesData = await UserDevice.findAll({
+            where: {
+                userId: userId,
+                isDeleted: { [Op.or]: [0, null] }
+            },
+            attributes: ['deviceId'],
+            include: [{
+                model: Device,
+                as: 'deviceInfo',
+                attributes: ['description'],
+                required: false
+            }],
+            order: [['deviceId', 'ASC']]
+        });
+
+        const devices = userDevicesData.map(ud => {
+            const raw = ud.get({ plain: true });
+            return {
+                DEVICE_ID: raw.deviceId,
+                DESCRIPTION: raw.deviceInfo ? raw.deviceInfo.description : null
+            };
+        });
+
+        return Response.json({ success: true, devices });
     } catch (error) {
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -39,12 +55,16 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Check if device is already owned by another user
-        const ownerCheckSql = `SELECT USER_ID FROM USER_DEVICES WHERE DEVICE_ID = :deviceId AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`;
-        const ownerResult = await query(ownerCheckSql, { deviceId });
+        const ownerCheck = await UserDevice.findOne({
+            where: {
+                deviceId: deviceId,
+                isDeleted: { [Op.or]: [0, null] }
+            }
+        });
 
-        if (ownerResult.rows && ownerResult.rows.length > 0) {
-            const currentOwner = ownerResult.rows[0].USER_ID;
-            if (currentOwner === userId) {
+        if (ownerCheck) {
+            const currentOwner = (ownerCheck.userId || '').trim();
+            if (currentOwner === userId.trim()) {
                 return Response.json({ success: false, error: 'You already own this device' }, { status: 409 });
             } else {
                 return Response.json({ success: false, error: 'This device is already claimed by another user' }, { status: 403 });
@@ -52,23 +72,28 @@ export async function POST(request) {
         }
 
         // Ensure device exists in master devices table
-        const deviceExistsResult = await query(`SELECT device_id FROM devices WHERE device_id = :deviceId`, { deviceId });
-        if (deviceExistsResult.rows.length === 0) {
-            await query(
-                `INSERT INTO devices (device_id, description) VALUES (:deviceId, :description)`,
-                { deviceId, description: description || 'New Device' }
-            );
+        const deviceExists = await Device.findOne({ where: { deviceId } });
+        
+        if (!deviceExists) {
+            await Device.create({
+                deviceId,
+                description: description || 'New Device'
+            });
         } else if (description) {
             // Update description if provided
-            await query(`UPDATE devices SET description = :description WHERE device_id = :deviceId`, { description, deviceId });
+            deviceExists.description = description;
+            await deviceExists.save();
         }
 
-        const sql = `INSERT INTO USER_DEVICES (USER_ID, DEVICE_ID) VALUES (:userId, :deviceId)`;
-        await query(sql, { userId, deviceId });
+        await UserDevice.create({
+            userId,
+            deviceId
+        });
 
         return Response.json({ success: true, message: 'Device added successfully' });
     } catch (error) {
-        if (error.errorNum === 1) {
+        // Sequelize UniqueConstraintError might occur if race condition
+        if (error.name === 'SequelizeUniqueConstraintError') {
             return Response.json({ success: false, error: 'Device already added to your account' }, { status: 409 });
         }
         return Response.json({ success: false, error: error.message }, { status: 500 });
@@ -92,9 +117,9 @@ export async function PATCH(request) {
         }
 
         // Update description in master table
-        await query(
-            `UPDATE devices SET description = :description WHERE device_id = :deviceId`,
-            { description, deviceId }
+        await Device.update(
+            { description },
+            { where: { deviceId } }
         );
 
         return Response.json({ success: true, message: 'Description updated successfully' });
@@ -118,8 +143,16 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `UPDATE USER_DEVICES SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(USER_ID) = TRIM(:userId) AND DEVICE_ID = :deviceId`;
-        const result = await query(sql, { userId, deviceId });
+        
+        await UserDevice.update(
+            { isDeleted: 1, updatedAt: new Date() },
+            {
+                where: sequelize.and(
+                    { userId: userId.trim() },
+                    { deviceId: deviceId }
+                )
+            }
+        );
 
         return Response.json({ success: true, message: 'Device removed successfully' });
     } catch (error) {

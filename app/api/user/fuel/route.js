@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
-import oracledb from 'oracledb';
+import { Fuel, Car, SessionData, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -10,31 +10,47 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT TRIM(f.ID) AS ID, TRIM(f.CAR_ID) AS CAR_ID, TO_CHAR(f.TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS TIMESTAMP_UTC, f.TOTAL_VALUE, f.LITERS, 
-                   f.TOTAL_KILOMETERS, f.KILOMETER_PER_LITER, f.PRICE_PER_KILOMETER,
-                   c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
-                   CASE WHEN f.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
-            FROM FUEL f
-            JOIN CARS c ON TRIM(f.CAR_ID) = TRIM(c.ID)
-            WHERE TRIM(f.USER_ID) = TRIM(:userId) AND (f.IS_DELETED = 0 OR f.IS_DELETED IS NULL)
-            ORDER BY f.TIMESTAMP_UTC DESC
-        `;
-        const result = await query(sql, { userId });
 
-        const fuelEntries = result.rows.map(row => ({
-            id: row.ID,
-            carId: row.CAR_ID,
-            timestampUtc: row.TIMESTAMP_UTC,
-            totalValue: row.TOTAL_VALUE,
-            liters: row.LITERS,
-            totalKilometers: row.TOTAL_KILOMETERS || 0,
-            kilometerPerLiter: row.KILOMETER_PER_LITER || 0,
-            pricePerKilometer: row.PRICE_PER_KILOMETER || 0,
-            carLicensePlate: row.LICENSE_PLATE,
-            carDescription: row.CAR_DESCRIPTION,
-            hasReceipt: row.HAS_RECEIPT === 1
-        }));
+        const fuelsData = await Fuel.findAll({
+            where: {
+                userId: userId,
+                isDeleted: { [Op.or]: [0, null] }
+            },
+            attributes: [
+                'id',
+                'carId',
+                'timestampUtc',
+                'totalValue',
+                'liters',
+                'totalKilometers',
+                'kilometerPerLiter',
+                'pricePerKilometer',
+                [sequelize.literal(`CASE WHEN "RECEIPT_IMAGE" IS NOT NULL THEN 1 ELSE 0 END`), 'hasReceipt']
+            ],
+            include: [{
+                model: Car,
+                as: 'car',
+                attributes: ['licensePlate', 'description']
+            }],
+            order: [['timestampUtc', 'DESC']]
+        });
+
+        const fuelEntries = fuelsData.map(f => {
+            const raw = f.get({ plain: true });
+            return {
+                id: (raw.id || '').trim(),
+                carId: (raw.carId || '').trim(),
+                timestampUtc: raw.timestampUtc ? new Date(raw.timestampUtc).toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+                totalValue: raw.totalValue,
+                liters: raw.liters,
+                totalKilometers: raw.totalKilometers || 0,
+                kilometerPerLiter: raw.kilometerPerLiter || 0,
+                pricePerKilometer: raw.pricePerKilometer || 0,
+                carLicensePlate: raw.car ? raw.car.licensePlate : null,
+                carDescription: raw.car ? raw.car.description : null,
+                hasReceipt: raw.hasReceipt === 1
+            };
+        });
 
         return Response.json({ success: true, fuel: fuelEntries });
     } catch (error) {
@@ -63,8 +79,15 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Ensure Car belongs to User
-        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`, { carId, userId });
-        if (carCheckResult.rows.length === 0) {
+        const carExists = await Car.findOne({
+            where: sequelize.and(
+                { id: carId.trim() },
+                { userId: userId.trim() },
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
+
+        if (!carExists) {
             return Response.json({ success: false, error: 'Invalid car selected' }, { status: 400 });
         }
 
@@ -77,25 +100,15 @@ export async function POST(request) {
             receiptMime = receiptFile.type;
         }
 
-        // Construct a strict UTC string without milliseconds/Z, i.e., '2026-02-26 19:00:00'
-        const utcStr = new Date(timestampIso).toISOString().substring(0, 19).replace('T', ' ');
-
-        const sql = `
-            INSERT INTO FUEL (USER_ID, CAR_ID, TIMESTAMP_UTC, TOTAL_VALUE, LITERS, RECEIPT_IMAGE, RECEIPT_MIME)
-            VALUES (:userId, :carId, TO_DATE(:utcStr, 'YYYY-MM-DD HH24:MI:SS'), :totalValue, :liters, :receiptImage, :receiptMime)
-        `;
-
-        const binds = {
+        await Fuel.create({
             userId,
             carId,
-            utcStr,
+            timestampUtc: new Date(timestampIso),
             totalValue,
             liters,
-            receiptImage: receiptBuffer ? { type: oracledb.BLOB, dir: oracledb.BIND_IN, val: receiptBuffer } : null,
-            receiptMime: receiptMime || null
-        };
-
-        await query(sql, binds);
+            receiptImage: receiptBuffer,
+            receiptMime: receiptMime
+        });
 
         return Response.json({ success: true, message: 'Fuel entry added successfully' });
     } catch (error) {
@@ -121,58 +134,74 @@ export async function DELETE(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Find the carId and timestamp before deleting the fuel entry
-        const carRes = await query(`
-            SELECT TRIM(CAR_ID) AS CAR_ID, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-            FROM FUEL 
-            WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-        `, { id, userId });
-        if (carRes.rows.length === 0) {
+        const deletedFuel = await Fuel.findOne({
+            where: sequelize.and(
+                { id: id.trim() },
+                { userId: userId.trim() },
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
+
+        if (!deletedFuel) {
             return Response.json({ success: false, error: 'Not found or not authorized' }, { status: 404 });
         }
-        const carId = carRes.rows[0].CAR_ID;
-        const deletedTimestampISO = carRes.rows[0].TIMESTAMP_UTC;
-        const deletedUtcStr = deletedTimestampISO.substring(0, 19).replace('T', ' ');
+        
+        const carId = deletedFuel.get('carId').trim();
+        const deletedTimestamp = deletedFuel.get('timestampUtc');
 
         // Find the prior fuel timestamp for this car (if any)
-        const priorFuelRes = await query(`
-            SELECT TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-            FROM FUEL 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) 
-              AND TRIM(USER_ID) = TRIM(:userId) 
-              AND TIMESTAMP_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
-              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
-            ORDER BY TIMESTAMP_UTC DESC 
-            FETCH NEXT 1 ROWS ONLY
-        `, { carId, userId, deletedUtcStr });
+        const priorFuel = await Fuel.findOne({
+            where: sequelize.and(
+                { carId: carId },
+                { userId: userId.trim() },
+                { timestampUtc: { [Op.lt]: deletedTimestamp } },
+                { isDeleted: { [Op.or]: [0, null] } }
+            ),
+            order: [['timestampUtc', 'DESC']]
+        });
 
-        const sql = `UPDATE FUEL SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
-        const result = await query(sql, { id, userId });
-
-        if (result.rowsAffected > 0) {
-            if (priorFuelRes.rows.length > 0) {
-                const priorTimestampISO = priorFuelRes.rows[0].TIMESTAMP_UTC;
-                const priorUtcStr = priorTimestampISO.substring(0, 19).replace('T', ' ');
-
-                await query(`
-                    UPDATE SESSION_DATA
-                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                        VALUE_CONFIRMED = 'N',
-                        UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                    WHERE TRIM(CAR_ID) = TRIM(:carId)
-                      AND START_UTC > TO_DATE(:priorUtcStr, 'YYYY-MM-DD HH24:MI:SS')
-                      AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
-                `, { carId, priorUtcStr, deletedUtcStr });
-            } else {
-                // If there's no prior fuel, invalidate all sessions up to this deleted fueling point
-                await query(`
-                    UPDATE SESSION_DATA
-                    SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                        VALUE_CONFIRMED = 'N',
-                        UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                    WHERE TRIM(CAR_ID) = TRIM(:carId)
-                      AND START_UTC < TO_DATE(:deletedUtcStr, 'YYYY-MM-DD HH24:MI:SS')
-                `, { carId, deletedUtcStr });
+        // Delete the fuel entry
+        const [updatedRowsCount] = await Fuel.update(
+            { isDeleted: 1, updatedAt: new Date() },
+            {
+                where: sequelize.and(
+                    { id: id.trim() },
+                    { userId: userId.trim() }
+                )
             }
+        );
+
+        if (updatedRowsCount > 0) {
+            let sessionCondition = {
+                carId: { carId: carId },
+                startUtc: { [Op.lt]: deletedTimestamp }
+            };
+
+            if (priorFuel) {
+                // Between prior fuel and deleted fuel
+                sessionCondition.startUtc = {
+                    [Op.gt]: priorFuel.timestampUtc,
+                    [Op.lt]: deletedTimestamp
+                };
+            }
+
+            // Note VALUE_CONFIRMED might not exist if we missed it in model generation.
+            // Let's use raw update for complex session update if valueConfirmed missing
+            await sequelize.query(`
+                UPDATE SESSION_DATA
+                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
+                    VALUE_CONFIRMED = 'N',
+                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                WHERE TRIM(CAR_ID) = :carId
+                  ${priorFuel ? `AND START_UTC > :priorTimestamp` : ''}
+                  AND START_UTC < :deletedTimestamp
+            `, {
+                replacements: { 
+                    carId, 
+                    priorTimestamp: priorFuel ? priorFuel.timestampUtc : null,
+                    deletedTimestamp
+                }
+            });
         }
 
         return Response.json({ success: true, message: 'Fuel entry removed successfully' });

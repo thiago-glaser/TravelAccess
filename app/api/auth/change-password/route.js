@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession, hashPassword, verifyPassword } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { User, sequelize } from '@/lib/models/index.js';
 
 export async function POST(request) {
     try {
@@ -16,32 +16,29 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'New password must be at least 6 characters' }, { status: 400 });
         }
 
-        // Fetch user to check current password if it exists (for non-Google users that have a password logic)
-        // If a user has no password (e.g., registered via Google), we might skip currentPassword check or require it
-        const userSql = `SELECT PASSWORD_HASH FROM USERS WHERE TRIM(ID) = TRIM(:id)`;
-        const userResult = await query(userSql, { id: session.id });
+        // Fetch user to check current password if it exists
+        const user = await User.findOne({
+            where: { id: session.id.trim() }
+        });
 
-        if (!userResult.rows || userResult.rows.length === 0) {
+        if (!user) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
 
-        const user = userResult.rows[0];
-
         // If the user has a password set, require them to enter the current one
-        if (user.PASSWORD_HASH) {
+        if (user.passwordHash) {
             if (!currentPassword) {
                 return NextResponse.json({ success: false, error: 'Current password is required' }, { status: 400 });
             }
-            const isValid = await verifyPassword(currentPassword, user.PASSWORD_HASH);
+            const isValid = await verifyPassword(currentPassword, user.passwordHash);
             if (!isValid) {
                 return NextResponse.json({ success: false, error: 'Incorrect current password' }, { status: 401 });
             }
         }
 
         // Apply new password
-        const newHash = await hashPassword(newPassword);
-        const updateSql = `UPDATE USERS SET PASSWORD_HASH = :hash WHERE TRIM(ID) = TRIM(:id)`;
-        await query(updateSql, { hash: newHash, id: session.id });
+        user.passwordHash = await hashPassword(newPassword);
+        await user.save();
 
         return NextResponse.json({ success: true, message: 'Password updated successfully' });
     } catch (error) {

@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
-import oracledb from 'oracledb';
+import { Maintenance, Car, sequelize } from '@/lib/models/index.js';
+import { Op } from 'sequelize';
 
 export async function GET(request) {
     const session = await getSession(request);
@@ -10,31 +10,47 @@ export async function GET(request) {
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
-        const sql = `
-            SELECT TRIM(m.ID) AS ID, TRIM(m.CAR_ID) AS CAR_ID, TO_CHAR(m.MAINTENANCE_DATE, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS MAINTENANCE_DATE, 
-                   m.AMOUNT, m.DESCRIPTION,
-                   c.LICENSE_PLATE, c.DESCRIPTION AS CAR_DESCRIPTION,
-                   CASE WHEN m.RECEIPT_IMAGE IS NOT NULL THEN 1 ELSE 0 END AS HAS_RECEIPT
-            FROM MAINTENANCE m
-            JOIN CARS c ON TRIM(m.CAR_ID) = TRIM(c.ID)
-            WHERE TRIM(m.USER_ID) = TRIM(:userId) AND (m.IS_DELETED = 0 OR m.IS_DELETED IS NULL)
-            ORDER BY m.MAINTENANCE_DATE DESC
-        `;
-        const result = await query(sql, { userId });
+        
+        const maintenances = await Maintenance.findAll({
+            where: {
+                userId: userId,
+                isDeleted: {
+                    [Op.or]: [0, null]
+                }
+            },
+            attributes: [
+                'id',
+                'carId',
+                'maintenanceDate',
+                'amount',
+                'description',
+                [sequelize.literal(`CASE WHEN "RECEIPT_IMAGE" IS NOT NULL THEN 1 ELSE 0 END`), 'hasReceipt']
+            ],
+            include: [{
+                model: Car,
+                as: 'car',
+                attributes: ['licensePlate', 'description']
+            }],
+            order: [['maintenanceDate', 'DESC']]
+        });
 
-        const maintenanceEntries = result.rows.map(row => ({
-            id: row.ID,
-            carId: row.CAR_ID,
-            maintenanceDate: row.MAINTENANCE_DATE,
-            amount: row.AMOUNT,
-            description: row.DESCRIPTION,
-            carLicensePlate: row.LICENSE_PLATE,
-            carDescription: row.CAR_DESCRIPTION,
-            hasReceipt: row.HAS_RECEIPT === 1
-        }));
+        const maintenanceEntries = maintenances.map(m => {
+            const raw = m.get({ plain: true });
+            return {
+                id: (raw.id || '').trim(),
+                carId: (raw.carId || '').trim(),
+                maintenanceDate: raw.maintenanceDate ? new Date(raw.maintenanceDate).toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+                amount: raw.amount,
+                description: raw.description,
+                carLicensePlate: raw.car ? raw.car.licensePlate : null,
+                carDescription: raw.car ? raw.car.description : null,
+                hasReceipt: raw.hasReceipt === 1
+            };
+        });
 
         return Response.json({ success: true, maintenance: maintenanceEntries });
     } catch (error) {
+        console.error("GET Maintenance error:", error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
@@ -60,8 +76,26 @@ export async function POST(request) {
         const userId = session.USER_ID || session.id || session.ID;
 
         // Ensure Car belongs to User
-        const carCheckResult = await query(`SELECT ID FROM CARS WHERE TRIM(ID) = TRIM(:carId) AND TRIM(USER_ID) = TRIM(:userId) AND (IS_DELETED = 0 OR IS_DELETED IS NULL)`, { carId, userId });
-        if (carCheckResult.rows.length === 0) {
+        const carCount = await Car.count({
+            where: {
+                id: carId.padEnd(36, ' '), // Pad with spaces because CHAR(36) in Oracle might require it depending on drivers, or Sequelize handles it. Let's rely on DB or trim in where string, Sequelize escapes params.
+                userId: userId,
+                isDeleted: {
+                    [Op.or]: [0, null]
+                }
+            }
+        });
+        
+        // Let's use raw where to ensure trim if needed
+        const carExists = await Car.findOne({
+            where: sequelize.and(
+                { id: carId.trim() },
+                { userId: userId.trim() },
+                { isDeleted: { [Op.or]: [0, null] } }
+            )
+        });
+
+        if (!carExists) {
             return Response.json({ success: false, error: 'Invalid car selected' }, { status: 400 });
         }
 
@@ -74,25 +108,15 @@ export async function POST(request) {
             receiptMime = receiptFile.type;
         }
 
-        // Construct a strict UTC string without milliseconds/Z
-        const utcStr = new Date(maintenanceDateIso).toISOString().substring(0, 19).replace('T', ' ');
-
-        const sql = `
-            INSERT INTO MAINTENANCE (USER_ID, CAR_ID, MAINTENANCE_DATE, AMOUNT, DESCRIPTION, RECEIPT_IMAGE, RECEIPT_MIME)
-            VALUES (:userId, :carId, TO_DATE(:utcStr, 'YYYY-MM-DD HH24:MI:SS'), :amount, :description, :receiptImage, :receiptMime)
-        `;
-
-        const binds = {
-            userId,
-            carId,
-            utcStr,
-            amount,
-            description,
-            receiptImage: receiptBuffer ? { type: oracledb.BLOB, dir: oracledb.BIND_IN, val: receiptBuffer } : null,
-            receiptMime: receiptMime || null
-        };
-
-        await query(sql, binds);
+        const newMaintenance = await Maintenance.create({
+            userId: userId,
+            carId: carId,
+            maintenanceDate: new Date(maintenanceDateIso),
+            amount: amount,
+            description: description,
+            receiptImage: receiptBuffer,
+            receiptMime: receiptMime
+        });
 
         return Response.json({ success: true, message: 'Maintenance entry added successfully' });
     } catch (error) {
@@ -117,11 +141,19 @@ export async function DELETE(request) {
 
         const userId = session.USER_ID || session.id || session.ID;
 
-        const sql = `UPDATE MAINTENANCE SET IS_DELETED = 1, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP) WHERE TRIM(ID) = TRIM(:id) AND TRIM(USER_ID) = TRIM(:userId)`;
-        await query(sql, { id, userId });
+        await Maintenance.update(
+            { isDeleted: 1, updatedAt: new Date() },
+            { 
+                where: sequelize.and(
+                    { id: id.trim() },
+                    { userId: userId.trim() }
+                )
+            }
+        );
 
         return Response.json({ success: true, message: 'Maintenance entry removed successfully' });
     } catch (error) {
+        console.error("DELETE Maintenance error:", error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
