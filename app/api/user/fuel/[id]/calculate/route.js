@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth';
-import { Fuel, sequelize } from '@/lib/models/index.js';
+import { Fuel, SessionView, LocationData, SessionData, sequelize } from '@/lib/models/index.js';
 import { calculateTotalDistance, filterLocationsByDistance } from '@/lib/gpsUtils';
-import { QueryTypes, Op } from 'sequelize';
+import { Op } from 'sequelize';
 
 export async function POST(request, context) {
     const session = await getSession(request);
@@ -38,9 +38,6 @@ export async function POST(request, context) {
         const f2Liters = parseFloat(f2.get('liters')) || 0;
         const f2TotalValue = parseFloat(f2.get('totalValue')) || 0;
 
-        const f2TimestampISO = f2Timestamp.toISOString(); // "2026-02-26T19:00:00.000Z"
-        const f2UtcStr = f2TimestampISO.substring(0, 19).replace('T', ' '); // "2026-02-26 19:00:00"
-
         // 2. Get previous fuel record F1 for the same car
         const f1 = await Fuel.findOne({
             where: sequelize.and(
@@ -56,51 +53,48 @@ export async function POST(request, context) {
             return Response.json({ success: false, error: 'Cannot calculate. No previous fuel log found for this car.' }, { status: 400 });
         }
 
-        const f1TimestampISO = f1.get('timestampUtc').toISOString();
-        const f1UtcStr = f1TimestampISO.substring(0, 19).replace('T', ' ');
+        const f1Timestamp = f1.get('timestampUtc');
 
-        // 3. Find all sessions for this car within (f1UtcStr, f2UtcStr)
-        // V_SESSIONS is a view, and we don't have a model, so we use raw query
-        const sessions = await sequelize.query(`
-            SELECT TRIM(ID) AS ID, DEVICE_ID, TO_CHAR(START_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS START_UTC, TO_CHAR(END_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS END_UTC 
-            FROM V_SESSIONS 
-            WHERE TRIM(CAR_ID) = TRIM(:carId) 
-              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS') 
-              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-        `, {
-            replacements: { carId, f1UtcStr, f2UtcStr },
-            type: QueryTypes.SELECT
+        // 3. Find all sessions for this car within (f1Timestamp, f2Timestamp)
+        // V_SESSIONS is a view, mapped to SessionView
+        const sessions = await SessionView.findAll({
+            attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
+            where: {
+                carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                startUtc: {
+                    [Op.gt]: f1Timestamp,
+                    [Op.lt]: f2Timestamp
+                }
+            },
+            raw: true
         });
 
         let totalMeters = 0;
 
         // 4. For each session, fetch location_data and calculate distance
         for (const s of sessions) {
-            const deviceId = s.DEVICE_ID;
-            const startUtc = s.START_UTC;
-            const endUtc = s.END_UTC;
+            const deviceId = s.deviceId;
+            const sessionStartUtc = s.startUtc;
+            const sessionEndUtc = s.endUtc || f2Timestamp;
 
-            const sessionEndUtc = endUtc ? endUtc : f2TimestampISO;
-            const sStartStr = startUtc.substring(0, 19).replace('T', ' ');
-            const sEndStr = sessionEndUtc.substring(0, 19).replace('T', ' ');
-
-            const gpsLocations = await sequelize.query(`
-                SELECT LATITUDE, LONGITUDE, TO_CHAR(TIMESTAMP_UTC, 'YYYY-MM-DD"T"HH24:MI:SS') AS TIMESTAMP_UTC 
-                FROM LOCATION_DATA 
-                WHERE DEVICE_ID = :deviceId 
-                  AND TIMESTAMP_UTC >= TO_DATE(:sStartStr, 'YYYY-MM-DD HH24:MI:SS') 
-                  AND TIMESTAMP_UTC <= TO_DATE(:sEndStr, 'YYYY-MM-DD HH24:MI:SS')
-                ORDER BY TIMESTAMP_UTC ASC
-            `, {
-                replacements: { deviceId, sStartStr, sEndStr },
-                type: QueryTypes.SELECT
+            const gpsLocations = await LocationData.findAll({
+                attributes: ['latitude', 'longitude', 'timestampUtc'],
+                where: {
+                    deviceId,
+                    timestampUtc: {
+                        [Op.gte]: sessionStartUtc,
+                        [Op.lte]: sessionEndUtc
+                    }
+                },
+                order: [['timestampUtc', 'ASC']],
+                raw: true
             });
 
             if (gpsLocations.length > 1) {
                 const locations = gpsLocations.map(row => ({
-                    lat: parseFloat(row.LATITUDE),
-                    lng: parseFloat(row.LONGITUDE),
-                    date: row.TIMESTAMP_UTC
+                    lat: Number(row.latitude),
+                    lng: Number(row.longitude),
+                    date: typeof row.timestampUtc === 'string' ? row.timestampUtc : row.timestampUtc.toISOString().substring(0, 19).replace('T', ' ')
                 }));
                 // Use filtering to ignore noise if necessary
                 const filtered = filterLocationsByDistance(locations, 10);
@@ -131,41 +125,59 @@ export async function POST(request, context) {
         });
 
         // --- Invalidate F1 → F2 sessions (confirmed range) ---
-        await sequelize.query(`
-            UPDATE SESSION_DATA
-            SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                VALUE_CONFIRMED = 'N',
-                UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-            WHERE TRIM(CAR_ID) = TRIM(:carId)
-              AND START_UTC > TO_DATE(:f1UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-              AND START_UTC < TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-        `, { replacements: { carId, f1UtcStr, f2UtcStr } });
+        await SessionData.update({
+            cost: null,
+            distance: null,
+            timeTraveled: null,
+            valueConfirmed: 'N',
+            updatedAt: new Date()
+        }, {
+            where: {
+                carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                startUtc: {
+                    [Op.gt]: f1Timestamp,
+                    [Op.lt]: f2Timestamp
+                }
+            }
+        });
 
         // --- Invalidate F2 → F3 sessions (estimated range) ---
         if (f3) {
             // There is a next fuel record — invalidate up to F3
-            const f3UtcStr = f3.get('timestampUtc').toISOString().substring(0, 19).replace('T', ' ');
-            await sequelize.query(`
-                UPDATE SESSION_DATA
-                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                    VALUE_CONFIRMED = 'N',
-                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE TRIM(CAR_ID) = TRIM(:carId)
-                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-                  AND START_UTC <  TO_DATE(:f3UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-            `, { replacements: { carId, f2UtcStr, f3UtcStr } });
-            console.log(`Invalidated estimated sessions between F2 and F3 (${f2UtcStr} → ${f3UtcStr})`);
+            const f3Timestamp = f3.get('timestampUtc');
+            await SessionData.update({
+                cost: null,
+                distance: null,
+                timeTraveled: null,
+                valueConfirmed: 'N',
+                updatedAt: new Date()
+            }, {
+                where: {
+                    carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                    startUtc: {
+                        [Op.gte]: f2Timestamp,
+                        [Op.lt]: f3Timestamp
+                    }
+                }
+            });
+            console.log(`Invalidated estimated sessions between F2 and F3`);
         } else {
             // No next fuel record — invalidate all future sessions from F2 onwards
-            await sequelize.query(`
-                UPDATE SESSION_DATA
-                SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
-                    VALUE_CONFIRMED = 'N',
-                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE TRIM(CAR_ID) = TRIM(:carId)
-                  AND START_UTC >= TO_DATE(:f2UtcStr, 'YYYY-MM-DD HH24:MI:SS')
-            `, { replacements: { carId, f2UtcStr } });
-            console.log(`Invalidated all future estimated sessions from F2 onwards (${f2UtcStr} → ∞)`);
+            await SessionData.update({
+                cost: null,
+                distance: null,
+                timeTraveled: null,
+                valueConfirmed: 'N',
+                updatedAt: new Date()
+            }, {
+                where: {
+                    carId: sequelize.where(sequelize.fn('TRIM', sequelize.col('CAR_ID')), carId),
+                    startUtc: {
+                        [Op.gte]: f2Timestamp
+                    }
+                }
+            });
+            console.log(`Invalidated all future estimated sessions from F2 onwards`);
         }
 
         return Response.json({ success: true, message: 'Calculated successfully' });
