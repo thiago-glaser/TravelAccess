@@ -158,7 +158,16 @@ export default function MonthlyReportsPage() {
             const sessionsList = sResult.data;
             if (sessionsList.length === 0) {
                 setReportData([]);
-                setTotals({ distance: 0, duration: 0, count: 0, cost: 0, insurance: 0, breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } } });
+                setTotals({ 
+                    distance: 0, 
+                    duration: 0, 
+                    count: 0, 
+                    cost: 0, 
+                    insurance: 0, 
+                    personalInsurance: 0, 
+                    businessInsurance: 0, 
+                    breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } } 
+                });
                 setLoading(false);
                 return;
             }
@@ -175,9 +184,9 @@ export default function MonthlyReportsPage() {
                         if (session.cost != null && session.distance != null && session.timeTraveled != null) {
                             return {
                                 ...session,
-                                distanceKm: session.distance,
-                                durationHours: session.timeTraveled,
-                                cost: session.cost,
+                                distanceKm: Number(session.distance) || 0,
+                                durationHours: Number(session.timeTraveled) || 0,
+                                cost: Number(session.cost) || 0,
                                 valueConfirmed: session.valueConfirmed || 'N',
                                 isProjected: (session.valueConfirmed || 'N') === 'N'
                             };
