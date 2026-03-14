@@ -25,7 +25,8 @@ export async function GET(request) {
                 username: user.username,
                 email: user.email,
                 googleAvatarUrl: user.googleAvatarUrl,
-                isDemo: session.isDemo === 'Y' || session.isDemo === true
+                isDemo: session.isDemo === 'Y' || session.isDemo === true,
+                isAdmin: session.isAdmin === 1
             }
         });
     } catch (error) {

@@ -21,6 +21,7 @@ export default function Navbar() {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' });
+    const [demoStatus, setDemoStatus] = useState({ loading: false, message: '' });
 
     const dropdownRef = useRef(null);
     const dropdownReportsRef = useRef(null);
@@ -96,6 +97,25 @@ export default function Navbar() {
             }
         } catch (err) {
             setPwdStatus({ loading: false, error: 'An error occurred', success: '' });
+        }
+    };
+    const handleSetupDemo = async (force = false) => {
+        if (!confirm(force ? 'Warning: This will DELETE all existing demo user data and recreate it. Continue?' : 'Initialize demo user and data?')) return;
+
+        setDemoStatus({ loading: true, message: 'Processing...' });
+        try {
+            const res = await fetch(`/api/setup-demo${force ? '?force=true' : ''}`);
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                setIsSettingsOpen(false);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (err) {
+            alert('An error occurred during demo setup.');
+        } finally {
+            setDemoStatus({ loading: false, message: '' });
         }
     };
     const isDataActive = pathname.startsWith('/dashboard/cars') || pathname.startsWith('/dashboard/fuel') || pathname.startsWith('/dashboard/insurance') || pathname.startsWith('/dashboard/maintenance') || pathname.startsWith('/dashboard/devices') || pathname.startsWith('/dashboard/bluetooth');
@@ -400,6 +420,35 @@ export default function Navbar() {
                                             API Keys
                                         </Link>
                                     )}
+
+                                    {userProfile?.isAdmin && (
+                                        <>
+                                            <div className="border-t border-gray-100 my-1 mx-2"></div>
+                                            <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                Admin Tools
+                                            </div>
+                                            <button
+                                                onClick={() => handleSetupDemo(false)}
+                                                disabled={demoStatus.loading}
+                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a2 2 0 00-1.996 1.414l-.5 1.5a2 2 0 01-1.898 1.367c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L11 2.5a2 2 0 00-2-1.5H3a2 2 0 00-2 2v6a2 2 0 00.5 1.5l1.5.5a2 2 0 011.367 1.898v.5a2 2 0 01-2.032 2.032c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L13 2.5" />
+                                                </svg>
+                                                {demoStatus.loading ? 'Processing...' : 'Setup Demo Data'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleSetupDemo(true)}
+                                                disabled={demoStatus.loading}
+                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                                Force Demo Reset
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -628,6 +677,35 @@ export default function Navbar() {
                                     </svg>
                                     API Keys
                                 </Link>
+                            )}
+
+                            {userProfile?.isAdmin && (
+                                <>
+                                    <div className="border-t border-gray-100 my-1 mx-2"></div>
+                                    <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                        Admin Tools
+                                    </div>
+                                    <button
+                                        onClick={() => handleSetupDemo(false)}
+                                        disabled={demoStatus.loading}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-all"
+                                    >
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a2 2 0 00-1.996 1.414l-.5 1.5a2 2 0 01-1.898 1.367c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L11 2.5a2 2 0 00-2-1.5H3a2 2 0 00-2 2v6a2 2 0 00.5 1.5l1.5.5a2 2 0 011.367 1.898v.5a2 2 0 01-2.032 2.032c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L13 2.5" />
+                                        </svg>
+                                        {demoStatus.loading ? 'Processing...' : 'Setup Demo Data'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleSetupDemo(true)}
+                                        disabled={demoStatus.loading}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
+                                    >
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Force Demo Reset
+                                    </button>
+                                </>
                             )}
                         </div>
                     )}
