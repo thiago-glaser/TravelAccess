@@ -21,21 +21,9 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
+    const clean = searchParams.get('clean') === 'true';
 
     try {
-        // 1. Ensure IS_DEMO column exists
-        try {
-            await sequelize.query(`
-                ALTER TABLE USERS 
-                ADD IS_DEMO CHAR(1) DEFAULT 'N'
-            `);
-            console.log('Added IS_DEMO column');
-        } catch (colErr) {
-            if (!colErr.message.includes('ORA-01430') && !colErr.message.includes('exists')) {
-                console.error('Column creation error:', colErr);
-            }
-        }
-
         // 2. Create/Update Demo user
         let demoUser = await User.findOne({ where: { username: 'demo' } });
         let userCreated = false;
@@ -55,23 +43,29 @@ export async function GET(request) {
         }
 
         const userId = demoUser.id;
+        const deviceId = 'DEMO-GPS-01';
 
-        // 3. Generate Data if new user or force=true
+        // 3. Clean or Recreate
+        if (clean || force) {
+            console.log('Cleaning demo data for user:', userId);
+            await Car.destroy({ where: { userId } });
+            await Fuel.destroy({ where: { userId } });
+            await Maintenance.destroy({ where: { userId } });
+            await Insurance.destroy({ where: { userId } });
+            await UserDevice.destroy({ where: { userId } });
+            await SessionData.destroy({ where: { deviceId } });
+            await LocationData.destroy({ where: { deviceId } });
+
+            if (clean) {
+                return Response.json({ success: true, message: 'Demo data cleaned successfully.' });
+            }
+        }
+
+        // 4. Generate Data if new user or force=true
         const carCount = await Car.count({ where: { userId, isDeleted: 0 } });
 
         if (carCount === 0 || force) {
             console.log('Generating demo data for user:', userId);
-
-            // Clean up old demo data if forcing
-            if (force) {
-                await Car.destroy({ where: { userId } });
-                await Fuel.destroy({ where: { userId } });
-                await Maintenance.destroy({ where: { userId } });
-                await Insurance.destroy({ where: { userId } });
-                await UserDevice.destroy({ where: { userId } });
-                // Note: We don't delete Global Devices or SessionData/LocationData linked to them 
-                // in a simple way here to avoid side effects, but for demo it's fine.
-            }
 
             // Create Cars
             const car1 = await Car.create({
@@ -87,7 +81,6 @@ export async function GET(request) {
             });
 
             // Create Device mapping
-            const deviceId = 'DEMO-GPS-01';
             const deviceExists = await Device.findByPk(deviceId);
             if (!deviceExists) {
                 await Device.create({
@@ -163,6 +156,9 @@ export async function GET(request) {
                 const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
                 const distance = 5 + Math.random() * 15;
 
+                // Calculate duration as the difference in hours between end and start
+                const calculatedDuration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
                 const session = await SessionData.create({
                     deviceId,
                     carId: car1.id,
@@ -170,7 +166,7 @@ export async function GET(request) {
                     endUtc: end,
                     sessionType: i % 3 === 0 ? 'B' : 'P', // B = Business, P = Private
                     distance: distance.toFixed(2),
-                    timeTraveled: durationMinutes.toFixed(2),
+                    timeTraveled: calculatedDuration.toFixed(2),
                     cost: (distance * 0.45).toFixed(2),
                     valueConfirmed: 'Y'
                 });

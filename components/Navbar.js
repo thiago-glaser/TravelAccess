@@ -99,12 +99,20 @@ export default function Navbar() {
             setPwdStatus({ loading: false, error: 'An error occurred', success: '' });
         }
     };
-    const handleSetupDemo = async (force = false) => {
-        if (!confirm(force ? 'Warning: This will DELETE all existing demo user data and recreate it. Continue?' : 'Initialize demo user and data?')) return;
+    const handleSetupDemo = async (mode = 'setup') => {
+        let confirmMsg = 'Initialize demo user and data?';
+        if (mode === 'force') confirmMsg = 'Warning: This will DELETE all existing demo user data and recreate it. Continue?';
+        if (mode === 'clean') confirmMsg = 'Warning: This will DELETE all existing demo user data. Continue?';
+
+        if (!confirm(confirmMsg)) return;
 
         setDemoStatus({ loading: true, message: 'Processing...' });
         try {
-            const res = await fetch(`/api/setup-demo${force ? '?force=true' : ''}`);
+            let url = '/api/setup-demo';
+            if (mode === 'force') url += '?force=true';
+            if (mode === 'clean') url += '?clean=true';
+
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 alert(data.message);
@@ -428,7 +436,7 @@ export default function Navbar() {
                                                 Admin Tools
                                             </div>
                                             <button
-                                                onClick={() => handleSetupDemo(false)}
+                                                onClick={() => handleSetupDemo('setup')}
                                                 disabled={demoStatus.loading}
                                                 className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                                             >
@@ -438,14 +446,24 @@ export default function Navbar() {
                                                 {demoStatus.loading ? 'Processing...' : 'Setup Demo Data'}
                                             </button>
                                             <button
-                                                onClick={() => handleSetupDemo(true)}
+                                                onClick={() => handleSetupDemo('force')}
                                                 disabled={demoStatus.loading}
-                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                 </svg>
                                                 Force Demo Reset
+                                            </button>
+                                            <button
+                                                onClick={() => handleSetupDemo('clean')}
+                                                disabled={demoStatus.loading}
+                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Clean Demo Data
                                             </button>
                                         </>
                                     )}
@@ -686,7 +704,7 @@ export default function Navbar() {
                                         Admin Tools
                                     </div>
                                     <button
-                                        onClick={() => handleSetupDemo(false)}
+                                        onClick={() => handleSetupDemo('setup')}
                                         disabled={demoStatus.loading}
                                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-all"
                                     >
@@ -696,14 +714,24 @@ export default function Navbar() {
                                         {demoStatus.loading ? 'Processing...' : 'Setup Demo Data'}
                                     </button>
                                     <button
-                                        onClick={() => handleSetupDemo(true)}
+                                        onClick={() => handleSetupDemo('force')}
                                         disabled={demoStatus.loading}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-all"
                                     >
                                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
                                         Force Demo Reset
+                                    </button>
+                                    <button
+                                        onClick={() => handleSetupDemo('clean')}
+                                        disabled={demoStatus.loading}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
+                                    >
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Clean Demo Data
                                     </button>
                                 </>
                             )}
