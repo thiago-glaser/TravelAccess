@@ -1,14 +1,14 @@
-import { 
-    User, 
-    Car, 
-    Device, 
-    UserDevice, 
-    SessionData, 
+import {
+    User,
+    Car,
+    Device,
+    UserDevice,
+    SessionData,
     LocationData,
-    Fuel, 
-    Maintenance, 
+    Fuel,
+    Maintenance,
     Insurance,
-    sequelize 
+    sequelize
 } from '@/lib/models/index.js';
 import { hashPassword, getSession } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
@@ -58,7 +58,7 @@ export async function GET(request) {
 
         // 3. Generate Data if new user or force=true
         const carCount = await Car.count({ where: { userId, isDeleted: 0 } });
-        
+
         if (carCount === 0 || force) {
             console.log('Generating demo data for user:', userId);
 
@@ -106,14 +106,14 @@ export async function GET(request) {
             for (let i = 1; i <= 6; i++) {
                 const date = new Date();
                 date.setDate(today.getDate() - (i * 15));
-                
+
                 await Fuel.create({
                     userId,
                     carId: car1.id,
                     timestampUtc: date,
                     totalValue: (40 + Math.random() * 20).toFixed(2),
                     liters: (30 + Math.random() * 10).toFixed(2),
-                    totalKilometers: 50000 + (i * 450),
+                    totalKilometers: (450 + Math.random() * 100),
                     kilometerPerLiter: (12 + Math.random() * 2).toFixed(2),
                     pricePerKilometer: (0.3 + Math.random() * 0.1).toFixed(2)
                 });
@@ -139,7 +139,7 @@ export async function GET(request) {
             // Generate Insurance Records
             const currentYear = today.getFullYear();
             const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            
+
             await Insurance.create({
                 userId,
                 carId: car1.id,
@@ -168,11 +168,9 @@ export async function GET(request) {
                     carId: car1.id,
                     startUtc: start,
                     endUtc: end,
-                    sessionType: i % 3 === 0 ? 'W' : 'P', // W = Work, P = Private
+                    sessionType: i % 3 === 0 ? 'B' : 'P', // B = Business, P = Private
                     distance: distance.toFixed(2),
                     timeTraveled: durationMinutes.toFixed(2),
-                    geocodeStart: 'Av. Paulista, 1000 - Bela Vista',
-                    geocodeEnd: 'Rua Augusta, 1500 - Consolação',
                     cost: (distance * 0.45).toFixed(2),
                     valueConfirmed: 'Y'
                 });
@@ -181,7 +179,7 @@ export async function GET(request) {
                 // Simple straight line for demo
                 const startLat = -23.55 + (Math.random() - 0.5) * 0.1;
                 const startLon = -46.63 + (Math.random() - 0.5) * 0.1;
-                
+
                 for (let j = 0; j < 5; j++) {
                     await LocationData.create({
                         deviceId,
@@ -193,17 +191,17 @@ export async function GET(request) {
                 }
             }
 
-            return Response.json({ 
-                success: true, 
+            return Response.json({
+                success: true,
                 message: force ? 'Demo data recreated successfully.' : 'Demo user and data created successfully.',
                 user: { username: 'demo', email: 'demo@travelaccess.ddns.net' }
             });
         }
 
-        return Response.json({ 
-            success: true, 
-            message: 'Demo user already exists and has data. Use ?force=true to recreate.', 
-            user: demoUser 
+        return Response.json({
+            success: true,
+            message: 'Demo user already exists and has data. Use ?force=true to recreate.',
+            user: demoUser
         });
 
     } catch (error) {
