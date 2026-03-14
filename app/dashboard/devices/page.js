@@ -12,6 +12,19 @@ export default function ManageDevicesPage() {
     const [editValue, setEditValue] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [userProfile, setUserProfile] = useState(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     useEffect(() => {
         fetchDevices();
@@ -137,10 +150,10 @@ export default function ManageDevicesPage() {
                             />
                             <button
                                 type="submit"
-                                disabled={submitting}
+                                disabled={submitting || userProfile?.isDemo}
                                 className="md:col-span-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                             >
-                                {submitting ? 'Adding...' : 'Add Device'}
+                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Adding...' : 'Add Device')}
                             </button>
                         </form>
 
@@ -188,7 +201,8 @@ export default function ManageDevicesPage() {
                                                             />
                                                             <button
                                                                 onClick={() => handleSaveDescription(device.DEVICE_ID)}
-                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors"
+                                                                disabled={userProfile?.isDemo}
+                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50"
                                                             >
                                                                 Save
                                                             </button>
@@ -218,7 +232,8 @@ export default function ManageDevicesPage() {
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     onClick={() => handleRemoveDevice(device.DEVICE_ID)}
-                                                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest"
+                                                    disabled={userProfile?.isDemo}
+                                                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
                                                     Remove
                                                 </button>

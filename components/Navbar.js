@@ -112,9 +112,16 @@ export default function Navbar() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight">
-                                TravelAccess
-                            </span>
+                            <div className="flex flex-col">
+                                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight leading-none">
+                                    TravelAccess
+                                </span>
+                                {userProfile?.isDemo && (
+                                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider mt-0.5 self-start">
+                                        Demo Mode
+                                    </span>
+                                )}
+                            </div>
                         </Link>
                     </div>
                     
@@ -368,28 +375,31 @@ export default function Navbar() {
                                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] transform origin-top transition-all duration-200 animate-in fade-in zoom-in-95">
                                     <button
                                         onClick={() => {
+                                            if (userProfile?.isDemo) return;
                                             setIsSettingsOpen(false);
                                             setIsPasswordModalOpen(true);
                                             setPwdStatus({ loading: false, error: '', success: '' });
                                             setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                                         }}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                                        className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${userProfile?.isDemo ? 'text-gray-400 cursor-not-allowed opacity-60' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                         </svg>
                                         Change Password
                                     </button>
-                                    <Link
-                                        href="/dashboard/keys"
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                        </svg>
-                                        API Keys
-                                    </Link>
+                                    {!userProfile?.isDemo && (
+                                        <Link
+                                            href="/dashboard/keys"
+                                            onClick={() => setIsSettingsOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                            </svg>
+                                            API Keys
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -594,28 +604,31 @@ export default function Navbar() {
                         <div className="space-y-1 ml-2 border-l-2 border-blue-50 pl-2 animate-in slide-in-from-top-1 duration-200">
                             <button
                                 onClick={() => {
+                                    if (userProfile?.isDemo) return;
                                     setIsMobileMenuOpen(false);
                                     setIsPasswordModalOpen(true);
                                     setPwdStatus({ loading: false, error: '', success: '' });
                                     setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                                 }}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-600 hover:bg-gray-50"
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${userProfile?.isDemo ? 'text-gray-400 cursor-not-allowed opacity-60' : 'text-gray-600 hover:bg-gray-50'}`}
                             >
                                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                 </svg>
                                 Change Password
                             </button>
-                            <Link
-                                href="/dashboard/keys"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
-                            >
-                                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                </svg>
-                                API Keys
-                            </Link>
+                            {!userProfile?.isDemo && (
+                                <Link
+                                    href="/dashboard/keys"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                    API Keys
+                                </Link>
+                            )}
                         </div>
                     )}
                     

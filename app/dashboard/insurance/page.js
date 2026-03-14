@@ -15,8 +15,20 @@ export default function ManageInsurancePage() {
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [userProfile, setUserProfile] = useState(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     useEffect(() => {
         fetchCars().then(() => fetchInsurances());
@@ -209,10 +221,10 @@ export default function ManageInsurancePage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || cars.length === 0}
+                                disabled={submitting || cars.length === 0 || userProfile?.isDemo}
                                 className="md:col-span-2 mt-4 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                             >
-                                {submitting ? 'Saving...' : 'Add Insurance'}
+                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Saving...' : 'Add Insurance')}
                             </button>
                         </form>
 
@@ -278,8 +290,8 @@ export default function ManageInsurancePage() {
                                                 <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-slate-700 pt-4 md:pt-0 md:pl-6">
                                                     <button
                                                         onClick={() => handleRemoveInsurance(entry.id)}
-                                                        className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest"
-                                                        disabled={submitting}
+                                                        className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        disabled={submitting || userProfile?.isDemo}
                                                     >
                                                         Delete
                                                     </button>

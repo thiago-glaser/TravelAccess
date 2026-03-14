@@ -9,6 +9,10 @@ export async function POST(request, context) {
         return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (session.isDemo === 'Y' || session.isDemo === true) {
+        return Response.json({ success: false, error: 'Demo users cannot perform write operations' }, { status: 403 });
+    }
+
     try {
         const userId = session.USER_ID || session.id || session.ID;
 

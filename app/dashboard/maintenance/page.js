@@ -19,8 +19,21 @@ export default function ManageMaintenancePage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [userProfile, setUserProfile] = useState(null);
 
     const fileInputRef = useRef(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     useEffect(() => {
         fetchCars().then(() => fetchMaintenance());
@@ -250,10 +263,10 @@ export default function ManageMaintenancePage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || cars.length === 0}
+                                disabled={submitting || cars.length === 0 || userProfile?.isDemo}
                                 className="md:col-span-2 mt-4 py-4 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold transition-all shadow-lg shadow-purple-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                             >
-                                {submitting ? 'Saving...' : 'Add Maintenance Log'}
+                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Saving...' : 'Add Maintenance Log')}
                             </button>
                         </form>
 
@@ -349,8 +362,8 @@ export default function ManageMaintenancePage() {
 
                                                     <button
                                                         onClick={() => handleRemoveMaintenance(entry.id)}
-                                                        className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest"
-                                                        disabled={submitting}
+                                                        className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        disabled={submitting || userProfile?.isDemo}
                                                     >
                                                         Delete
                                                     </button>

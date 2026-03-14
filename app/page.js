@@ -33,6 +33,19 @@ export default function SessionsPage() {
     const [expandedSessionIds, setExpandedSessionIds] = useState([]);
     const [now, setNow] = useState(() => new Date());
     const [latestSession, setLatestSession] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     const toggleExpandSession = (e, sessionId) => {
         e.stopPropagation(); // Prevents the map modal from opening
@@ -302,6 +315,10 @@ export default function SessionsPage() {
 
     const toggleSessionType = async (e, sessionId, currentType) => {
         e.stopPropagation();
+        if (userProfile?.isDemo) {
+            alert('Demo users cannot change session types');
+            return;
+        }
         const newType = currentType === 'B' ? 'P' : 'B';
         try {
             const response = await fetch('/api/sessions', {

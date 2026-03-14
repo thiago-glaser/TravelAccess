@@ -70,6 +70,19 @@ export default function ReportsPage() {
             B: { distance: 0, duration: 0, cost: 0 }
         }
     });
+    const [userProfile, setUserProfile] = useState(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     const fetchCars = async () => {
         try {
@@ -242,7 +255,7 @@ export default function ReportsPage() {
                         }
                         const sessionCost = (distanceMeters / 1000) * sessionPricePerKm;
 
-                        if (!isProjected && session.endTime && sessionCost > 0) {
+                        if (!isProjected && session.endTime && sessionCost > 0 && !userProfile?.isDemo) {
                             fetch('/api/sessions', {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
@@ -254,7 +267,7 @@ export default function ReportsPage() {
                                     valueConfirmed: 'Y'
                                 })
                             }).catch(err => console.error('Failed to save session metrics:', err));
-                        } else if (isProjected && session.endTime && sessionCost > 0) {
+                        } else if (isProjected && session.endTime && sessionCost > 0 && !userProfile?.isDemo) {
                             // Save estimated values too, so next run can read them from the fast path
                             fetch('/api/sessions', {
                                 method: 'PATCH',

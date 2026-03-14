@@ -8,6 +8,10 @@ export async function POST(request) {
             return Response.json({ message: "Unauthorized: Invalid or missing API Key" }, { status: 401 });
         }
 
+        if (session.isDemo === 'Y' || session.isDemo === true) {
+            return Response.json({ message: "Demo users cannot perform write operations" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { device_id, locations } = body;
 

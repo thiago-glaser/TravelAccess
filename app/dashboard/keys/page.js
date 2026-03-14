@@ -8,9 +8,18 @@ export default function ApiKeysPage() {
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [newKey, setNewKey] = useState('');
+    const [userProfile, setUserProfile] = useState(null);
 
     useEffect(() => {
         fetchKeys();
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
     }, []);
 
     const fetchKeys = async () => {
@@ -91,10 +100,10 @@ export default function ApiKeysPage() {
                             />
                             <button
                                 type="submit"
-                                disabled={creating}
+                                disabled={creating || userProfile?.isDemo}
                                 className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all disabled:opacity-50"
                             >
-                                {creating ? 'Generating...' : 'Generate Key'}
+                                {userProfile?.isDemo ? 'View Only Mode' : (creating ? 'Generating...' : 'Generate Key')}
                             </button>
                         </form>
 
@@ -154,7 +163,8 @@ export default function ApiKeysPage() {
                                                 <td className="px-6 py-4">
                                                     <button
                                                         onClick={() => handleRevokeKey(key.ID)}
-                                                        className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                                                        disabled={userProfile?.isDemo}
+                                                        className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                     >
                                                         Revoke
                                                     </button>

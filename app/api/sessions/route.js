@@ -119,6 +119,10 @@ export async function PATCH(request) {
         return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (session.isDemo === 'Y' || session.isDemo === true) {
+        return Response.json({ success: false, error: 'Demo users cannot perform write operations' }, { status: 403 });
+    }
+
     try {
         const body = await request.json();
         const { id, type, cost, distance, timeTraveled, valueConfirmed } = body;

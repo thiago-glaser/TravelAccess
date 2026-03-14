@@ -26,6 +26,7 @@ export async function POST(request) {
             ID: user.id,
             USERNAME: user.username,
             IS_ADMIN: user.isAdmin,
+            IS_DEMO: user.isDemo,
             // Fallbacks for the rest if generating generic session objects
             id: user.id
         };

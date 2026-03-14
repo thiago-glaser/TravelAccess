@@ -24,7 +24,8 @@ export async function GET(request) {
             user: {
                 username: user.username,
                 email: user.email,
-                googleAvatarUrl: user.googleAvatarUrl
+                googleAvatarUrl: user.googleAvatarUrl,
+                isDemo: session.isDemo === 'Y' || session.isDemo === true
             }
         });
     } catch (error) {
