@@ -33,6 +33,32 @@ export async function POST(request) {
 
         const token = generateToken(tokenTokenPayload);
 
+        // Log demo access if it's the demo user
+        if (user.isDemo === 'Y' || user.isDemo === true) {
+            try {
+                const { DemoAccessLog } = await import('@/lib/models/index.js');
+
+                // Ensure table exists (quick check/init)
+                await DemoAccessLog.sync();
+
+                const ip = request.headers.get('x-forwarded-for') ||
+                    request.headers.get('x-real-ip') ||
+                    'unknown';
+                const ua = request.headers.get('user-agent') || 'unknown';
+                const referer = request.headers.get('referer') || '';
+
+                await DemoAccessLog.create({
+                    ipAddress: ip.split(',')[0].trim(),
+                    userAgent: ua,
+                    referer: referer
+                });
+                console.log(`[Demo Access] Logged connection from ${ip}`);
+            } catch (logError) {
+                console.error('Failed to log demo access:', logError);
+                // Don't block login if logging fails
+            }
+        }
+
         // Set cookie for browser sessions
         const response = Response.json({
             success: true,

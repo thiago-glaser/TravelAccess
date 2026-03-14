@@ -50,6 +50,9 @@ export async function GET(request) {
         // 3. Clean or Recreate
         if (clean || force) {
             console.log('Cleaning demo data for user:', userId);
+            const { DemoAccessLog } = await import('@/lib/models/index.js');
+            await DemoAccessLog.destroy({ where: {}, truncate: true }).catch(() => {});
+            
             await Car.destroy({ where: { userId } });
             await Fuel.destroy({ where: { userId } });
             await Maintenance.destroy({ where: { userId } });
