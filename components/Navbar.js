@@ -47,17 +47,22 @@ export default function Navbar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Fetch user profile on mount
+    // Fetch user profile on mount or when navigation occurs
     useEffect(() => {
         fetch('/api/auth/me')
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.user) {
                     setUserProfile(data.user);
+                } else {
+                    setUserProfile(null);
                 }
             })
-            .catch(err => console.error('Failed to load user profile:', err));
-    }, []);
+            .catch(err => {
+                console.error('Failed to load user profile:', err);
+                setUserProfile(null);
+            });
+    }, [pathname]);
 
     // Hide navbar on login and register pages
     if (pathname === '/login' || pathname === '/register') {
