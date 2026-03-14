@@ -1,33 +1,45 @@
-# 🌍 TravelAccess: GPS Tracking & Analytics Platform
+# 🌍 TravelAccess: Precision GPS Tracking & Expense Management
 
-TravelAccess is a robust, full-stack GPS tracking system designed for real-time visualization and deep analysis of movement data. Built with Next.js and powered by Oracle Database, it provides a seamless interface for monitoring devices, analyzing speed patterns, and visualizing altitude changes across the globe.
+TravelAccess is a professional, full-stack platform designed for gig economy workers, fleet managers, and individual drivers who need total control over their travel data. Built with **Next.js 15+** and **Oracle Database**, it automates mileage logging, expense tracking, and provides deep analytical insights into your driving habits.
 
 ---
 
 ## ✨ Key Features
 
-- 🗺️ **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and custom markers.
-- 🔐 **Secure Authentication**: Complete user system with JWT session management, glassmorphism UI, and protected routes.
-- 🔑 **API Key Management**: Generate and revoke secure access keys (with `x-api-key` header support) for external device integration.
-- 📱 **Device Ownership**: Secure mapping where users only see their own devices. One device, one owner enforcement.
-- ⚙️ **Settings Dashboard**: Dedicated space to manage API keys and customize device descriptions/names.
-- 🕒 **Session Management**: Track discrete movement sessions with start/end timing and duration analytics.
-- 📉 **Advanced Reporting**: Generate comprehensive summaries for distance, speed, and altitude trends.
-- 📊 **Dynamic Analytics**:
-  - **Speed Analysis**: Automatic speed calculation between GPS points with interactive SVG charts.
-  - **Altitude Profiling**: Track elevation changes over time with detailed altitude charts.
-- 🔍 **Privacy First**: Multi-tenant data isolation ensures users never see data from devices they don't own.
-- 🐳 **Docker Ready**: Production-grade Docker and Docker Compose configuration for instant deployment.
+### 🚀 Core Tracking & Mapping
+- 🗺️ **Interactive Mapping**: Real-time GPS point visualization using Leaflet with smooth transitions and heat-map alternatives.
+- 🕒 **Session Management**: Automatically or manually track discrete movement sessions with timing, distance, and duration analytics.
+- 📊 **Dynamic Analytics**: 
+  - **Speed Analysis**: Interactive SVG charts showing speed fluctuations across journeys.
+  - **Altitude Profiling**: Track elevation changes and terrain analysis.
+- 📍 **Automated Geocoding**: Background jobs automatically resolve GPS coordinates into human-readable addresses.
+
+### 💰 Vehicle & Expense Management
+- 🚗 **Fleet Control**: Manage multiple vehicles with detailed descriptions and license plate tracking.
+- ⛽ **Fuel Intelligence**: Log refueling entries with automatic **KM/L (L/100km)** consumption and **Cost per Kilometer** calculations.
+- 🔧 **Maintenance Logs**: Track services, repairs, and part replacements. Supports **Image and PDF** receipt attachments.
+- 🛡️ **Insurance Tracking**: Manage policy payments and historical coverage periods.
+
+### 🔐 Security & Access
+- 🔓 **Google OAuth 2.0**: Fast, secure sign-in via Google accounts alongside traditional email/password auth.
+- 🔐 **JWT Session Management**: Secure, encrypted session handling with HttpOnly cookies.
+- 🔑 **API Key Management**: Generate secure keys for external OBD-II trackers or mobile app integration.
+- 🕵️ **Privacy Isolation**: Multi-tenant architecture ensures data is strictly isolated by user and device ownership.
+
+### 🧪 Trial & Admin Tools
+- 🎪 **Demo Mode**: Instant access with credentials (`demo` / `demo123`).
+- 🧹 **Automated Reset**: The demo environment is automatically cleaned and regenerated every day at **8:00 AM UTC**.
+- 🛠️ **Admin Control Panel**: Integrated tools to force-reset demo data or clean environments with one click.
+- 📋 **Access Monitoring**: Real-time logging of demo account connections (IP, User Agent, Referer) for administrator review.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
-- **Security**: [Bcrypt.js](https://github.com/dcodeIO/bcrypt.js) (Hashing), [JSON Web Tokens](https://jwt.io/) (Auth)
-- **Mapping**: [Leaflet](https://leafletjs.com/), [React Leaflet](https://react-leaflet.js.org/)
-- **Backend**: Next.js API Routes (Serverless)
-- **Database**: [Oracle Database](https://www.oracle.com/database/) (via `oracledb`)
+- **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/)
+- **ORM / Database**: [Sequelize 6](https://sequelize.org/) & [Oracle Database](https://www.oracle.com/database/) (via `oracledb`)
+- **Mapping**: [Leaflet](https://leafletjs.com/), [React Leaflet](https://react-leaflet.js.org/), [Leaflet Heat](https://github.com/Leaflet/Leaflet.heat)
+- **Reporting**: [jspdf](https://github.com/parallax/jsPDF), [jspdf-autotable](https://github.com/simonbengtsson/jsPDF-AutoTable)
 - **Infrastructure**: [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/)
 
 ---
@@ -35,13 +47,11 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 ## 🛠️ Getting Started
 
 ### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- [Docker](https://www.docker.com/get-started) (optional)
+- [Node.js](https://nodejs.org/) (v20+)
 - Oracle Database (local or cloud instance)
+- Oracle Client / Wallet (for cloud connections)
 
 ### Local Development
-
 1. **Clone & Install**:
    ```bash
    git clone <repository-url>
@@ -50,16 +60,16 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
    ```
 
 2. **Configure Environment**:
-   Create a `.env` file from the example:
-   ```bash
-   cp .env.example .env
-   ```
-   Required variables: `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECTION_STRING`, and `JWT_SECRET`.
+   Create a `.env.local` file. Required variables:
+   - `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECTION_STRING`
+   - `JWT_SECRET`
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (for OAuth)
 
 3. **Initialize Database**:
-   Run the setup script to create the necessary tables (`USERS`, `API_KEYS`, `USER_DEVICES`):
+   The app uses Sequelize for schema management. You can trigger the initial demo setup (which creates core tables) via:
    ```bash
-   node scripts/init-db.js
+   # Requires Admin Login -> use the UI button or call:
+   GET /api/setup-demo?force=true
    ```
 
 4. **Run Server**:
@@ -70,42 +80,15 @@ TravelAccess is a robust, full-stack GPS tracking system designed for real-time 
 
 ---
 
-## 💾 Database Schema
+## 📡 Core API Categories
 
-The complete database schema, including all **Tables**, **Views**, **Functions**, and **Indexes**, is documented in the `database/` directory.
-
-👉 **[View Database Documentation](database/README.md)**
-
-To initialize the database manually:
-1. Connect to your Oracle instance.
-2. Run the SQL scripts in order: `01_tables.sql` → `02_functions_procedures.sql` → `03_views.sql` → `05_indexes.sql`.
-
----
-
-## 📡 API Security
-
-All API endpoints are protected. Authenticate using either:
-1.  **Session Cookie**: Automatically handled for browser users after login.
-2.  **API Key**: For external clients/trackers, include the `x-api-key` header:
-    ```bash
-    curl -H "x-api-key: your_key_here" https://your-domain/api/gps-data
-    ```
-
----
-
-## 📡 Core API Endpoints
-
-- `GET /api/devices`: List authorized devices for the current user.
-- `GET /api/gps-data`: Search GPS points (filtered by user ownership).
-- `POST /api/LocationData`: Insert bulk GPS points (requires API key/session & device ownership validation).
-- `POST /api/Session/start-session`: Start a new tracking session (requires API key/session & device ownership validation).
-- `POST /api/Session/end-session`: End an active tracking session.
-- `GET`, `POST`, `PATCH`, `DELETE /api/user/cars`: Manage user cars.
-- `GET`, `POST`, `DELETE /api/user/fuel`: Manage fuel logs.
-- `GET /api/user/fuel/[id]/receipt`: Retrieve the receipt image.
-- `POST /api/auth/login`: Authenticate and start session.
-- `POST /api/auth/api-keys`: Create new access keys.
-- `DELETE /api/auth/api-keys?id=...`: Revoke an API key.
+- **Auth**: `/api/auth/[login, register, google, logout, me]`
+- **Devices**: `/api/user/devices`
+- **Vehicles**: `/api/user/cars`
+- **Expenses**: `/api/user/fuel`, `/api/user/maintenance`, `/api/user/insurance`
+- **Tracking**: `/api/LocationData`, `/api/Session/[start, end]`
+- **Admin**: `/api/admin/demo-logs`, `/api/setup-demo`
+- **Jobs**: `/api/jobs/[geocode-locations, merge-location-geocodes]`
 
 ---
 
@@ -113,95 +96,22 @@ All API endpoints are protected. Authenticate using either:
 
 ```text
 TravelAccess/
-├── app/                # Next.js App Router (Pages & API)
-│   ├── api/            # Server-Side API endpoints (GPS, Devices, Auth)
-│   ├── dashboard/      # Protected dashboard for managing keys, cars, and devices
-│   ├── map/            # Real-time and historical GPS mapping interface
-│   ├── reports/        # Analytics and comprehensive travel summaries
-│   ├── login/          # User authentication and login entry
-│   └── register/       # User account creation
-├── components/         # Reusable UI components (MapContainer, Lists, Navbars)
-├── database/           # SQL and PL/SQL schemas for Oracle DB initialization
-├── Dockerfile          # Container configuration for production builds
-├── public/             # Static assets (icons, images)
-└── lib/                # Core helper functions and utilities
-```
-
----
-
-## 🚢 Deployment
-
-Production deployment is handled by `deploy.ps1`, which builds the Docker image locally, pushes it to Docker Hub, and restarts the container on the remote server.
-
-### Prerequisites
-
-- Docker Desktop (logged in to Docker Hub)
-- SSH key with access to the remote VM
-- `ssh` and `scp` available in your PATH
-
-### Usage
-
-**Full deploy** (build + push + restart):
-```powershell
-.\deploy.ps1 `
-  -RemoteUser <ssh-user> `
-  -RemoteHost <server-hostname> `
-  -SshKeyPath "<path-to-ssh-key>" `
-  -DockerHubUser <dockerhub-username>
-```
-
-**Skip re-uploading certs / wallet / env** (faster redeploy when only code changed):
-```powershell
-.\deploy.ps1 `
-  -RemoteUser <ssh-user> `
-  -RemoteHost <server-hostname> `
-  -SshKeyPath "<path-to-ssh-key>" `
-  -DockerHubUser <dockerhub-username> `
-  -SkipRuntimeFiles
-```
-
-**Restart with an already-pushed image** (no local build):
-```powershell
-.\deploy.ps1 `
-  -RemoteUser <ssh-user> `
-  -RemoteHost <server-hostname> `
-  -SshKeyPath "<path-to-ssh-key>" `
-  -DockerHubUser <dockerhub-username> `
-  -SkipBuild
-```
-
-### Parameters
-
-| Parameter | Required | Default | Description |
-|---|---|---|---|
-| `-RemoteUser` | ✅ | — | SSH username on the remote server |
-| `-RemoteHost` | ✅ | — | Hostname or IP of the remote server |
-| `-SshKeyPath` | ✅ | — | Path to your local SSH private key |
-| `-DockerHubUser` | ✅ | — | Docker Hub username |
-| `-ImageName` | | `travelaccess` | Docker image name |
-| `-Tag` | | `latest` | Docker image tag |
-| `-RemoteDir` | | `~/TravelAccess` | Deployment directory on the server |
-| `-SkipRuntimeFiles` | | `false` | Skip uploading `.env.local`, certs, and wallet |
-| `-SkipBuild` | | `false` | Skip local build and push — redeploy existing image |
-
-### Useful post-deploy commands
-
-```bash
-# Stream live logs
-ssh -i <path-to-ssh-key> <ssh-user>@<server-hostname> 'docker logs -f travelaccess-web'
-
-# Stop the container
-ssh -i <path-to-ssh-key> <ssh-user>@<server-hostname> 'cd ~/TravelAccess && docker compose down'
+├── app/                # UI Pages & API Routes
+├── components/         # Premium UI Components (Maps, Charts, Nav)
+├── lib/
+│   ├── models/         # Sequelize Data Models
+│   ├── jobs/           # Background Task Logic (Geocoding, daily resets)
+│   ├── auth.js         # JWT & Permission Utilities
+│   └── sequelize.js    # Database Connection Pool
+├── scripts/            # Database migration and utility scripts
+├── public/             # Static Assets
+└── deploy.ps1          # Automated CI/CD Docker Deployment Script
 ```
 
 ---
 
 ## 📝 License
-
 This project is licensed under the MIT License.
 
 ---
-
-<p align="center">
-  Built with ❤️ for global explorers.
-</p>
+<p align="center">Built with ❤️ for gig economy professionals and travelers everywhere.</p>
