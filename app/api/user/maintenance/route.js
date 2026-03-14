@@ -24,6 +24,7 @@ export async function GET(request) {
                 'maintenanceDate',
                 'amount',
                 'description',
+                'receiptMime',
                 [sequelize.literal(`CASE WHEN "RECEIPT_IMAGE" IS NOT NULL THEN 1 ELSE 0 END`), 'hasReceipt']
             ],
             include: [{
@@ -44,7 +45,8 @@ export async function GET(request) {
                 description: raw.description,
                 carLicensePlate: raw.car ? raw.car.licensePlate : null,
                 carDescription: raw.car ? raw.car.description : null,
-                hasReceipt: raw.hasReceipt === 1
+                hasReceipt: raw.hasReceipt === 1,
+                receiptMime: raw.receiptMime
             };
         });
 

@@ -74,7 +74,13 @@ export default function ManageFuelPage() {
         const file = e.target.files[0];
         if (file) {
             setReceiptFile(file);
-            setReceiptPreview(URL.createObjectURL(file));
+            if (file.type.startsWith('image/')) {
+                setReceiptPreview(URL.createObjectURL(file));
+            } else if (file.type === 'application/pdf') {
+                setReceiptPreview('pdf'); // Special flag for PDF
+            } else {
+                setReceiptPreview(null);
+            }
         } else {
             setReceiptFile(null);
             setReceiptPreview(null);
@@ -264,11 +270,11 @@ export default function ManageFuelPage() {
                             </div>
 
                             <div className="md:col-span-2 flex flex-col gap-2 mt-2">
-                                <label className="text-sm text-slate-400 font-medium">Receipt Image (Optional)</label>
+                                <label className="text-sm text-slate-400 font-medium">Receipt (Image or PDF)</label>
                                 <div className="flex flex-col items-start gap-4 p-4 border border-dashed border-slate-600 rounded-xl bg-slate-800/30">
                                     <input
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/*,application/pdf"
                                         capture="environment"
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
@@ -276,7 +282,16 @@ export default function ManageFuelPage() {
                                     />
                                     {receiptPreview && (
                                         <div className="relative group">
-                                            <img src={receiptPreview} alt="Receipt Preview" className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
+                                            {receiptPreview === 'pdf' ? (
+                                                <div className="h-32 w-24 rounded-lg border border-slate-700 bg-slate-900 flex flex-col items-center justify-center p-2 text-red-500">
+                                                    <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                                    </svg>
+                                                    <span className="text-[10px] uppercase font-bold mt-1 text-slate-400">PDF Document</span>
+                                                </div>
+                                            ) : (
+                                                <img src={receiptPreview} alt="Receipt Preview" className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => { setReceiptFile(null); setReceiptPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
@@ -387,13 +402,22 @@ export default function ManageFuelPage() {
                                                             title="View Receipt"
                                                         >
                                                             <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border border-slate-700 group-hover:border-green-400/50 transition-colors">
-                                                                <img
-                                                                    src={`/api/user/fuel/${entry.id}/receipt`}
-                                                                    alt="Receipt Preview"
-                                                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                                                />
+                                                                {entry.receiptMime === 'application/pdf' ? (
+                                                                    <div className="flex flex-col items-center justify-center text-red-500">
+                                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                        <span className="text-[8px] font-bold">PDF</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <img
+                                                                        src={`/api/user/fuel/${entry.id}/receipt`}
+                                                                        alt="Receipt Preview"
+                                                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                                    />
+                                                                )}
                                                             </div>
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider">Receipt</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider">{entry.receiptMime === 'application/pdf' ? 'PDF' : 'Receipt'}</span>
                                                         </a>
                                                     ) : (
                                                         <div className="flex flex-col items-center gap-1 text-slate-600" title="No Receipt">
