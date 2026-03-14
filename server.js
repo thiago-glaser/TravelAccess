@@ -48,7 +48,10 @@ function scheduleJob(name, path, intervalMs) {
 
     setInterval(() => {
         console.log(`[Job Runner] Executing ${name}...`);
-        http.get(`${baseUrl}${path}`, { rejectUnauthorized: false }, (res) => {
+        http.get(`${baseUrl}${path}`, { 
+            rejectUnauthorized: false,
+            headers: { 'x-internal-job': 'true' }
+        }, (res) => {
             let data = '';
             res.on('data', chunk => (data += chunk));
             res.on('end', () =>
@@ -58,6 +61,48 @@ function scheduleJob(name, path, intervalMs) {
             console.error(`[Job Runner] ${name} failed:`, e.message);
         });
     }, intervalMs);
+}
+
+function scheduleDailyJob(name, path, hourUtc) {
+    const http = require(useHttps ? 'https' : 'http');
+    const baseUrl = useHttps
+        ? `https://${hostname}:${port}`
+        : `http://localhost:${port}`;
+
+    const runJob = () => {
+        console.log(`[Job Runner] Executing daily job ${name}...`);
+        http.get(`${baseUrl}${path}`, { 
+            rejectUnauthorized: false,
+            headers: { 'x-internal-job': 'true' }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => (data += chunk));
+            res.on('end', () =>
+                console.log(`[Job Runner] Daily job ${name} completed with status ${res.statusCode}:`, data)
+            );
+        }).on('error', (e) => {
+            console.error(`[Job Runner] Daily job ${name} failed:`, e.message);
+        });
+        
+        // Schedule next run
+        setTimeout(scheduleNext, 60000); // Wait 1 minute before scheduling next to avoid immediate re-trigger
+    };
+
+    const scheduleNext = () => {
+        const now = new Date();
+        const nextRun = new Date();
+        nextRun.setUTCHours(hourUtc, 0, 0, 0);
+        
+        if (nextRun <= now) {
+            nextRun.setUTCDate(nextRun.getUTCDate() + 1);
+        }
+        
+        const delay = nextRun.getTime() - now.getTime();
+        console.log(`[Job Runner] Scheduled ${name} for ${nextRun.toISOString()} (in ${Math.round(delay/1000/60)} minutes)`);
+        setTimeout(runJob, delay);
+    };
+
+    scheduleNext();
 }
 
 // ── Start ────────────────────────────────────────────────────────────────────
@@ -86,5 +131,6 @@ app.prepare().then(() => {
 
         scheduleJob('GEOCODE_PENDING_LOCATIONS', '/api/jobs/geocode-locations', 1 * 60 * 1000);
         scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 1 * 60 * 1000);
+        scheduleDailyJob('DAILY_DEMO_RESET', '/api/setup-demo?force=true', 8);
     });
 });

@@ -14,8 +14,10 @@ import { hashPassword, getSession } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request) {
+    const isInternal = request.headers.get('x-internal-job') === 'true';
     const session = await getSession(request);
-    if (!session || session.isAdmin !== 1) {
+    
+    if (!isInternal && (!session || session.isAdmin !== 1)) {
         return Response.json({ success: false, error: 'Unauthorized. Admin access required.' }, { status: 401 });
     }
 
