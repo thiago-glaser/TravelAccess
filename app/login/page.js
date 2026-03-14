@@ -79,11 +79,31 @@ function LoginForm() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
             <div className="max-w-md w-full p-8 rounded-2xl bg-[#1e293b] shadow-2xl border border-slate-700 backdrop-blur-sm">
-                <div className="text-center mb-10">
+                <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                         TravelAccess
                     </h1>
-                    <p className="text-slate-400 mt-2">Sign in to your account</p>
+                    <p className="text-slate-400 mt-2">Precision Travel & Expense Tracking</p>
+                </div>
+
+                <div className="mb-8 space-y-4">
+                    <p className="text-sm text-slate-300 leading-relaxed text-center">
+                        The ultimate tool for <span className="text-blue-400 font-semibold">gig economy professionals</span>. 
+                        Whether you drive for <span className="text-indigo-300">Uber</span>, deliver with <span className="text-indigo-300">DoorDash</span>, 
+                        or manage a fleet, TravelAccess automates your mileage logs, fuel expenses, and tax-ready reports.
+                    </p>
+                    
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Try Demo Mode</span>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                            Explore all features instantly with our read-only trial.
+                            <br />
+                            <span className="text-slate-300 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
+                        </p>
+                    </div>
                 </div>
 
                 {success && (
