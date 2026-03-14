@@ -15,6 +15,7 @@ export default function ManageInsurancePage() {
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [userProfile, setUserProfile] = useState(null);
 
