@@ -11,8 +11,8 @@ export async function GET(request) {
         }
 
         const user = await User.findOne({
-            attributes: ['username', 'email', 'googleAvatarUrl'],
-            where: { id: session.id.trim() }
+            attributes: ['username', 'email', 'googleAvatarUrl', 'isAdmin', 'isDemo'],
+            where: { id: (session.id || session.ID).trim() }
         });
 
         if (!user) {
@@ -25,8 +25,8 @@ export async function GET(request) {
                 username: user.username,
                 email: user.email,
                 googleAvatarUrl: user.googleAvatarUrl,
-                isDemo: session.isDemo === 'Y' || session.isDemo === true,
-                isAdmin: session.isAdmin === 1
+                isDemo: user.isDemo === 'Y' || user.isDemo === true,
+                isAdmin: user.isAdmin === 1
             }
         });
     } catch (error) {
