@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { createServer: createHttpServer } = require('http');
 const { createServer: createHttpsServer } = require('https');
 const { parse } = require('url');
@@ -50,7 +51,10 @@ function scheduleJob(name, path, intervalMs) {
         console.log(`[Job Runner] Executing ${name}...`);
         http.get(`${baseUrl}${path}`, { 
             rejectUnauthorized: false,
-            headers: { 'x-internal-job': 'true' }
+            headers: { 
+                'x-internal-job': 'true',
+                'x-api-key': process.env.ADMIN_API_KEY || ''
+            }
         }, (res) => {
             let data = '';
             res.on('data', chunk => (data += chunk));
@@ -73,7 +77,10 @@ function scheduleDailyJob(name, path, hourUtc) {
         console.log(`[Job Runner] Executing daily job ${name}...`);
         http.get(`${baseUrl}${path}`, { 
             rejectUnauthorized: false,
-            headers: { 'x-internal-job': 'true' }
+            headers: { 
+                'x-internal-job': 'true',
+                'x-api-key': process.env.ADMIN_API_KEY || ''
+            }
         }, (res) => {
             let data = '';
             res.on('data', chunk => (data += chunk));
