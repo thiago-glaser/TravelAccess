@@ -41,7 +41,7 @@ function buildHttpsOptions() {
 }
 
 // ── Internal job runner ──────────────────────────────────────────────────────
-function scheduleJob(name, path, intervalMs) {
+function scheduleJob(name, path, intervalMs, apiKey) {
     const http = require(useHttps ? 'https' : 'http');
     const baseUrl = useHttps
         ? `https://${hostname}:${port}`
@@ -53,7 +53,7 @@ function scheduleJob(name, path, intervalMs) {
             rejectUnauthorized: false,
             headers: { 
                 'x-internal-job': 'true',
-                'x-api-key': process.env.ADMIN_API_KEY || ''
+                'x-api-key': apiKey || ''
             }
         }, (res) => {
             let data = '';
@@ -67,7 +67,7 @@ function scheduleJob(name, path, intervalMs) {
     }, intervalMs);
 }
 
-function scheduleDailyJob(name, path, hourUtc) {
+function scheduleDailyJob(name, path, hourUtc, apiKey) {
     const http = require(useHttps ? 'https' : 'http');
     const baseUrl = useHttps
         ? `https://${hostname}:${port}`
@@ -79,7 +79,7 @@ function scheduleDailyJob(name, path, hourUtc) {
             rejectUnauthorized: false,
             headers: { 
                 'x-internal-job': 'true',
-                'x-api-key': process.env.ADMIN_API_KEY || ''
+                'x-api-key': apiKey || ''
             }
         }, (res) => {
             let data = '';
@@ -136,8 +136,8 @@ app.prepare().then(() => {
 
         // Background jobs
 
-        scheduleJob('GEOCODE_PENDING_LOCATIONS', '/api/jobs/geocode-locations', 1 * 60 * 1000);
-        scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 1 * 60 * 1000);
-        scheduleDailyJob('DAILY_DEMO_RESET', '/api/setup-demo?force=true', 8);
+        scheduleJob('GEOCODE_PENDING_LOCATIONS', '/api/jobs/geocode-locations', 1 * 60 * 1000, process.env.GEOCODE_JOB_API_KEY);
+        scheduleJob('MERGE_LOCATION_GEOCODES_JOB', '/api/jobs/merge-location-geocodes', 1 * 60 * 1000, process.env.MERGE_JOB_API_KEY);
+        scheduleDailyJob('DAILY_DEMO_RESET', '/api/setup-demo?force=true', 8, process.env.DEMO_RESET_JOB_API_KEY);
     });
 });
