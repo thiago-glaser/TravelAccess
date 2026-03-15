@@ -54,7 +54,8 @@ export async function POST(request) {
         await ApiKey.create({
             userId: userId,
             keyValue: apiKey,
-            description: description || 'Default API Key'
+            description: description || 'Default API Key',
+            isActive: 1
         });
 
         return Response.json({ success: true, apiKey });

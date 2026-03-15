@@ -37,6 +37,9 @@ services:
       - NEXT_PUBLIC_BASE_URL=https://travel-access.ddns.net
       - JWT_SECRET=${JWT_SECRET}
       - GEOAPIFY_API_KEY=${GEOAPIFY_API_KEY}
+      - GEOCODE_JOB_API_KEY=${GEOCODE_JOB_API_KEY}
+      - MERGE_JOB_API_KEY=${MERGE_JOB_API_KEY}
+      - DEMO_RESET_JOB_API_KEY=${DEMO_RESET_JOB_API_KEY}
     volumes:
       - ./certificates/Cloud:/app/certs:ro
       - ./oracle_wallet:/app/oracle_wallet:ro
