@@ -74,6 +74,19 @@ export default function MonthlyReportsPage() {
             B: { distance: 0, duration: 0, cost: 0 }
         }
     });
+    const [userProfile, setUserProfile] = useState(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    setUserProfile(data.user);
+                }
+            })
+            .catch(err => console.error('Failed to load user profile:', err));
+    }, []);
 
     const fetchCars = async () => {
         try {
@@ -181,87 +194,107 @@ export default function MonthlyReportsPage() {
                 const batch = sessionsList.slice(i, i + batchSize);
                 const batchResults = await Promise.all(batch.map(async (session) => {
                     try {
-                        if (session.valueConfirmed === 'Y' && session.cost != null && session.distance != null && session.timeTraveled != null) {
-                            return {
-                                ...session,
-                                distanceKm: Number(session.distance) || 0,
-                                durationHours: Number(session.timeTraveled) || 0,
-                                cost: Number(session.cost) || 0,
-                                valueConfirmed: 'Y',
-                                isProjected: false
-                            };
-                        }
-
                         const start = parseUTC(session.startTime);
                         const end = parseUTC(session.endTime) || new Date();
 
-                        let startStr = session.startTime || '';
-                        if (startStr.endsWith('Z')) startStr = startStr.substring(0, startStr.length - 1);
+                        let distanceKm = Number(session.distance) || 0;
+                        let durationHours = Number(session.timeTraveled) || 0;
+                        let sessionCost = Number(session.cost) || 0;
+                        let valueConfirmed = session.valueConfirmed || 'N';
+                        let isProjected = valueConfirmed === 'N';
 
-                        let endStr = '';
-                        if (session.endTime) {
-                            endStr = session.endTime;
-                            if (endStr.endsWith('Z')) endStr = endStr.substring(0, endStr.length - 1);
-                        } else {
-                            endStr = end.toISOString().split('.')[0];
-                        }
+                        // Only fetch GPS data if we don't have valid distance/time already
+                        if (distanceKm <= 0 || durationHours <= 0) {
+                            let startStr = session.startTime || '';
+                            if (startStr.endsWith('Z')) startStr = startStr.substring(0, startStr.length - 1);
 
-                        const locUrl = `/api/gps-data?startDate=${startStr}&endDate=${endStr}&deviceId=${session.deviceId}`;
-                        const lResponse = await fetch(locUrl);
-                        const lResult = await lResponse.json();
-
-                        if (!start) return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
-
-                        const sessionLocations = (lResult.data || [])
-                            .map(l => ({ ...l, timestamp: new Date(l.date).getTime() }))
-                            .sort((a, b) => a.timestamp - b.timestamp);
-
-                        const filteredLocs = filterLocationsByDistance(sessionLocations, 10);
-                        const distanceMeters = calculateTotalDistance(filteredLocs);
-                        const durationMs = end.getTime() - start.getTime();
-                        const durationHours = durationMs / (1000 * 60 * 60);
-
-                        // Junk session filtering
-                        if (distanceMeters < 1 && durationMs < 1000) {
-                             return { ...session, distanceKm: 0, durationHours: 0, cost: 0, isEmpty: true };
-                        }
-
-                        let sessionPricePerKm = 0;
-                        let isProjected = false;
-                        const carFuelLogs = fuelData.filter(f => f.carId === session.carId).sort((a, b) => {
-                            const aTime = a.timestampUtc.endsWith('Z') ? a.timestampUtc : a.timestampUtc + 'Z';
-                            const bTime = b.timestampUtc.endsWith('Z') ? b.timestampUtc : b.timestampUtc + 'Z';
-                            return new Date(aTime).getTime() - new Date(bTime).getTime();
-                        });
-                        
-                        if (carFuelLogs.length > 0) {
-                            const validLogs = carFuelLogs.filter(f => parseFloat(f.pricePerKilometer) > 0);
-                            const applicableLog = carFuelLogs.find(f => {
-                                const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
-                                return new Date(fTimeStr).getTime() >= end.getTime();
-                            });
-
-                            if (applicableLog && parseFloat(applicableLog.pricePerKilometer) > 0) {
-                                sessionPricePerKm = parseFloat(applicableLog.pricePerKilometer);
+                            let endStr = '';
+                            if (session.endTime) {
+                                endStr = session.endTime;
+                                if (endStr.endsWith('Z')) endStr = endStr.substring(0, endStr.length - 1);
                             } else {
-                                if (validLogs.length > 0) {
+                                endStr = end.toISOString().split('.')[0];
+                            }
+
+                            const locUrl = `/api/gps-data?startDate=${startStr}&endDate=${endStr}&deviceId=${session.deviceId}`;
+                            const lResponse = await fetch(locUrl);
+                            const lResult = await lResponse.json();
+
+                            if (!lResult.success) return { ...session, distanceKm: 0, durationHours: 0, error: true };
+                            if (!start) return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
+
+                            const sessionLocations = (lResult.data || [])
+                                .map(l => ({ ...l, timestamp: new Date(l.date).getTime() }))
+                                .sort((a, b) => a.timestamp - b.timestamp);
+
+                            const filteredLocs = filterLocationsByDistance(sessionLocations, 10);
+                            const distanceMeters = calculateTotalDistance(filteredLocs);
+                            const durationMs = end.getTime() - start.getTime();
+                            
+                            distanceKm = distanceMeters / 1000;
+                            durationHours = durationMs / (1000 * 60 * 60);
+
+                            // Junk session filtering
+                            if (distanceMeters < 1 && durationMs < 1000) {
+                                return { ...session, distanceKm: 0, durationHours: 0, cost: 0, isEmpty: true };
+                            }
+                        }
+
+                        // Re-evaluate cost if not confirmed or if we just recalculated distance
+                        if (valueConfirmed === 'N' || session.distance === null || session.distance <= 0) {
+                            let sessionPricePerKm = 0;
+                            const carFuelLogs = fuelData.filter(f => f.carId === session.carId).sort((a, b) => {
+                                const aTime = a.timestampUtc.endsWith('Z') ? a.timestampUtc : a.timestampUtc + 'Z';
+                                const bTime = b.timestampUtc.endsWith('Z') ? b.timestampUtc : b.timestampUtc + 'Z';
+                                return new Date(aTime).getTime() - new Date(bTime).getTime();
+                            });
+                            
+                            if (carFuelLogs.length > 0) {
+                                const validLogs = carFuelLogs.filter(f => parseFloat(f.pricePerKilometer) > 0);
+                                const applicableLog = carFuelLogs.find(f => {
+                                    const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
+                                    return new Date(fTimeStr).getTime() >= end.getTime();
+                                });
+
+                                if (applicableLog && parseFloat(applicableLog.pricePerKilometer) > 0) {
+                                    sessionPricePerKm = parseFloat(applicableLog.pricePerKilometer);
+                                    isProjected = false;
+                                    valueConfirmed = 'Y';
+                                } else if (validLogs.length > 0) {
                                     isProjected = true;
                                     if (!applicableLog) sessionPricePerKm = parseFloat(validLogs[validLogs.length - 1].pricePerKilometer);
                                     else sessionPricePerKm = parseFloat(validLogs[0].pricePerKilometer);
+                                    valueConfirmed = 'N';
                                 }
                             }
+                            sessionCost = distanceKm * sessionPricePerKm;
+
+                            // Save results back to DB if they've changed and session is finished
+                            if (session.endTime && !userProfile?.isDemo) {
+                                fetch('/api/sessions', {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        id: session.id,
+                                        cost: sessionCost,
+                                        distance: distanceKm,
+                                        timeTraveled: durationHours,
+                                        valueConfirmed: valueConfirmed
+                                    })
+                                }).catch(err => console.error('Failed to save session metrics:', err));
+                            }
                         }
-                        
-                        const sessionCost = (distanceMeters / 1000) * sessionPricePerKm;
 
                         return {
                             ...session,
-                            distanceKm: distanceMeters / 1000,
-                            durationHours: durationHours,
+                            distanceKm,
+                            durationHours,
                             cost: sessionCost,
-                            valueConfirmed: isProjected ? 'N' : 'Y'
+                            valueConfirmed,
+                            isProjected
                         };
                     } catch (err) {
+                        console.error('Error processing session:', session.id, err);
                         return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
                     }
                 }));
