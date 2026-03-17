@@ -35,10 +35,14 @@ function LoginForm() {
 
     useEffect(() => {
         const registered = searchParams.get('registered');
+        const verified = searchParams.get('verified');
         const googleError = searchParams.get('error');
 
         if (registered === 'true') {
-            setSuccess('Account created! Please sign in.');
+            setSuccess('Account created! Please check your email to verify your account before signing in.');
+        }
+        if (verified === 'true') {
+            setSuccess('Email verified successfully! You can now sign in.');
         }
         if (googleError && GOOGLE_ERROR_MESSAGES[googleError]) {
             setError(GOOGLE_ERROR_MESSAGES[googleError]);
@@ -173,11 +177,18 @@ function LoginForm() {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400">
-                    Don't have an account?{' '}
-                    <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
-                        Register here
-                    </a>
+                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400 space-y-3">
+                    <div>
+                        Don't have an account?{' '}
+                        <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+                            Register here
+                        </a>
+                    </div>
+                    <div>
+                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-slate-300 transition-colors">
+                            Forgot your password?
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

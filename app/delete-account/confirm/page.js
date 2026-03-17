@@ -1,0 +1,115 @@
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+function DeleteAccountConfirm() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const token = searchParams.get('token');
+
+    const [status, setStatus] = useState('verifying'); // 'verifying', 'confirming', 'success', 'error'
+    const [message, setMessage] = useState('Verifying your deletion request...');
+
+    useEffect(() => {
+        if (!token) {
+            setStatus('error');
+            setMessage('Invalid deletion link. Please request a new one.');
+        }
+    }, [token]);
+
+    const handleConfirm = async () => {
+        setStatus('confirming');
+        setMessage('Processing account deletion...');
+
+        try {
+            const res = await fetch('/api/auth/delete-account/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setStatus('success');
+                setMessage(data.message);
+                setTimeout(() => {
+                    router.push('/login');
+                }, 5000);
+            } else {
+                setStatus('error');
+                setMessage(data.error || 'Failed to delete account');
+            }
+        } catch (err) {
+            setStatus('error');
+            setMessage('An unexpected error occurred. Please try again.');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700 p-8 text-center animate-in fade-in zoom-in duration-300">
+                <div className="mb-6">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                        status === 'success' ? 'bg-green-500/20 text-green-400' : 
+                        status === 'error' ? 'bg-red-500/20 text-red-400' : 
+                        'bg-red-500/20 text-red-500 animate-pulse'
+                    }`}>
+                        {status === 'success' ? (
+                            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        )}
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                        {status === 'success' ? 'Account Deleted' : 'Account Deletion'}
+                    </h2>
+                    <p className="text-slate-400">
+                        {message}
+                    </p>
+                </div>
+
+                {status === 'verifying' && token && (
+                    <button
+                        onClick={handleConfirm}
+                        className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-900/40 transform hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                        Confirm Decisive Deletion
+                    </button>
+                )}
+
+                {status === 'success' && (
+                    <div className="mt-6 text-sm text-slate-500 italic">
+                        All systems are being flushed. Redirecting you to login...
+                    </div>
+                )}
+
+                {(status === 'error' || !token) && (
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all"
+                    >
+                        Back to Home
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+
+export default function DeleteAccountPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
+                <div className="text-white">Loading...</div>
+            </div>
+        }>
+            <DeleteAccountConfirm />
+        </Suspense>
+    );
+}

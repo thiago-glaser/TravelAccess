@@ -15,10 +15,24 @@ export async function POST(request) {
             return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
         }
 
+        // Check if account is deleted
+        if (user.isDeleted === 1 || user.isDeleted === true) {
+            return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+        }
+
         const isValid = await verifyPassword(password, user.passwordHash);
 
         if (!isValid) {
             return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+        }
+
+        // Check if email is verified (skip for demo users)
+        const isDemo = user.isDemo === 'Y' || user.isDemo === true;
+        if (!isDemo && user.isVerified !== 1) {
+            return Response.json({ 
+                success: false, 
+                error: 'Please verify your email address before logging in. Check your inbox for the verification link.' 
+            }, { status: 403 });
         }
 
         // generateToken expects an object with specific keys from the old query (ID, USERNAME)
