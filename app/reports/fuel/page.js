@@ -344,7 +344,7 @@ export default function FuelReportPage() {
                                                 {fuel.totalKilometers ? (
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-black text-amber-600 font-mono">{Number(fuel.kilometerPerLiter || 0).toFixed(2)} <span className="text-[10px]">km/L</span></span>
-                                                        <span className="text-[10px] text-gray-400">Dist: {fuel.totalKilometers}km</span>
+                                                        <span className="text-[10px] text-gray-400">Dist: {Number(fuel.totalKilometers || 0).toFixed(2)}km</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-gray-300">-</span>
