@@ -22,6 +22,8 @@ export default function Navbar() {
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' });
     const [demoStatus, setDemoStatus] = useState({ loading: false, message: '' });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: '', success: '' });
 
     const dropdownRef = useRef(null);
     const dropdownReportsRef = useRef(null);
@@ -104,6 +106,24 @@ export default function Navbar() {
             setPwdStatus({ loading: false, error: 'An error occurred', success: '' });
         }
     };
+    const handleAccountDeletion = async () => {
+        if (!confirm('Are you sure you want to delete your account? A confirmation email will be sent to your inbox to finalize the process.')) return;
+
+        setDeleteStatus({ loading: true, error: '', success: '' });
+        try {
+            const res = await fetch('/api/auth/delete-account/request', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                setDeleteStatus({ loading: false, error: '', success: data.message });
+                setTimeout(() => setIsDeleteModalOpen(false), 5000);
+            } else {
+                setDeleteStatus({ loading: false, error: data.error || 'Failed to request deletion', success: '' });
+            }
+        } catch (err) {
+            setDeleteStatus({ loading: false, error: 'An error occurred. Please try again.', success: '' });
+        }
+    };
+
     const handleSetupDemo = async (mode = 'setup') => {
         let confirmMsg = 'Initialize demo user and data?';
         if (mode === 'force') confirmMsg = 'Warning: This will DELETE all existing demo user data and recreate it. Continue?';
@@ -434,6 +454,22 @@ export default function Navbar() {
                                         </Link>
                                     )}
 
+                                    {!userProfile?.isDemo && (
+                                        <button
+                                            onClick={() => {
+                                                setIsSettingsOpen(false);
+                                                setIsDeleteModalOpen(true);
+                                                setDeleteStatus({ loading: false, error: '', success: '' });
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete Account
+                                        </button>
+                                    )}
+
                                     {userProfile?.isAdmin && (
                                         <>
                                             <div className="border-t border-gray-100 my-1 mx-2"></div>
@@ -712,6 +748,22 @@ export default function Navbar() {
                                 </Link>
                             )}
 
+                            {!userProfile?.isDemo && (
+                                <button
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setIsDeleteModalOpen(true);
+                                        setDeleteStatus({ loading: false, error: '', success: '' });
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
+                                >
+                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete Account
+                                </button>
+                            )}
+
                             {userProfile?.isAdmin && (
                                 <>
                                     <div className="border-t border-gray-100 my-1 mx-2"></div>
@@ -855,6 +907,67 @@ export default function Navbar() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Account Deletion Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Your Account?</h3>
+                            <p className="text-gray-500 text-sm mb-6">
+                                This will deactivate your account and revoke all API keys. For security, we will send a confirmation link to <strong>{userProfile?.email}</strong>.
+                            </p>
+
+                            {deleteStatus.error && (
+                                <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                    {deleteStatus.error}
+                                </div>
+                            )}
+
+                            {deleteStatus.success && (
+                                <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200 flex flex-col items-center">
+                                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {deleteStatus.success}
+                                </div>
+                            )}
+
+                            {!deleteStatus.success && (
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={handleAccountDeletion}
+                                        disabled={deleteStatus.loading}
+                                        className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-200 disabled:opacity-50"
+                                    >
+                                        {deleteStatus.loading ? 'Processing...' : 'Send Confirmation Email'}
+                                    </button>
+                                    <button
+                                        onClick={() => setIsDeleteModalOpen(false)}
+                                        className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold rounded-xl transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

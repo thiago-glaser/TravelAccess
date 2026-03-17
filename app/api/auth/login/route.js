@@ -15,6 +15,11 @@ export async function POST(request) {
             return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
         }
 
+        // Check if account is deleted
+        if (user.isDeleted === 1 || user.isDeleted === true) {
+            return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+        }
+
         const isValid = await verifyPassword(password, user.passwordHash);
 
         if (!isValid) {

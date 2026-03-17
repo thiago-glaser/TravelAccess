@@ -106,6 +106,11 @@ export async function GET(request) {
             return NextResponse.redirect(`${baseUrl}/login?error=google_db_error`);
         }
 
+        // 3d. Check if account is deleted
+        if (user.isDeleted === 1 || user.isDeleted === true) {
+            return NextResponse.redirect(`${baseUrl}/login?error=google_server_error`);
+        }
+
         // Generate JWT expected token shape (falling back to legacy column names used inside sign)
         const tokenPayload = {
             ID: user.id,
