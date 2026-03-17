@@ -173,11 +173,18 @@ function LoginForm() {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400">
-                    Don't have an account?{' '}
-                    <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
-                        Register here
-                    </a>
+                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400 space-y-3">
+                    <div>
+                        Don't have an account?{' '}
+                        <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+                            Register here
+                        </a>
+                    </div>
+                    <div>
+                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-slate-300 transition-colors">
+                            Forgot your password?
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
