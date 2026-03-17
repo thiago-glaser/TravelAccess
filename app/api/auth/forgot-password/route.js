@@ -3,6 +3,8 @@ import { User } from '@/lib/models/index.js';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
 
+import { sendEmail } from '@/lib/email';
+
 export async function POST(req) {
     try {
         const { email } = await req.json();
@@ -29,11 +31,27 @@ export async function POST(req) {
 
         const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
-        // In a real application, you would send an email here.
-        // For this demonstration, we'll log it to the console.
-        console.log(`[PASSWORD RESET] Link for ${email}: ${resetUrl}`);
-        
-        // If there's a need to mock email sending functionality, we could do it here.
+        try {
+            await sendEmail({
+                to: email,
+                subject: 'Reset your TravelAccess Password',
+                text: `You requested a password reset. Click the following link to set a new password: ${resetUrl}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #4f46e5;">TravelAccess</h2>
+                        <p>We received a request to reset your password. Click the button below to secure your account:</p>
+                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 20px 0;">Reset Password</a>
+                        <p style="color: #6b7280; font-size: 14px;">This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+                        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+                        <p style="color: #9ca3af; font-size: 12px;">Precision Travel & Expense Tracking</p>
+                    </div>
+                `,
+            });
+        } catch (emailError) {
+            console.error('[GMAIL] Deployment failed, logging to console instead:');
+            console.log(`[PASSWORD RESET] Link for ${email}: ${resetUrl}`);
+            // We don't fail the whole request if email fails, but you should check the logs
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {
