@@ -66,7 +66,7 @@ export async function POST(request, context) {
             where: {
                 carId: carId,
                 startUtc: {
-                    [Op.gt]: f1Timestamp,
+                    [Op.gte]: f1Timestamp,
                     [Op.lt]: f2Timestamp
                 }
             },
@@ -108,14 +108,23 @@ export async function POST(request, context) {
         }
 
         const totalKilometers = totalMeters / 1000;
-        const kilometerPerLiter = f2Liters > 0 ? totalKilometers / f2Liters : 0;
-        const pricePerKilometer = totalKilometers > 0 ? f2TotalValue / totalKilometers : 0;
+        
+        // Only update efficiency metrics if we actually have distance data. 
+        // If distance is zero, we keep the previous values (usually 0) but avoid 
+        // overwriting with a potentially "broken" zero calculation if some distance was expected.
+        if (totalKilometers > 0.01) {
+            const kilometerPerLiter = f2Liters > 0 ? totalKilometers / f2Liters : 0;
+            const pricePerKilometer = totalKilometers > 0 ? f2TotalValue / totalKilometers : 0;
 
-        // Update F2 with calculated values
-        f2.totalKilometers = totalKilometers;
-        f2.kilometerPerLiter = kilometerPerLiter;
-        f2.pricePerKilometer = pricePerKilometer;
-        await f2.save();
+            f2.totalKilometers = totalKilometers;
+            f2.kilometerPerLiter = kilometerPerLiter;
+            f2.pricePerKilometer = pricePerKilometer;
+            await f2.save();
+        } else {
+            // Even if distance is zero, we should record that no distance was found
+            f2.totalKilometers = 0;
+            await f2.save();
+        }
 
         // 5. Invalidate sessions that are affected by F2's updated price:
         const f3 = await Fuel.findOne({
@@ -139,7 +148,7 @@ export async function POST(request, context) {
             where: {
                 carId: carId,
                 startUtc: {
-                    [Op.gt]: f1Timestamp,
+                    [Op.gte]: f1Timestamp,
                     [Op.lt]: f2Timestamp
                 }
             }

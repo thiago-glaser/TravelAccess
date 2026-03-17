@@ -181,14 +181,14 @@ export default function MonthlyReportsPage() {
                 const batch = sessionsList.slice(i, i + batchSize);
                 const batchResults = await Promise.all(batch.map(async (session) => {
                     try {
-                        if (session.cost != null && session.distance != null && session.timeTraveled != null) {
+                        if (session.valueConfirmed === 'Y' && session.cost != null && session.distance != null && session.timeTraveled != null) {
                             return {
                                 ...session,
                                 distanceKm: Number(session.distance) || 0,
                                 durationHours: Number(session.timeTraveled) || 0,
                                 cost: Number(session.cost) || 0,
-                                valueConfirmed: session.valueConfirmed || 'N',
-                                isProjected: (session.valueConfirmed || 'N') === 'N'
+                                valueConfirmed: 'Y',
+                                isProjected: false
                             };
                         }
 
@@ -210,15 +210,21 @@ export default function MonthlyReportsPage() {
                         const lResponse = await fetch(locUrl);
                         const lResult = await lResponse.json();
 
-                        if (!lResult.success) return { ...session, distanceKm: 0, durationHours: 0, error: true };
+                        if (!start) return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
 
-                        const sessionLocations = lResult.data
+                        const sessionLocations = (lResult.data || [])
                             .map(l => ({ ...l, timestamp: new Date(l.date).getTime() }))
                             .sort((a, b) => a.timestamp - b.timestamp);
 
                         const filteredLocs = filterLocationsByDistance(sessionLocations, 10);
                         const distanceMeters = calculateTotalDistance(filteredLocs);
                         const durationMs = end.getTime() - start.getTime();
+                        const durationHours = durationMs / (1000 * 60 * 60);
+
+                        // Junk session filtering
+                        if (distanceMeters < 1 && durationMs < 1000) {
+                             return { ...session, distanceKm: 0, durationHours: 0, cost: 0, isEmpty: true };
+                        }
 
                         let sessionPricePerKm = 0;
                         let isProjected = false;
@@ -232,7 +238,7 @@ export default function MonthlyReportsPage() {
                             const validLogs = carFuelLogs.filter(f => parseFloat(f.pricePerKilometer) > 0);
                             const applicableLog = carFuelLogs.find(f => {
                                 const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
-                                return new Date(fTimeStr).getTime() > end.getTime();
+                                return new Date(fTimeStr).getTime() >= end.getTime();
                             });
 
                             if (applicableLog && parseFloat(applicableLog.pricePerKilometer) > 0) {
@@ -251,7 +257,7 @@ export default function MonthlyReportsPage() {
                         return {
                             ...session,
                             distanceKm: distanceMeters / 1000,
-                            durationHours: durationMs / (1000 * 60 * 60),
+                            durationHours: durationHours,
                             cost: sessionCost,
                             valueConfirmed: isProjected ? 'N' : 'Y'
                         };
@@ -260,7 +266,7 @@ export default function MonthlyReportsPage() {
                     }
                 }));
 
-                processed.push(...batchResults);
+                processed.push(...batchResults.filter(r => !r.isEmpty));
                 setProgress(prev => ({ ...prev, current: Math.min(prev.total, i + batchSize) }));
             }
 

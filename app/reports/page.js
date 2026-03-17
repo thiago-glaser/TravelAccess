@@ -170,17 +170,17 @@ export default function ReportsPage() {
                 const batch = sessionsList.slice(i, i + batchSize);
                 const batchResults = await Promise.all(batch.map(async (session) => {
                     try {
-                        // FAST PATH: If all three calculated values are already stored in the DB,
-                        // skip GPS processing entirely. VALUE_CONFIRMED tells us if it was a
-                        // confirmed calculation (fuel calc button) or estimated (projected).
-                        if (session.cost != null && session.distance != null && session.timeTraveled != null) {
+                        // FAST PATH: Only skip if the value is already CONFIRMED.
+                        // If it's 'N' (Estimated), we MUST re-evaluate to see if a new fuel log
+                        // has been added that covers this session.
+                        if (session.valueConfirmed === 'Y' && session.cost != null && session.distance != null && session.timeTraveled != null) {
                             return {
                                 ...session,
                                 distanceKm: Number(session.distance) || 0,
                                 durationHours: Number(session.timeTraveled) || 0,
                                 cost: Number(session.cost) || 0,
-                                valueConfirmed: session.valueConfirmed || 'N',
-                                isProjected: (session.valueConfirmed || 'N') === 'N',
+                                valueConfirmed: 'Y',
+                                isProjected: false,
                                 points: 0
                             };
                         }
@@ -207,8 +207,10 @@ export default function ReportsPage() {
 
                         if (!lResult.success) return { ...session, distanceKm: 0, durationHours: 0, error: true };
 
+                        if (!start) return { ...session, distanceKm: 0, durationHours: 0, cost: 0, error: true };
+
                         // Process locations exactly like MapContainer
-                        const sessionLocations = lResult.data
+                        const sessionLocations = (lResult.data || [])
                             .map(l => ({
                                 ...l,
                                 timestamp: new Date(l.date).getTime()
@@ -218,6 +220,12 @@ export default function ReportsPage() {
                         const filteredLocs = filterLocationsByDistance(sessionLocations, 10);
                         const distanceMeters = calculateTotalDistance(filteredLocs);
                         const durationMs = end.getTime() - start.getTime();
+                        const durationHours = durationMs / (1000 * 60 * 60);
+
+                        // Junk session filtering: If no distance AND very short duration, consider it empty
+                        if (distanceMeters < 1 && durationMs < 1000) {
+                             return { ...session, distanceKm: 0, durationHours: 0, cost: 0, isEmpty: true };
+                        }
 
                         let sessionPricePerKm = 0;
                         let isProjected = false;
@@ -233,7 +241,7 @@ export default function ReportsPage() {
                             // Because F2 calculates its efficiency using the distance tracked between F1 and F2.
                             const applicableLog = carFuelLogs.find(f => {
                                 const fTimeStr = f.timestampUtc.endsWith('Z') ? f.timestampUtc : f.timestampUtc + 'Z';
-                                return new Date(fTimeStr).getTime() > end.getTime();
+                                return new Date(fTimeStr).getTime() >= end.getTime();
                             });
 
                             if (applicableLog && parseFloat(applicableLog.pricePerKilometer) > 0) {
@@ -285,7 +293,7 @@ export default function ReportsPage() {
                         return {
                             ...session,
                             distanceKm: distanceMeters / 1000,
-                            durationHours: durationMs / (1000 * 60 * 60),
+                            durationHours: durationHours,
                             points: filteredLocs.length,
                             pricePerKm: sessionPricePerKm,
                             cost: sessionCost,
@@ -298,7 +306,7 @@ export default function ReportsPage() {
                     }
                 }));
 
-                processed.push(...batchResults);
+                processed.push(...batchResults.filter(r => !r.isEmpty));
                 setProgress(prev => ({ ...prev, current: Math.min(prev.total, i + batchSize) }));
             }
 
