@@ -101,7 +101,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Email (Optional)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
                         <input
                             id="input-register-email"
                             type="email"
@@ -109,6 +109,7 @@ export default function RegisterPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
                             placeholder="your@email.com"
+                            required
                         />
                     </div>
 

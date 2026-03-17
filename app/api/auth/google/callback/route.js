@@ -68,6 +68,8 @@ export async function GET(request) {
                 // Link Google account to existing user
                 user.googleId = googleId;
                 user.googleAvatarUrl = picture || null;
+                user.isVerified = 1; // Mark as verified if they sign in with Google
+                user.verificationToken = null;
                 await user.save();
             }
         }
@@ -93,7 +95,8 @@ export async function GET(request) {
                 email,
                 googleId,
                 googleAvatarUrl: picture || null,
-                isAdmin: 0
+                isAdmin: 0,
+                isVerified: 1 // Google users are verified
             });
             
             if (!user.id) throw new Error('Failed to create new user in database');

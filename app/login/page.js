@@ -35,10 +35,14 @@ function LoginForm() {
 
     useEffect(() => {
         const registered = searchParams.get('registered');
+        const verified = searchParams.get('verified');
         const googleError = searchParams.get('error');
 
         if (registered === 'true') {
-            setSuccess('Account created! Please sign in.');
+            setSuccess('Account created! Please check your email to verify your account before signing in.');
+        }
+        if (verified === 'true') {
+            setSuccess('Email verified successfully! You can now sign in.');
         }
         if (googleError && GOOGLE_ERROR_MESSAGES[googleError]) {
             setError(GOOGLE_ERROR_MESSAGES[googleError]);
