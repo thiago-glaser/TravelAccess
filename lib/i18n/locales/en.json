@@ -314,6 +314,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "calcDist": "Calc Dist",
+    "calcDistTitle": "Calculate kilometers driven since last fuel",
     "remove": "Remove",
     "backToDashboard": "Back to Dashboard",
     "addSuccess": "Car added successfully!",

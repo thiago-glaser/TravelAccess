@@ -285,7 +285,7 @@ export default function ManageCarsPage() {
                                                     <button
                                                         onClick={() => handleCalculateDistance(car.ID)}
                                                         disabled={calculatingDistances[car.ID]}
-                                                        title="Calculate kilometers driven since last fuel"
+                                                        title={t('cars.calcDistTitle')}
                                                         className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg border border-transparent hover:border-blue-400/20 transition-all uppercase tracking-widest flex items-center justify-center disabled:opacity-50"
                                                     >
                                                         {calculatingDistances[car.ID] ? (

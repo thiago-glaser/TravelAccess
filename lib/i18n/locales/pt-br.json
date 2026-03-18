@@ -314,6 +314,7 @@
     "save": "Salvar",
     "cancel": "Cancelar",
     "calcDist": "Calc Dist",
+    "calcDistTitle": "Calcular quilômetros percorridos desde o último abastecimento",
     "remove": "Remover",
     "backToDashboard": "Voltar para o Painel",
     "addSuccess": "Carro adicionado com sucesso!",
