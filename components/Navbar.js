@@ -548,7 +548,11 @@ export default function Navbar() {
                                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-all duration-200"
                             >
-                                <span className="text-lg">{languages.find(l => l.code === locale)?.flag}</span>
+                                <img
+                                    src={languages.find(l => l.code === locale)?.flag}
+                                    alt={locale.toUpperCase()}
+                                    className="w-5 h-auto shadow-sm"
+                                />
                                 <span className="uppercase">{locale.split('-')[0]}</span>
                                 <svg className={`w-3 h-3 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -567,7 +571,7 @@ export default function Navbar() {
                                             className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${locale === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            <span className="text-lg">{lang.flag}</span>
+                                            <img src={lang.flag} alt={lang.name} className="w-5 h-auto shadow-sm" />
                                             <span>{lang.name}</span>
                                         </button>
                                     ))}
@@ -877,7 +881,11 @@ export default function Navbar() {
                     >
                         {locale.split('-')[0] === 'pt' ? 'Idioma' : 'Language'}
                         <div className="flex items-center gap-2">
-                            <span>{languages.find(l => l.code === locale)?.flag}</span>
+                            <img
+                                src={languages.find(l => l.code === locale)?.flag}
+                                alt={locale}
+                                className="w-6 h-auto shadow-sm"
+                            />
                             <svg className={`w-4 h-4 transition-transform duration-200 ${mobileLanguageOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                             </svg>
@@ -895,7 +903,7 @@ export default function Navbar() {
                                     }}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${locale === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
-                                    <span className="text-xl">{lang.flag}</span>
+                                    <img src={lang.flag} alt={lang.name} className="w-8 h-auto shadow-sm" />
                                     {lang.name}
                                 </button>
                             ))}
