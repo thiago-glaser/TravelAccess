@@ -16,14 +16,6 @@ function GoogleIcon() {
     );
 }
 
-const GOOGLE_ERROR_MESSAGES = {
-    google_denied: 'Google sign-in was cancelled.',
-    google_no_code: 'No authorization code received from Google.',
-    google_no_token: 'Failed to obtain token from Google.',
-    google_no_email: 'Your Google account does not have an email address.',
-    google_db_error: 'A database error occurred. Please try again.',
-    google_server_error: 'An unexpected error occurred. Please try again.',
-};
 
 function LoginForm() {
     const [username, setUsername] = useState('');
@@ -34,6 +26,15 @@ function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t, locale, changeLanguage } = useTranslation();
+
+    const GOOGLE_ERROR_MESSAGES = {
+        google_denied: t('login.googleErrors.denied'),
+        google_no_code: t('login.googleErrors.noCode'),
+        google_no_token: t('login.googleErrors.noToken'),
+        google_no_email: t('login.googleErrors.noEmail'),
+        google_db_error: t('login.googleErrors.dbError'),
+        google_server_error: t('login.googleErrors.serverError'),
+    };
 
     useEffect(() => {
         const registered = searchParams.get('registered');
@@ -216,11 +217,16 @@ function LoginForm() {
     );
 }
 
+function LoadingContent() {
+    const { t } = useTranslation();
+    return <>{t('common.loading')}</>;
+}
+
 export default function LoginPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-                Loading...
+                <LoadingContent />
             </div>
         }>
             <LoginForm />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -71,6 +72,7 @@ export default function ReportsPage() {
         }
     });
     const [userProfile, setUserProfile] = useState(null);
+    const { t, locale } = useTranslation();
 
     // Fetch user profile on mount
     useEffect(() => {
@@ -345,12 +347,12 @@ export default function ReportsPage() {
         // Document Title
         doc.setFontSize(22);
         doc.setTextColor(30, 41, 59); // text-slate-800
-        doc.text('Travel Analytics Report', 14, 22);
+        doc.text(t('reports.pdfOutput.title'), 14, 22);
         
         // Generation Date
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        doc.text(t('reports.pdfOutput.generatedOn', { date: new Date().toLocaleString(locale) }), 14, 30);
         
         // Applied Filters (if any)
         doc.setFontSize(10);
@@ -358,48 +360,48 @@ export default function ReportsPage() {
         let filterText = [];
         if (filters.carId) {
             const car = cars.find(c => c.ID.toString() === filters.carId.toString());
-            filterText.push(`Car: ${car ? (car.DESCRIPTION || car.LICENSE_PLATE) : filters.carId}`);
+            filterText.push(`${t('reports.car')}: ${car ? (car.DESCRIPTION || car.LICENSE_PLATE) : filters.carId}`);
         }
-        if (filters.year) filterText.push(`Year: ${filters.year}`);
-        if (filters.month) filterText.push(`Month: ${filters.month}`);
-        if (filters.type) filterText.push(`Type: ${filters.type === 'P' ? 'Personal' : 'Business'}`);
+        if (filters.year) filterText.push(`${t('reports.year')}: ${filters.year}`);
+        if (filters.month) filterText.push(`${t('reports.month')}: ${filters.month}`);
+        if (filters.type) filterText.push(`${t('reports.type')}: ${filters.type === 'P' ? t('reports.personal') : t('reports.business')}`);
         
         if (filterText.length > 0) {
-            doc.text(`Filters: ${filterText.join(' | ')}`, 14, 36);
+            doc.text(t('reports.pdfOutput.filters', { filters: filterText.join(' | ') }), 14, 36);
         }
         
         // Summary block
         doc.setFontSize(14);
         doc.setTextColor(30, 41, 59);
-        doc.text('Summary', 14, 46);
+        doc.text(t('reports.pdfOutput.summary'), 14, 46);
         
         doc.setFontSize(11);
         doc.setTextColor(71, 85, 105); // text-slate-600
 
         // Column 1: Totals
-        doc.text(`Total Distance: ${totals.distance.toFixed(2)} km`, 14, 54);
-        doc.text(`Total Duration: ${formatDuration(totals.duration)}`, 14, 60);
-        doc.text(`Total Sessions: ${totals.count}`, 14, 66);
-        doc.text(`Total Cost: $${totals.cost.toFixed(2)}`, 14, 72);
+        doc.text(`${t('reports.totalDistance')}: ${totals.distance.toFixed(2)} km`, 14, 54);
+        doc.text(`${t('reports.totalDuration')}: ${formatDuration(totals.duration)}`, 14, 60);
+        doc.text(`${t('reports.totalSessions')}: ${totals.count}`, 14, 66);
+        doc.text(`${t('reports.totalCost')}: $${totals.cost.toFixed(2)}`, 14, 72);
 
         // Column 2: Personal Breakdown
-        doc.text('Personal', 80, 54);
-        doc.text(`Distance: ${totals.breakdown.P.distance.toFixed(2)} km`, 80, 60);
-        doc.text(`Duration: ${formatDuration(totals.breakdown.P.duration)}`, 80, 66);
-        doc.text(`Cost: $${totals.breakdown.P.cost.toFixed(2)}`, 80, 72);
+        doc.text(t('reports.personal'), 80, 54);
+        doc.text(`${t('reports.table.distance')}: ${totals.breakdown.P.distance.toFixed(2)} km`, 80, 60);
+        doc.text(`${t('reports.table.duration')}: ${formatDuration(totals.breakdown.P.duration)}`, 80, 66);
+        doc.text(`${t('reports.table.estCost')}: $${totals.breakdown.P.cost.toFixed(2)}`, 80, 72);
 
         // Column 3: Business Breakdown
-        doc.text('Business', 140, 54);
-        doc.text(`Distance: ${totals.breakdown.B.distance.toFixed(2)} km`, 140, 60);
-        doc.text(`Duration: ${formatDuration(totals.breakdown.B.duration)}`, 140, 66);
-        doc.text(`Cost: $${totals.breakdown.B.cost.toFixed(2)}`, 140, 72);
+        doc.text(t('reports.business'), 140, 54);
+        doc.text(`${t('reports.table.distance')}: ${totals.breakdown.B.distance.toFixed(2)} km`, 140, 60);
+        doc.text(`${t('reports.table.duration')}: ${formatDuration(totals.breakdown.B.duration)}`, 140, 66);
+        doc.text(`${t('reports.table.estCost')}: $${totals.breakdown.B.cost.toFixed(2)}`, 140, 72);
 
         // Body Table
         const tableData = reportData.map(s => [
-            s.description || 'Unknown Car',
-            parseUTC(s.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }),
-            s.endTime ? parseUTC(s.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : 'Active',
-            s.type === 'P' ? 'Personal' : s.type === 'B' ? 'Business' : 'Other',
+            s.description || t('common.unknownCar'),
+            parseUTC(s.startTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }),
+            s.endTime ? parseUTC(s.endTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }) : t('reports.table.active'),
+            s.type === 'P' ? t('reports.personal') : s.type === 'B' ? t('reports.business') : t('reports.other'),
             `${s.distanceKm.toFixed(2)} km`,
             formatDuration(s.durationHours),
             `$${(s.cost || 0).toFixed(2)}${s.valueConfirmed === 'Y' ? '' : '*'}`
@@ -407,7 +409,7 @@ export default function ReportsPage() {
 
         // Push grand total as the last row in the body specifically, and style it using hook
         tableData.push([
-            'Grand Total', '', '', '', 
+            t('reports.table.grandTotal'), '', '', '', 
             `${totals.distance.toFixed(2)} km`, 
             formatDuration(totals.duration), 
             `$${totals.cost.toFixed(2)}`
@@ -415,7 +417,7 @@ export default function ReportsPage() {
 
         autoTable(doc, {
             startY: 84,
-            head: [['Car', 'Start', 'End', 'Type', 'Distance', 'Duration', 'Est. Cost']],
+            head: [[t('reports.table.car'), t('reports.table.startTime'), t('reports.table.endTime'), t('reports.table.type'), t('reports.table.distance'), t('reports.table.duration'), t('reports.table.estCost')]],
             body: tableData,
             headStyles: { fillColor: [37, 99, 235] }, // bg-blue-600
             styles: { fontSize: 9 },
@@ -434,7 +436,7 @@ export default function ReportsPage() {
             const tableEnd = doc.lastAutoTable.finalY || 80;
             doc.setFontSize(8);
             doc.setTextColor(245, 158, 11); // text-amber-500
-            doc.text('* Some values are estimated based on past/future efficiency records.', 14, tableEnd + 8);
+            doc.text(t('reports.pdfOutput.disclaimer'), 14, tableEnd + 8);
         }
 
         doc.save(`Travel_Report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -446,10 +448,10 @@ export default function ReportsPage() {
                 <header className="mb-8 flex justify-between items-end">
                     <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                            Travel Analytics Reports
+                            {t('reports.title')}
                         </h1>
                         <p className="mt-2 text-lg text-gray-600">
-                            Comprehensive summaries of your distance and time traveled.
+                            {t('reports.subtitle')}
                         </p>
                     </div>
                 </header>
@@ -458,55 +460,55 @@ export default function ReportsPage() {
                 <div className="bg-white shadow-md rounded-xl p-4 mb-6 border border-gray-100">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Car</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.car')}</label>
                             <select
                                 value={filters.carId}
                                 onChange={(e) => setFilters(prev => ({ ...prev, carId: e.target.value }))}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">All Cars</option>
+                                <option value="">{t('reports.allCars')}</option>
                                 {cars.map(car => (
-                                    <option key={car.ID} value={car.ID}>{car.DESCRIPTION || car.LICENSE_PLATE || `Car #${car.ID}`}</option>
+                                    <option key={car.ID} value={car.ID}>{car.DESCRIPTION || car.LICENSE_PLATE || `${t('reports.car')} #${car.ID}`}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="w-32">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Year</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.year')}</label>
                             <select
                                 value={filters.year}
                                 onChange={(e) => setFilters(prev => ({ ...prev, year: e.target.value }))}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">Any Year</option>
+                                <option value="">{t('common.anyYear')}</option>
                                 {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040].map(y => <option key={y} value={y}>{y}</option>)}
                             </select>
                         </div>
                         <div className="w-40">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Month</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.month')}</label>
                             <select
                                 value={filters.month}
                                 onChange={(e) => setFilters(prev => ({ ...prev, month: e.target.value }))}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">Any Month</option>
+                                <option value="">{t('common.anyMonth')}</option>
                                 {[
-                                    { v: 1, n: 'January' }, { v: 2, n: 'February' }, { v: 3, n: 'March' },
-                                    { v: 4, n: 'April' }, { v: 5, n: 'May' }, { v: 6, n: 'June' },
-                                    { v: 7, n: 'July' }, { v: 8, n: 'August' }, { v: 9, n: 'September' },
-                                    { v: 10, n: 'October' }, { v: 11, n: 'November' }, { v: 12, n: 'December' }
+                                    { v: 1, n: t('months.1') }, { v: 2, n: t('months.2') }, { v: 3, n: t('months.3') },
+                                    { v: 4, n: t('months.4') }, { v: 5, n: t('months.5') }, { v: 6, n: t('months.6') },
+                                    { v: 7, n: t('months.7') }, { v: 8, n: t('months.8') }, { v: 9, n: t('months.9') },
+                                    { v: 10, n: t('months.10') }, { v: 11, n: t('months.11') }, { v: 12, n: t('months.12') }
                                 ].map(m => <option key={m.v} value={m.v}>{m.n}</option>)}
                             </select>
                         </div>
                         <div className="w-40">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Type</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.type')}</label>
                             <select
                                 value={filters.type}
                                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
                                 className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                             >
-                                <option value="">All Types</option>
-                                <option value="P">Personal Only</option>
-                                <option value="B">Business Only</option>
+                                <option value="">{t('reports.allTypes')}</option>
+                                <option value="P">{t('reports.personalOnly')}</option>
+                                <option value="B">{t('reports.businessOnly')}</option>
                             </select>
                         </div>
                         <div className="flex items-end self-end pb-0.5 gap-2">
@@ -521,9 +523,9 @@ export default function ReportsPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Processing...
+                                        {t('reports.processing')}
                                     </span>
-                                ) : 'Generate Report'}
+                                ) : t('reports.generateBtn')}
                             </button>
                             <button
                                 onClick={() => {
@@ -536,7 +538,7 @@ export default function ReportsPage() {
                                 }}
                                 className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
                             >
-                                Reset
+                                {t('reports.reset')}
                             </button>
                             {reportData.length > 0 && (
                                 <button
@@ -547,7 +549,7 @@ export default function ReportsPage() {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    PDF
+                                    {t('reports.pdf')}
                                 </button>
                             )}
                         </div>
@@ -557,7 +559,7 @@ export default function ReportsPage() {
                 {loading && progress.total > 0 && (
                     <div className="mb-6">
                         <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-2">
-                            <span>Processing Sessions</span>
+                            <span>{t('reports.processingSessions')}</span>
                             <span>{progress.current} / {progress.total} ({Math.round((progress.current / progress.total) * 100)}%)</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -574,7 +576,7 @@ export default function ReportsPage() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="font-medium">Error: {error}</span>
+                        <span className="font-medium">{t('common.error')}: {error}</span>
                     </div>
                 )}
 
@@ -582,23 +584,23 @@ export default function ReportsPage() {
                 {reportData.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Distance</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalDistance')}</p>
                             <p className="text-3xl font-black text-blue-600 font-mono">{totals.distance.toFixed(2)} <span className="text-sm">KM</span></p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Duration</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalDuration')}</p>
                             <p className="text-3xl font-black text-green-600 font-mono">{formatDuration(totals.duration)}</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Sessions</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalSessions')}</p>
                             <p className="text-3xl font-black text-purple-600 font-mono">{totals.count}</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
-                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Total Cost</p>
+                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">{t('reports.totalCost')}</p>
                             <p className="text-3xl font-black text-emerald-600 font-mono">${totals.cost.toFixed(2)}</p>
                             {reportData.some(s => s.valueConfirmed === 'N') && (
                                 <p className="text-[10px] text-amber-500 font-semibold mt-1 flex items-center gap-1">
-                                    <span>⚠</span> Some values are estimated
+                                    <span>⚠</span> {t('reports.estimatedWarning')}
                                 </p>
                             )}
                         </div>
@@ -608,34 +610,34 @@ export default function ReportsPage() {
                 {/* Type Breakdown (Visible when All Types are selected) */}
                 {reportData.length > 0 && !filters.type && (
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Breakdown by Type</h3>
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('reports.breakdownTitle')}</h3>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Distance Breakdown */}
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">Distance Distribution</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">Total: {totals.distance.toFixed(1)} km</span>
+                                    <span className="text-gray-600 font-medium">{t('reports.distDist')}</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: {totals.distance.toFixed(1)} km</span>
                                 </div>
                                 <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-blue-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.P.distance / totals.distance) * 100 : 0}%` }}
-                                        title={`Personal: ${totals.breakdown.P.distance.toFixed(1)} km`}
+                                        title={`${t('reports.personal')}: ${totals.breakdown.P.distance.toFixed(1)} km`}
                                     ></div>
                                     <div
                                         className="bg-yellow-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.B.distance / totals.distance) * 100 : 0}%` }}
-                                        title={`Business: ${totals.breakdown.B.distance.toFixed(1)} km`}
+                                        title={`${t('reports.business')}: ${totals.breakdown.B.distance.toFixed(1)} km`}
                                     ></div>
                                 </div>
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Personal ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600">{t('reports.personal')} ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-yellow-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Business ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600">{t('reports.business')} ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                 </div>
                             </div>
@@ -643,29 +645,29 @@ export default function ReportsPage() {
                             {/* Time Breakdown */}
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">Time Distribution</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">Total: {Math.round(totals.duration)}h</span>
+                                    <span className="text-gray-600 font-medium">{t('reports.timeDist')}</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: {Math.round(totals.duration)}h</span>
                                 </div>
                                 <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-blue-400 h-full transition-all duration-500"
                                         style={{ width: `${totals.duration > 0 ? (totals.breakdown.P.duration / totals.duration) * 100 : 0}%` }}
-                                        title={`Personal: ${formatDuration(totals.breakdown.P.duration)}`}
+                                        title={`${t('reports.personal')}: ${formatDuration(totals.breakdown.P.duration)}`}
                                     ></div>
                                     <div
                                         className="bg-yellow-400 h-full transition-all duration-500"
                                         style={{ width: `${totals.duration > 0 ? (totals.breakdown.B.duration / totals.duration) * 100 : 0}%` }}
-                                        title={`Business: ${formatDuration(totals.breakdown.B.duration)}`}
+                                        title={`${t('reports.business')}: ${formatDuration(totals.breakdown.B.duration)}`}
                                     ></div>
                                 </div>
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-blue-400 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Personal ({totals.duration > 0 ? Math.round((totals.breakdown.P.duration / totals.duration) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600">{t('reports.personal')} ({totals.duration > 0 ? Math.round((totals.breakdown.P.duration / totals.duration) * 100) : 0}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Business ({totals.duration > 0 ? Math.round((totals.breakdown.B.duration / totals.duration) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600">{t('reports.business')} ({totals.duration > 0 ? Math.round((totals.breakdown.B.duration / totals.duration) * 100) : 0}%)</span>
                                     </div>
                                 </div>
                             </div>
@@ -673,29 +675,29 @@ export default function ReportsPage() {
                             {/* Cost Breakdown */}
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">Cost Distribution</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">Total: ${totals.cost.toFixed(2)}</span>
+                                    <span className="text-gray-600 font-medium">{t('reports.costDist')}</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: ${totals.cost.toFixed(2)}</span>
                                 </div>
                                 <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-emerald-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.cost > 0 ? (totals.breakdown.P.cost / totals.cost) * 100 : 0}%` }}
-                                        title={`Personal: $${totals.breakdown.P.cost.toFixed(2)}`}
+                                        title={`${t('reports.personal')}: $${totals.breakdown.P.cost.toFixed(2)}`}
                                     ></div>
                                     <div
                                         className="bg-orange-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.cost > 0 ? (totals.breakdown.B.cost / totals.cost) * 100 : 0}%` }}
-                                        title={`Business: $${totals.breakdown.B.cost.toFixed(2)}`}
+                                        title={`${t('reports.business')}: $${totals.breakdown.B.cost.toFixed(2)}`}
                                     ></div>
                                 </div>
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Personal (${totals.breakdown.P.cost.toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600">{t('reports.personal')} (${totals.breakdown.P.cost.toFixed(2)})</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-orange-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">Business (${totals.breakdown.B.cost.toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600">{t('reports.business')} (${totals.breakdown.B.cost.toFixed(2)})</span>
                                     </div>
                                 </div>
                             </div>
@@ -709,20 +711,20 @@ export default function ReportsPage() {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Car</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Start Time</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">End Time</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Distance</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Duration</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Est. Cost</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.table.car')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.table.startTime')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.table.endTime')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.table.type')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.distance')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.duration')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.estCost')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {reportData.length === 0 ? (
                                     <tr>
                                         <td colSpan="6" className="px-6 py-20 text-center text-gray-400 italic">
-                                            {loading ? 'Consulting high-precision GPS telemetry...' : 'No sessions matching criteria. Use filters and click "Generate Report".'}
+                                            {loading ? t('reports.table.loadingMsg') : t('reports.table.noSessionsMsg')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -730,17 +732,17 @@ export default function ReportsPage() {
                                         {reportData.map((s) => (
                                             <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900">{s.description || 'Unknown Car'}</div>
+                                                    <div className="font-bold text-gray-900">{s.description || t('common.unknownCar')}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                                    {parseUTC(s.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+                                                    {parseUTC(s.startTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                                    {s.endTime ? parseUTC(s.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : 'Active'}
+                                                    {s.endTime ? parseUTC(s.endTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }) : t('reports.table.active')}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${s.type === 'P' ? 'bg-blue-100 text-blue-700' : s.type === 'B' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                        {s.type === 'P' ? 'Personal' : s.type === 'B' ? 'Business' : 'Other'}
+                                                        {s.type === 'P' ? t('reports.personal') : s.type === 'B' ? t('reports.business') : t('reports.other')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-mono font-bold text-blue-600">
@@ -755,14 +757,14 @@ export default function ReportsPage() {
                                                             ? 'text-emerald-500'
                                                             : 'text-amber-500'
                                                         }`}>
-                                                        {s.valueConfirmed === 'Y' ? '✓ Confirmed' : '~ Estimated'}
+                                                        {s.valueConfirmed === 'Y' ? `✓ ${t('reports.table.confirmed')}` : `~ ${t('reports.table.estimated')}`}
                                                     </div>
                                                 </td>
                                             </tr>
                                         ))}
                                         {/* Final Row with Totals */}
                                         <tr className="bg-gray-50 font-black border-t-2 border-gray-200">
-                                            <td colSpan="4" className="px-6 py-6 text-right text-gray-900 text-base uppercase tracking-widest">Grand Total</td>
+                                            <td colSpan="4" className="px-6 py-6 text-right text-gray-900 text-base uppercase tracking-widest">{t('reports.table.grandTotal')}</td>
                                             <td className="px-6 py-6 text-right text-xl text-blue-700 font-mono">
                                                 {totals.distance.toFixed(2)} km
                                             </td>

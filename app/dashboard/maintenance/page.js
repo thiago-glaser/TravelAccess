@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function ManageMaintenancePage() {
     const [maintenanceEntries, setMaintenanceEntries] = useState([]);
@@ -20,6 +21,7 @@ export default function ManageMaintenancePage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [userProfile, setUserProfile] = useState(null);
+    const { t } = useTranslation();
 
     const fileInputRef = useRef(null);
 
@@ -63,7 +65,7 @@ export default function ManageMaintenancePage() {
             }
         } catch (err) {
             console.error('Failed to fetch maintenance entries', err);
-            setError('Failed to fetch maintenance entries');
+            setError(t('maintenance.loading').replace('Loading', 'Failed to fetch')); // fallback-ish
         } finally {
             setLoading(false);
         }
@@ -93,7 +95,7 @@ export default function ManageMaintenancePage() {
         setSuccess('');
 
         if (!selectedCarId || !maintenanceDate || !amount || !description) {
-            setError('Please fill in all mandatory fields');
+            setError(t('maintenance.fillMandatory'));
             setSubmitting(false);
             return;
         }
@@ -101,7 +103,7 @@ export default function ManageMaintenancePage() {
         try {
             const dateObj = new Date(maintenanceDate);
             if (isNaN(dateObj.getTime())) {
-                setError('Invalid date/time selected');
+                setError(t('maintenance.invalidDate'));
                 setSubmitting(false);
                 return;
             }
@@ -122,7 +124,7 @@ export default function ManageMaintenancePage() {
 
             const data = await res.json();
             if (data.success) {
-                setSuccess('Maintenance entry added successfully!');
+                setSuccess(t('maintenance.addSuccess'));
                 setMaintenanceDate('');
                 setAmount('');
                 setDescription('');
@@ -131,17 +133,17 @@ export default function ManageMaintenancePage() {
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 fetchMaintenance();
             } else {
-                setError(data.error || 'Failed to add maintenance entry');
+                setError(data.error || t('maintenance.addFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleRemoveMaintenance = async (id) => {
-        if (!confirm(`Are you sure you want to remove this maintenance entry?`)) return;
+        if (!confirm(t('maintenance.removeConfirm'))) return;
 
         try {
             const res = await fetch(`/api/user/maintenance?id=${id}`, {
@@ -149,13 +151,13 @@ export default function ManageMaintenancePage() {
             });
             const data = await res.json();
             if (data.success) {
-                setSuccess('Maintenance entry removed successfully');
+                setSuccess(t('maintenance.removeSuccess'));
                 fetchMaintenance();
             } else {
-                setError(data.error || 'Failed to remove maintenance entry');
+                setError(data.error || t('maintenance.removeFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         }
     };
 
@@ -164,25 +166,25 @@ export default function ManageMaintenancePage() {
             <div className="max-w-3xl mx-auto">
                 <header className="mb-12">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                        Manage Maintenance
+                        {t('maintenance.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">Track maintenance, services, and associated receipts for your cars.</p>
+                    <p className="text-slate-400 mt-2">{t('maintenance.subtitle')}</p>
                 </header>
 
                 <div className="grid gap-8">
                     {/* Add Maintenance Form */}
                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-xl">
-                        <h2 className="text-xl font-semibold mb-4">Add Maintenance Entry</h2>
+                        <h2 className="text-xl font-semibold mb-4">{t('maintenance.addEntry')}</h2>
 
                         {cars.length === 0 && !loading && (
                             <div className="mb-4 text-orange-400 bg-orange-400/10 p-3 rounded-xl text-sm border border-orange-400/20">
-                                You need to add a car first before logging maintenance. <Link href="/dashboard/cars" className="underline font-bold">Manage Cars</Link>
+                                {t('maintenance.noCarWarning')} <Link href="/dashboard/cars" className="underline font-bold">{t('maintenance.manageCars')}</Link>
                             </div>
                         )}
 
                         <form onSubmit={handleAddMaintenance} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Car *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('maintenance.carLabel')}</label>
                                 <select
                                     value={selectedCarId}
                                     onChange={(e) => setSelectedCarId(e.target.value)}
@@ -190,7 +192,7 @@ export default function ManageMaintenancePage() {
                                     required
                                     disabled={cars.length === 0}
                                 >
-                                    <option value="" disabled>Select a Car</option>
+                                    <option value="" disabled>{t('maintenance.selectCar')}</option>
                                     {cars.map(c => (
                                         <option key={c.ID} value={c.ID}>
                                             {c.DESCRIPTION ? `${c.DESCRIPTION} (${c.LICENSE_PLATE || 'N/A'})` : (c.LICENSE_PLATE || `Car #${c.ID}`)}
@@ -200,7 +202,7 @@ export default function ManageMaintenancePage() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Date & Time *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('maintenance.dateTimeLabel')}</label>
                                 <input
                                     type="datetime-local"
                                     step="1"
@@ -212,7 +214,7 @@ export default function ManageMaintenancePage() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Amount *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('maintenance.amountLabel')}</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
                                     <input
@@ -229,20 +231,20 @@ export default function ManageMaintenancePage() {
                             </div>
                             
                             <div className="flex flex-col gap-1 md:col-span-2">
-                                <label className="text-sm text-slate-400 font-medium">Description *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('maintenance.descriptionLabel')}</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Maintenance details..."
+                                    placeholder={t('maintenance.descriptionPlaceholder')}
                                     maxLength="1000"
                                     className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder-slate-600 min-h-[100px]"
                                     required
                                 />
-                                <div className="text-right text-xs text-slate-500 mt-1">{description.length}/1000 characters</div>
+                                <div className="text-right text-xs text-slate-500 mt-1">{description.length}/1000 {t('maintenance.characters')}</div>
                             </div>
 
                             <div className="md:col-span-2 flex flex-col gap-2 mt-2">
-                                <label className="text-sm text-slate-400 font-medium">Receipt (Image or PDF)</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('maintenance.receiptLabel')}</label>
                                 <div className="flex flex-col items-start gap-4 p-4 border border-dashed border-slate-600 rounded-xl bg-slate-800/30">
                                     <input
                                         type="file"
@@ -259,10 +261,10 @@ export default function ManageMaintenancePage() {
                                                     <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                                                     </svg>
-                                                    <span className="text-[10px] uppercase font-bold mt-1 text-slate-400">PDF Document</span>
+                                                    <span className="text-[10px] uppercase font-bold mt-1 text-slate-400">{t('maintenance.pdfDocument')}</span>
                                                 </div>
                                             ) : (
-                                                <img src={receiptPreview} alt="Receipt Preview" className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
+                                                <img src={receiptPreview} alt={t('maintenance.receiptPreview')} className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
                                             )}
                                             <button
                                                 type="button"
@@ -281,7 +283,7 @@ export default function ManageMaintenancePage() {
                                 disabled={submitting || cars.length === 0 || userProfile?.isDemo}
                                 className="md:col-span-2 mt-4 py-4 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold transition-all shadow-lg shadow-purple-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                             >
-                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Saving...' : 'Add Maintenance Log')}
+                                {userProfile?.isDemo ? t('maintenance.viewOnly') : (submitting ? t('maintenance.saving') : t('maintenance.addLog'))}
                             </button>
                         </form>
 
@@ -292,15 +294,15 @@ export default function ManageMaintenancePage() {
                     {/* Maintenance List */}
                     <div className="bg-[#1e293b] rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
                         <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/20">
-                            <h2 className="text-xl font-semibold">Maintenance Logs</h2>
-                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{maintenanceEntries.length} Total</span>
+                            <h2 className="text-xl font-semibold">{t('maintenance.logsTitle')}</h2>
+                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{maintenanceEntries.length} {t('maintenance.total')}</span>
                         </div>
 
                         <div className="divide-y divide-slate-700">
                             {loading ? (
-                                <div className="p-10 text-center text-slate-500">Loading maintenance logs...</div>
+                                <div className="p-10 text-center text-slate-500">{t('maintenance.loading')}</div>
                             ) : maintenanceEntries.length === 0 ? (
-                                <div className="p-10 text-center text-slate-500 font-medium italic">No maintenance logged yet</div>
+                                <div className="p-10 text-center text-slate-500 font-medium italic">{t('maintenance.noLogs')}</div>
                             ) : (
                                 maintenanceEntries.map((entry) => {
                                     const rawDate = new Date(entry.maintenanceDate);
@@ -333,11 +335,11 @@ export default function ManageMaintenancePage() {
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
                                                         <div>
-                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Date</span>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">{t('maintenance.date')}</span>
                                                             <div className="text-slate-300">{localDate}</div>
                                                         </div>
                                                         <div className="sm:col-span-2">
-                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Description</span>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">{t('maintenance.description')}</span>
                                                             <div className="text-slate-300 whitespace-pre-wrap">{entry.description}</div>
                                                         </div>
                                                     </div>
@@ -351,7 +353,7 @@ export default function ManageMaintenancePage() {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="flex flex-col items-center gap-1 group text-slate-400 hover:text-purple-400 transition-colors"
-                                                            title="View Receipt"
+                                                            title={t('maintenance.viewReceipt')}
                                                         >
                                                             <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border border-slate-700 group-hover:border-purple-400/50 transition-colors">
                                                                 {entry.receiptMime === 'application/pdf' ? (
@@ -364,21 +366,21 @@ export default function ManageMaintenancePage() {
                                                                 ) : (
                                                                     <img
                                                                         src={`/api/user/maintenance/${entry.id}/receipt`}
-                                                                        alt="Receipt Preview"
+                                                                        alt={t('maintenance.receiptLabel')}
                                                                         className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                                                     />
                                                                 )}
                                                             </div>
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider">{entry.receiptMime === 'application/pdf' ? 'PDF' : 'Receipt'}</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider">{entry.receiptMime === 'application/pdf' ? 'PDF' : t('maintenance.receipt')}</span>
                                                         </a>
                                                     ) : (
-                                                        <div className="flex flex-col items-center gap-1 text-slate-600" title="No Receipt">
+                                                        <div className="flex flex-col items-center gap-1 text-slate-600" title={t('maintenance.noRec')}>
                                                             <div className="w-10 h-10 rounded-xl flex items-center justify-center border border-dashed border-slate-700">
                                                                 <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                                 </svg>
                                                             </div>
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider">No Rec</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider">{t('maintenance.noRec')}</span>
                                                         </div>
                                                     )}
 
@@ -389,7 +391,7 @@ export default function ManageMaintenancePage() {
                                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                                                         disabled={submitting || userProfile?.isDemo}
                                                     >
-                                                        Delete
+                                                        {t('maintenance.delete')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -406,7 +408,7 @@ export default function ManageMaintenancePage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to Dashboard
+                        {t('maintenance.backToDashboard')}
                     </Link>
                 </div>
             </div>
