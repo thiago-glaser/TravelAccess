@@ -189,6 +189,11 @@ function LoginForm() {
                             Forgot your password?
                         </a>
                     </div>
+                    <div>
+                        <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-slate-300 transition-colors text-xs opacity-80">
+                            Forgot your username?
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

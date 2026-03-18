@@ -204,6 +204,7 @@ Write-Step "Step 6 - Build Docker image on server"
 # ============================================================
 
 $buildCmd = "set -e" +
+"; rm -rf $SrcDir" +
 "; mkdir -p $SrcDir" +
 "; cd $SrcDir" +
 "; tar -xzf $TarFile" +

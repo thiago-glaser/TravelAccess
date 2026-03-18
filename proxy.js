@@ -6,10 +6,15 @@ export function proxy(request) {
 
     // Paths that don't require authentication
     if (
-        pathname.startsWith('/api/auth') || // Covers /api/auth/google and /api/auth/google/callback
+        pathname.startsWith('/api/auth') || 
         pathname.startsWith('/login') ||
         pathname.startsWith('/register') ||
-        pathname.includes('.') // Static files
+        pathname.startsWith('/verify-email') ||
+        pathname.startsWith('/reset-password') ||
+        pathname.startsWith('/forgot-password') ||
+        pathname.startsWith('/forgot-username') ||
+        pathname.startsWith('/delete-account') ||
+        pathname.includes('.') 
     ) {
         return NextResponse.next();
     }

@@ -8,17 +8,21 @@ import { sendEmail } from '@/lib/email';
 export async function POST(req) {
     try {
         const { email } = await req.json();
+        console.log(`[Forgot Password] Request received for: ${email}`);
 
         if (!email) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });
         }
 
-        const user = await User.findOne({ where: { email: email.toLowerCase() } });
+        const user = await User.findOne({ where: { email: email.toLowerCase().trim() } });
 
         if (!user) {
+            console.log(`[Forgot Password] No user found for email: ${email}`);
             // We return success even if user not found for security reasons
             return NextResponse.json({ success: true });
         }
+
+        console.log(`[Forgot Password] Found user: ${user.username}. Sending reset email...`);
 
         // Generate reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
