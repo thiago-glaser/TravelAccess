@@ -418,7 +418,7 @@ export default function Navbar() {
                             >
                                 <div className="flex items-center gap-2">
                                     {userProfile?.googleAvatarUrl ? (
-                                        <img src={userProfile.googleAvatarUrl} alt="Avatar" className="w-5 h-5 rounded-full" />
+                                        <img src={userProfile.googleAvatarUrl} alt={t('navbar.avatarAlt')} className="w-5 h-5 rounded-full" />
                                     ) : (
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -875,11 +875,11 @@ export default function Navbar() {
 
                     {/* Mobile Language Switcher */}
                     <div className="border-t border-gray-100 my-1 mx-2"></div>
-                    <button
+                        <button
                         onClick={() => setMobileLanguageOpen(!mobileLanguageOpen)}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-gray-400 uppercase tracking-wider hover:bg-gray-50 transition-colors pt-2"
                     >
-                        {locale.split('-')[0] === 'pt' ? 'Idioma' : 'Language'}
+                        {t('navbar.language')}
                         <div className="flex items-center gap-2">
                             <img
                                 src={languages.find(l => l.code === locale)?.flag}
@@ -926,7 +926,7 @@ export default function Navbar() {
                         </button>
 
                         <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">
-                            Change Password
+                            {t('navbar.modals.password.title')}
                         </h3>
 
                         {pwdStatus.success && (
@@ -943,37 +943,37 @@ export default function Navbar() {
 
                         <form onSubmit={handlePasswordChange} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password (optional if purely Google setup)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('navbar.modals.password.currentLabel')}</label>
                                 <input
                                     type="password"
                                     value={pwdForm.currentPassword}
                                     onChange={(e) => setPwdForm({ ...pwdForm, currentPassword: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-900 bg-white"
-                                    placeholder="Enter current password"
+                                    placeholder={t('navbar.modals.password.currentPlaceholder')}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('navbar.modals.password.newLabel')}</label>
                                 <input
                                     type="password"
                                     value={pwdForm.newPassword}
                                     onChange={(e) => setPwdForm({ ...pwdForm, newPassword: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-900 bg-white"
-                                    placeholder="Enter new password"
+                                    placeholder={t('navbar.modals.password.newPlaceholder')}
                                     required
                                     minLength={6}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('navbar.modals.password.confirmLabel')}</label>
                                 <input
                                     type="password"
                                     value={pwdForm.confirmPassword}
                                     onChange={(e) => setPwdForm({ ...pwdForm, confirmPassword: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-900 bg-white"
-                                    placeholder="Confirm new password"
+                                    placeholder={t('navbar.modals.password.confirmPlaceholder')}
                                     required
                                     minLength={6}
                                 />
@@ -985,7 +985,7 @@ export default function Navbar() {
                                     disabled={pwdStatus.loading || pwdStatus.success !== ''}
                                     className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {pwdStatus.loading ? 'Updating...' : 'Update Password'}
+                                    {pwdStatus.loading ? t('navbar.modals.password.updating') : t('navbar.modals.password.updateBtn')}
                                 </button>
                             </div>
                         </form>
@@ -1012,9 +1012,9 @@ export default function Navbar() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Your Account?</h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('navbar.modals.delete.title')}</h3>
                             <p className="text-gray-500 text-sm mb-6">
-                                This will deactivate your account and revoke all API keys. For security, we will send a confirmation link to <strong>{userProfile?.email}</strong>.
+                                {t('navbar.modals.delete.description')} <strong>{userProfile?.email}</strong>.
                             </p>
 
                             {deleteStatus.error && (
@@ -1039,13 +1039,13 @@ export default function Navbar() {
                                         disabled={deleteStatus.loading}
                                         className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-200 disabled:opacity-50"
                                     >
-                                        {deleteStatus.loading ? 'Processing...' : 'Send Confirmation Email'}
+                                        {deleteStatus.loading ? t('navbar.modals.delete.processing') : t('navbar.modals.delete.confirmEmailBtn')}
                                     </button>
                                     <button
                                         onClick={() => setIsDeleteModalOpen(false)}
                                         className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold rounded-xl transition-all"
                                     >
-                                        Cancel
+                                        {t('navbar.modals.delete.cancelBtn')}
                                     </button>
                                 </div>
                             )}

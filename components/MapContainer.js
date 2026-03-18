@@ -450,7 +450,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -458,7 +458,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -479,7 +479,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -487,7 +487,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -658,7 +658,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                           <g key={`y-${speed}`}>
                             <line x1="45" y1={y} x2="780" y2={y} stroke="#f0f0f0" strokeWidth="1" />
                             <text x="40" y={y + 5} fontSize="12" fill="#666" textAnchor="end">
-                              {speed.toFixed(0)} km/h
+                              {speed.toFixed(0)} {t('common.units.kmh')}
                             </text>
                           </g>
                         );
@@ -698,19 +698,19 @@ export default function MapContainer({ initialFilters = null, isModal = false })
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">{t('mapContainer.averageSpeed')}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {(speedData.reduce((sum, d) => sum + d.speed, 0) / speedData.length).toFixed(1)} km/h
+                  {(speedData.reduce((sum, d) => sum + d.speed, 0) / speedData.length).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">{t('mapContainer.minSpeed')}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {Math.min(...speedData.map(d => d.speed)).toFixed(1)} km/h
+                  {Math.min(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">{t('mapContainer.maxSpeed')}</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {Math.max(...speedData.map(d => d.speed)).toFixed(1)} km/h
+                  {Math.max(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
@@ -759,7 +759,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                           <g key={`y-${alt}`}>
                             <line x1="45" y1={y} x2="780" y2={y} stroke="#f0f0f0" strokeWidth="1" />
                             <text x="40" y={y + 5} fontSize="12" fill="#666" textAnchor="end">
-                              {alt.toFixed(0)} m
+                              {alt.toFixed(0)} {t('common.units.m')}
                             </text>
                           </g>
                         );

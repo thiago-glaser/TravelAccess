@@ -264,7 +264,7 @@ export default function ManageMaintenancePage() {
                                                     <span className="text-[10px] uppercase font-bold mt-1 text-slate-400">{t('maintenance.pdfDocument')}</span>
                                                 </div>
                                             ) : (
-                                                <img src={receiptPreview} alt={t('maintenance.receiptPreview')} className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
+                                                <img src={receiptPreview} alt={t('maintenance.receiptPreviewAlt')} className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
                                             )}
                                             <button
                                                 type="button"
@@ -366,7 +366,7 @@ export default function ManageMaintenancePage() {
                                                                 ) : (
                                                                     <img
                                                                         src={`/api/user/maintenance/${entry.id}/receipt`}
-                                                                        alt={t('maintenance.receiptLabel')}
+                                                                        alt={t('maintenance.receiptAlt')}
                                                                         className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                                                     />
                                                                 )}

@@ -33,7 +33,29 @@
       "viewDemoLogs": "View Demo Logs"
     },
     "logout": "Logout",
-    "demoMode": "Demo Mode"
+    "demoMode": "Demo Mode",
+    "avatarAlt": "Avatar",
+    "language": "Language",
+    "modals": {
+      "password": {
+        "title": "Change Password",
+        "currentLabel": "Current Password (optional if purely Google setup)",
+        "currentPlaceholder": "Enter current password",
+        "newLabel": "New Password",
+        "newPlaceholder": "Enter new password",
+        "confirmLabel": "Confirm New Password",
+        "confirmPlaceholder": "Confirm new password",
+        "updating": "Updating...",
+        "updateBtn": "Update Password"
+      },
+      "delete": {
+        "title": "Delete Your Account?",
+        "description": "This will deactivate your account and revoke all API keys. For security, we will send a confirmation link to",
+        "confirmEmailBtn": "Send Confirmation Email",
+        "cancelBtn": "Cancel",
+        "processing": "Processing..."
+      }
+    }
   },
   "login": {
     "title": "TravelAccess",
@@ -86,7 +108,16 @@
     "hours": "h",
     "minutes": "m",
     "seconds": "s",
-    "days": "d"
+    "days": "d",
+    "units": {
+      "kmh": "km/h",
+      "m": "m",
+      "km": "km"
+    },
+    "placeholders": {
+      "hour": "HH",
+      "minute": "MM"
+    }
   },
   "mapContainer": {
     "title": "Filter GPS Data by Date and Device",
@@ -172,6 +203,8 @@
       "endTime": "End Time",
       "startLoc": "Start Loc",
       "endLoc": "End Loc",
+      "startLocTitle": "Starting Location",
+      "endLocTitle": "Ending Location",
       "type": "Type"
     },
     "showingSessions": "Showing {{start}} to {{end}} of {{total}} sessions",
@@ -181,7 +214,9 @@
     "modalSingleSubtitle": "Viewing GPS path for the selected session",
     "demoWarning": "Demo users cannot change session types",
     "updateError": "Error updating session type: {{error}}",
-    "updateFailed": "Update failed: {{error}}"
+    "updateFailed": "Update failed: {{error}}",
+    "expandToggleTitle": "Expand session details",
+    "typeToggleTitle": "Click to toggle between Personal and Business"
   },
   "months": {
     "1": "January", "2": "February", "3": "March", "4": "April",
@@ -341,7 +376,8 @@
     "date": "Date",
     "description": "Description",
     "viewReceipt": "View Receipt",
-    "receipt": "Receipt",
+    "receiptPreviewAlt": "Receipt preview",
+    "receiptAlt": "Maintenance receipt",
     "noRec": "No Rec",
     "delete": "Delete",
     "backToDashboard": "Back to Dashboard",
@@ -381,8 +417,8 @@
     "totalKm": "Total KM",
     "kmL": "KM / L",
     "priceKm": "Price / KM",
-    "viewReceipt": "View Receipt",
-    "receipt": "Receipt",
+    "receiptPreviewAlt": "Receipt preview",
+    "receiptAlt": "Fuel receipt",
     "noRec": "No Rec",
     "calculate": "Calculate",
     "delete": "Delete",
@@ -608,6 +644,7 @@
       "filters": "Filters: {{filters}}",
       "summary": "Summary",
       "disclaimer": "* Some values are estimated based on past/future efficiency records."
-    }
+    },
+    "downloadPdfTitle": "Download Report as PDF"
   }
 }

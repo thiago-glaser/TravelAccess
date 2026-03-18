@@ -208,7 +208,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -216,7 +216,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -245,7 +245,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>

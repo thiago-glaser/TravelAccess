@@ -625,8 +625,8 @@ export default function SessionsPage() {
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.car')}</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.startTime')}</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.endTime')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title="Starting Location">{t('sessions.table.startLoc')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title="Ending Location">{t('sessions.table.endLoc')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.startLocTitle')}>{t('sessions.table.startLoc')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.endLocTitle')}>{t('sessions.table.endLoc')}</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.type')}</th>
                                             </tr>
                                         </thead>
@@ -648,7 +648,7 @@ export default function SessionsPage() {
                                                         <td className="px-2 py-4 w-10" onClick={(e) => toggleExpandSession(e, session.id)}>
                                                             <button
                                                                 className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors cursor-pointer"
-                                                                title="Expand session details"
+                                                                title={t('sessions.expandToggleTitle')}
                                                             >
                                                                 {expandedSessionIds.includes(session.id) ? (
                                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
@@ -689,7 +689,7 @@ export default function SessionsPage() {
                                                                     session.type === 'B' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
                                                                         'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                     }`}
-                                                                title="Click to toggle between Personal and Business"
+                                                                title={t('sessions.typeToggleTitle')}
                                                             >
                                                                 {session.type === 'P' ? t('common.personal') :
                                                                     session.type === 'B' ? t('common.business') :

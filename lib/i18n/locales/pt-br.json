@@ -33,7 +33,29 @@
       "viewDemoLogs": "Ver Logs Demo"
     },
     "logout": "Sair",
-    "demoMode": "Modo Demo"
+    "demoMode": "Modo Demo",
+    "avatarAlt": "Avatar",
+    "language": "Idioma",
+    "modals": {
+      "password": {
+        "title": "Alterar Senha",
+        "currentLabel": "Senha Atual (opcional se login for apenas via Google)",
+        "currentPlaceholder": "Digite a senha atual",
+        "newLabel": "Nova Senha",
+        "newPlaceholder": "Digite a nova senha",
+        "confirmLabel": "Confirmar Nova Senha",
+        "confirmPlaceholder": "Confirme a nova senha",
+        "updating": "Atualizando...",
+        "updateBtn": "Atualizar Senha"
+      },
+      "delete": {
+        "title": "Excluir sua Conta?",
+        "description": "Isso desativará sua conta e revogará todas as chaves de API. Por segurança, enviaremos um link de confirmação para",
+        "confirmEmailBtn": "Enviar E-mail de Confirmação",
+        "cancelBtn": "Cancelar",
+        "processing": "Processando..."
+      }
+    }
   },
   "login": {
     "title": "TravelAccess",
@@ -86,7 +108,16 @@
     "hours": "h",
     "minutes": "m",
     "seconds": "s",
-    "days": "d"
+    "days": "d",
+    "units": {
+      "kmh": "km/h",
+      "m": "m",
+      "km": "km"
+    },
+    "placeholders": {
+      "hour": "HH",
+      "minute": "MM"
+    }
   },
   "mapContainer": {
     "title": "Filtrar Dados GPS por Data e Dispositivo",
@@ -172,6 +203,8 @@
       "endTime": "Fim",
       "startLoc": "Local Início",
       "endLoc": "Local Fim",
+      "startLocTitle": "Local de Início",
+      "endLocTitle": "Local de Fim",
       "type": "Tipo"
     },
     "showingSessions": "Mostrando {{start}} a {{end}} de {{total}} sessões",
@@ -181,7 +214,9 @@
     "modalSingleSubtitle": "Visualizando o caminho GPS da sessão selecionada",
     "demoWarning": "Usuários demo não podem alterar tipos de sessão",
     "updateError": "Erro ao atualizar tipo de sessão: {{error}}",
-    "updateFailed": "Falha na atualização: {{error}}"
+    "updateFailed": "Falha na atualização: {{error}}",
+    "expandToggleTitle": "Expandir detalhes da sessão",
+    "typeToggleTitle": "Clique para alternar entre Pessoal e Trabalho"
   },
   "months": {
     "1": "Janeiro", "2": "Fevereiro", "3": "Março", "4": "Abril",
@@ -341,6 +376,8 @@
     "date": "Data",
     "description": "Descrição",
     "viewReceipt": "Ver Recibo",
+    "receiptPreviewAlt": "Prévia do comprovante",
+    "receiptAlt": "Comprovante de manutenção",
     "receipt": "Recibo",
     "noRec": "Sem Rec",
     "delete": "Excluir",
@@ -382,6 +419,8 @@
     "kmL": "KM / L",
     "priceKm": "Preço / KM",
     "viewReceipt": "Ver Recibo",
+    "receiptPreviewAlt": "Prévia do comprovante",
+    "receiptAlt": "Comprovante de abastecimento",
     "receipt": "Recibo",
     "noRec": "Sem Rec",
     "calculate": "Calcular",
@@ -591,6 +630,7 @@
       "endTime": "Fim",
       "active": "Ativo",
       "type": "Tipo",
+      "sessions": "Sessões",
       "distance": "Distância",
       "duration": "Duração",
       "estCost": "Custo Est.",
@@ -607,6 +647,7 @@
       "filters": "Filtros: {{filters}}",
       "summary": "Resumo",
       "disclaimer": "* Alguns valores são estimados com base em registros de eficiência passados/futuros."
-    }
+    },
+    "downloadPdfTitle": "Baixar Relatório como PDF"
   }
 }

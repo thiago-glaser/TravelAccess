@@ -292,7 +292,7 @@ export default function ManageFuelPage() {
                                                     <span className="text-[10px] uppercase font-bold mt-1 text-slate-400">{t('fuel.pdfDocument')}</span>
                                                 </div>
                                             ) : (
-                                                <img src={receiptPreview} alt="Receipt Preview" className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
+                                                <img src={receiptPreview} alt={t('fuel.receiptPreviewAlt')} className="h-32 rounded-lg border border-slate-700 object-contain bg-slate-900" />
                                             )}
                                             <button
                                                 type="button"
@@ -414,7 +414,7 @@ export default function ManageFuelPage() {
                                                                 ) : (
                                                                     <img
                                                                         src={`/api/user/fuel/${entry.id}/receipt`}
-                                                                        alt={t('fuel.receiptLabel')}
+                                                                        alt={t('fuel.receiptAlt')}
                                                                         className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                                                     />
                                                                 )}
