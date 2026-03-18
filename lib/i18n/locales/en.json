@@ -1,0 +1,61 @@
+{
+  "navbar": {
+    "sessions": "Sessions",
+    "reports": {
+      "title": "Reports",
+      "detailed": "Detailed",
+      "monthly": "Monthly",
+      "fuel": "Fuel"
+    },
+    "maps": {
+      "title": "Maps",
+      "routes": "Routes",
+      "heatMap": "Heat Map"
+    },
+    "data": {
+      "title": "Data",
+      "cars": "Cars",
+      "fuel": "Fuel",
+      "insurance": "Insurance",
+      "maintenance": "Maintenance",
+      "devices": "Devices",
+      "bluetooth": "Bluetooth"
+    },
+    "settings": {
+      "title": "Settings",
+      "changePassword": "Change Password",
+      "apiKeys": "API Keys",
+      "deleteAccount": "Delete Account",
+      "adminTools": "Admin Tools",
+      "setupDemoData": "Setup Demo Data",
+      "forceDemoReset": "Force Demo Reset",
+      "cleanDemoData": "Clean Demo Data",
+      "viewDemoLogs": "View Demo Logs"
+    },
+    "logout": "Logout",
+    "demoMode": "Demo Mode"
+  },
+  "login": {
+    "title": "TravelAccess",
+    "subtitle": "Precision Travel & Expense Tracking",
+    "description": "The ultimate tool for gig economy professionals. Whether you drive for Uber, deliver with DoorDash, or manage a fleet, TravelAccess automates your mileage logs, fuel expenses, and tax-ready reports.",
+    "demoTitle": "Try Demo Mode",
+    "demoDescription": "Explore all features instantly with our read-only trial.",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "googleSignIn": "Sign in with Google",
+    "divider": "or sign in with username",
+    "noAccount": "Don't have an account?",
+    "register": "Register here",
+    "forgotPassword": "Forgot your password?",
+    "forgotUsername": "Forgot your username?",
+    "placeholderUsername": "Enter your username",
+    "placeholderPassword": "Enter your password",
+    "successRegistered": "Account created! Please check your email to verify your account before signing in.",
+    "successVerified": "Email verified successfully! You can now sign in.",
+    "errorDefault": "Login failed",
+    "errorOccurred": "An error occurred. Please try again."
+  }
+}

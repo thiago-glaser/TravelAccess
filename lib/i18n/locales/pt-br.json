@@ -1,0 +1,61 @@
+{
+  "navbar": {
+    "sessions": "Sessões",
+    "reports": {
+      "title": "Relatórios",
+      "detailed": "Detalhado",
+      "monthly": "Mensal",
+      "fuel": "Combustível"
+    },
+    "maps": {
+      "title": "Mapas",
+      "routes": "Rotas",
+      "heatMap": "Mapa de Calor"
+    },
+    "data": {
+      "title": "Dados",
+      "cars": "Carros",
+      "fuel": "Combustível",
+      "insurance": "Seguro",
+      "maintenance": "Manutenção",
+      "devices": "Dispositivos",
+      "bluetooth": "Bluetooth"
+    },
+    "settings": {
+      "title": "Configurações",
+      "changePassword": "Alterar Senha",
+      "apiKeys": "Chaves API",
+      "deleteAccount": "Excluir Conta",
+      "adminTools": "Ferramentas Admin",
+      "setupDemoData": "Configurar Dados-Demo",
+      "forceDemoReset": "Resetar Demo Forçado",
+      "cleanDemoData": "Limpar Dados-Demo",
+      "viewDemoLogs": "Ver Logs Demo"
+    },
+    "logout": "Sair",
+    "demoMode": "Modo Demo"
+  },
+  "login": {
+    "title": "TravelAccess",
+    "subtitle": "Rastreamento de Viagens e Despesas",
+    "description": "A ferramenta definitiva para profissionais da gig economy. Seja você motorista da Uber, entregador do DoorDash, ou gerente de frota, o TravelAccess automatiza seus registros de quilometragem, despesas de combustível e relatórios prontos para impostos.",
+    "demoTitle": "Experimente o Modo Demo",
+    "demoDescription": "Explore todos os recursos instantaneamente com nosso teste apenas-leitura.",
+    "username": "Usuário",
+    "password": "Senha",
+    "signIn": "Entrar",
+    "signingIn": "Entrando...",
+    "googleSignIn": "Entrar com Google",
+    "divider": "ou entre com seu usuário",
+    "noAccount": "Não tem uma conta?",
+    "register": "Registre-se aqui",
+    "forgotPassword": "Esqueceu sua senha?",
+    "forgotUsername": "Esqueceu seu usuário?",
+    "placeholderUsername": "Digite seu usuário",
+    "placeholderPassword": "Digite sua senha",
+    "successRegistered": "Conta criada! Verifique seu e-mail para validar sua conta antes de entrar.",
+    "successVerified": "E-mail verificado com sucesso! Você já pode entrar.",
+    "errorDefault": "Falha ao entrar",
+    "errorOccurred": "Ocorreu um erro. Tente novamente."
+  }
+}
