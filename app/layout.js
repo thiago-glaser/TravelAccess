@@ -17,6 +17,7 @@ export const metadata = {
 };
 
 import Navbar from "@/components/Navbar";
+import Providers from "./Providers";
 
 export default function RootLayout({ children }) {
   return (
@@ -24,8 +25,10 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
-        {children}
+        <Providers>
+          <Navbar />
+          {children}
+        </Providers>
       </body>
     </html>
   );

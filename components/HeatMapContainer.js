@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parseUTC } from '@/lib/gpsUtils';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function HeatMapContainer({ initialFilters = null, isModal = false }) {
+  const { t } = useTranslation();
   const mapContainer = useRef(null);
   const map = useRef(null);
   const heatLayer = useRef(null);
@@ -164,16 +166,16 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
         {!isModal && (
           <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Heat Map Analysis
+              {t('mapContainer.heatMapTitle')}
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Times shown are in your local timezone and will be converted to UTC for database queries
+              {t('mapContainer.subtitle')}
             </p>
 
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Device
+                  {t('mapContainer.device')}
                 </label>
                 <select
                   value={selectedDevice}
@@ -182,7 +184,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200/50 text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                 >
-                  <option value="">All Devices</option>
+                  <option value="">{t('mapContainer.allDevices')}</option>
                   {devices.map(device => (
                     <option key={device.id} value={device.id}>
                       {device.id} {device.description ? `- ${device.description}` : ''}
@@ -193,7 +195,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
 
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Start Date & Time
+                  {t('mapContainer.startDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -206,7 +208,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -214,7 +216,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -222,7 +224,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
 
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  End Date & Time
+                  {t('mapContainer.endDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -235,7 +237,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -243,7 +245,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -282,7 +284,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                   disabled={loading}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
                 >
-                  {loading ? 'Loading...' : 'Filter'}
+                  {loading ? t('mapContainer.loading') : t('mapContainer.filter')}
                 </button>
 
                 <button
@@ -307,7 +309,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                   }}
                   className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium"
                 >
-                  Reset
+                  {t('mapContainer.reset')}
                 </button>
               </div>
             </div>
@@ -326,8 +328,8 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                   </svg>
                 </div>
                 <p className={`${isModal ? 'text-sm' : ''} text-gray-600`}>
-                  Showing <span className="font-bold text-blue-600">{locations.length}</span> raw GPS location(s)
-                  {selectedDevice && !isModal && ` from device ${selectedDevice}`}
+                  <span dangerouslySetInnerHTML={{ __html: t('mapContainer.showing_plural', { count: locations.length }) }}></span>
+                  {selectedDevice && !isModal && t('mapContainer.from_device', { deviceId: selectedDevice })}
                 </p>
               </div>
             </div>
@@ -343,7 +345,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
           >
             {!mapLoaded && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg">Loading heat map...</p>
+                <p className="text-gray-500 text-lg">{t('mapContainer.loadingHeatMap')}</p>
               </div>
             )}
           </div>

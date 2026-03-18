@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function ApiKeysPage() {
     const [keys, setKeys] = useState([]);
@@ -9,6 +10,7 @@ export default function ApiKeysPage() {
     const [creating, setCreating] = useState(false);
     const [newKey, setNewKey] = useState('');
     const [userProfile, setUserProfile] = useState(null);
+    const { t } = useTranslation();
 
     useEffect(() => {
         fetchKeys();
@@ -59,7 +61,7 @@ export default function ApiKeysPage() {
     };
 
     const handleRevokeKey = async (id) => {
-        if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return;
+        if (!confirm(t('keys.revokeConfirm'))) return;
 
         try {
             const res = await fetch(`/api/auth/api-keys?id=${id}`, {
@@ -79,22 +81,22 @@ export default function ApiKeysPage() {
             <div className="max-w-4xl mx-auto">
                 <header className="flex justify-between items-center mb-12">
                     <div>
-                        <h1 className="text-3xl font-bold">API Access Keys</h1>
-                        <p className="text-slate-400 mt-2">Manage your keys for secure API access</p>
+                        <h1 className="text-3xl font-bold">{t('keys.title')}</h1>
+                        <p className="text-slate-400 mt-2">{t('keys.subtitle')}</p>
                     </div>
-                    <a href="/" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700">Back to Map</a>
+                    <a href="/" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700">{t('keys.backToMap')}</a>
                 </header>
 
                 <div className="grid gap-8">
                     {/* Create New Key Section */}
                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700">
-                        <h2 className="text-xl font-semibold mb-6">Create New Key</h2>
+                        <h2 className="text-xl font-semibold mb-6">{t('keys.createTitle')}</h2>
                         <form onSubmit={handleCreateKey} className="flex gap-4">
                             <input
                                 type="text"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Key description (e.g., Mobile App)"
+                                placeholder={t('keys.descriptionPlaceholder')}
                                 className="flex-1 px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 required
                             />
@@ -103,20 +105,20 @@ export default function ApiKeysPage() {
                                 disabled={creating || userProfile?.isDemo}
                                 className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? 'View Only Mode' : (creating ? 'Generating...' : 'Generate Key')}
+                                {userProfile?.isDemo ? t('keys.viewOnly') : (creating ? t('keys.generating') : t('keys.generateBtn'))}
                             </button>
                         </form>
 
                         {newKey && (
                             <div className="mt-6 p-4 bg-green-500/10 border border-green-500/50 rounded-xl">
-                                <p className="text-green-400 text-sm mb-2 font-medium">Your new API key (copy it now, it won't be shown again):</p>
+                                <p className="text-green-400 text-sm mb-2 font-medium">{t('keys.newKeyWarning')}</p>
                                 <div className="flex gap-2">
                                     <code className="flex-1 p-3 bg-black/40 rounded-lg text-lg font-mono break-all">{newKey}</code>
                                     <button
                                         onClick={() => navigator.clipboard.writeText(newKey)}
                                         className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
                                     >
-                                        Copy
+                                        {t('keys.copy')}
                                     </button>
                                 </div>
                             </div>
@@ -126,25 +128,25 @@ export default function ApiKeysPage() {
                     {/* Keys List Section */}
                     <div className="bg-[#1e293b] rounded-2xl border border-slate-700 overflow-hidden">
                         <div className="p-6 border-b border-slate-700">
-                            <h2 className="text-xl font-semibold">Existing Keys</h2>
+                            <h2 className="text-xl font-semibold">{t('keys.existingTitle')}</h2>
                         </div>
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-[#0f172a]/50 text-slate-400 text-sm uppercase">
                                     <tr>
-                                        <th className="px-6 py-4 font-medium">Description</th>
-                                        <th className="px-6 py-4 font-medium">Created</th>
-                                        <th className="px-6 py-4 font-medium">Last Used</th>
-                                        <th className="px-6 py-4 font-medium">Status</th>
-                                        <th className="px-6 py-4 font-medium">Actions</th>
+                                        <th className="px-6 py-4 font-medium">{t('keys.table.description')}</th>
+                                        <th className="px-6 py-4 font-medium">{t('keys.table.created')}</th>
+                                        <th className="px-6 py-4 font-medium">{t('keys.table.lastUsed')}</th>
+                                        <th className="px-6 py-4 font-medium">{t('keys.table.status')}</th>
+                                        <th className="px-6 py-4 font-medium">{t('keys.table.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700">
                                     {loading ? (
-                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading keys...</td></tr>
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">{t('keys.loading')}</td></tr>
                                     ) : keys.length === 0 ? (
-                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No API keys found</td></tr>
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">{t('keys.noKeys')}</td></tr>
                                     ) : (
                                         keys.map((key) => (
                                             <tr key={key.ID} className="hover:bg-slate-800/50 transition-colors">
@@ -153,11 +155,11 @@ export default function ApiKeysPage() {
                                                     {new Date(key.CREATED_AT).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4 text-slate-400 text-sm">
-                                                    {key.LAST_USED ? new Date(key.LAST_USED).toLocaleString() : 'Never'}
+                                                    {key.LAST_USED ? new Date(key.LAST_USED).toLocaleString() : t('keys.never')}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${key.IS_ACTIVE ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                                                        {key.IS_ACTIVE ? 'Active' : 'Inactive'}
+                                                        {key.IS_ACTIVE ? t('keys.active') : t('keys.inactive')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -166,7 +168,7 @@ export default function ApiKeysPage() {
                                                         disabled={userProfile?.isDemo}
                                                         className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                     >
-                                                        Revoke
+                                                        {t('keys.revoke')}
                                                     </button>
                                                 </td>
                                             </tr>

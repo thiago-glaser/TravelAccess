@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parseUTC } from '@/lib/gpsUtils';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 // Calculate distance between two points in meters using Haversine formula
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -61,25 +62,10 @@ const calculateTotalDistance = (locations) => {
   return totalDistance;
 };
 
-// Format time duration in milliseconds to a human-readable string
-const formatTimeDuration = (ms) => {
-  if (ms <= 0) return '0s';
-  const seconds = Math.floor((ms / 1000) % 60);
-  const minutes = Math.floor((ms / (1000 * 60)) % 60);
-  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
-  const parts = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  parts.push(`${seconds}s`);
-
-  return parts.join(' ');
-};
 
 // Calculate average speed for each point using surrounding points (2 before and 2 after)
-const calculateAverageSpeed = (locations) => {
+const calculateAverageSpeed = (locations, locale) => {
   if (locations.length < 3) {
     return []; // Need at least 3 points to calculate meaningful speed
   }
@@ -114,14 +100,33 @@ const calculateAverageSpeed = (locations) => {
       index: i,
       speed: speedKmH,
       date: localDate,
-      time: localDate.toLocaleTimeString(),
+      time: localDate.toLocaleTimeString(locale),
     });
   }
 
   return speeds;
 };
 
+// Format time duration in milliseconds to a human-readable string
+// This version takes translation function
+const formatDurationTranslated = (ms, t) => {
+  if (ms <= 0) return `0${t('common.seconds')}`;
+  const seconds = Math.floor((ms / 1000) % 60);
+  const minutes = Math.floor((ms / (1000 * 60)) % 60);
+  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}${t('common.days')}`);
+  if (hours > 0) parts.push(`${hours}${t('common.hours')}`);
+  if (minutes > 0) parts.push(`${minutes}${t('common.minutes')}`);
+  parts.push(`${seconds}${t('common.seconds')}`);
+
+  return parts.join(' ');
+};
+
 export default function MapContainer({ initialFilters = null, isModal = false }) {
+  const { t, locale } = useTranslation();
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
@@ -219,16 +224,16 @@ export default function MapContainer({ initialFilters = null, isModal = false })
             ${deviceName}
           </h4>
           <p style="margin: 4px 0;">
-            <strong>Date:</strong> ${localDate.toLocaleDateString()} ${localDate.toLocaleTimeString()}
+            <strong>${t('mapContainer.popup.date')}</strong> ${localDate.toLocaleDateString(locale)} ${localDate.toLocaleTimeString(locale)}
           </p>
           <p style="margin: 4px 0;">
-            <strong>Latitude:</strong> ${location.lat.toFixed(6)}
+            <strong>${t('mapContainer.popup.latitude')}</strong> ${location.lat.toFixed(6)}
           </p>
           <p style="margin: 4px 0;">
-            <strong>Longitude:</strong> ${location.lng.toFixed(6)}
+            <strong>${t('mapContainer.popup.longitude')}</strong> ${location.lng.toFixed(6)}
           </p>
           <p style="margin: 4px 0;">
-            <strong>Altitude:</strong> ${location.altitude ? location.altitude.toFixed(2) + ' m' : 'N/A'}
+            <strong>${t('mapContainer.popup.altitude')}</strong> ${location.altitude ? location.altitude.toFixed(2) + ' m' : t('mapContainer.popup.na')}
           </p>
         </div>
       `;
@@ -296,7 +301,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
     const distance = calculateTotalDistance(filtered);
     setTotalDistance(distance);
     // Calculate average speed for each point
-    const speeds = calculateAverageSpeed(filtered);
+    const speeds = calculateAverageSpeed(filtered, locale);
     setSpeedData(speeds);
 
     // Process altitude data
@@ -307,7 +312,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         index: i,
         altitude: loc.altitude || 0,
         date: localDate,
-        time: localDate.toLocaleTimeString(),
+        time: localDate.toLocaleTimeString(locale),
       };
     });
     setAltitudeData(altitudes);
@@ -403,16 +408,16 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         {!isModal && (
           <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Filter GPS Data by Date and Device
+              {t('mapContainer.title')}
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Times shown are in your local timezone and will be converted to UTC for database queries
+              {t('mapContainer.subtitle')}
             </p>
 
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Device
+                  {t('mapContainer.device')}
                 </label>
                 <select
                   value={selectedDevice}
@@ -421,7 +426,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200/50 text-gray-900 transition-all hover:bg-white hover:border-blue-400"
                 >
-                  <option value="">All Devices</option>
+                  <option value="">{t('mapContainer.allDevices')}</option>
                   {devices.map(device => (
                     <option key={device.id} value={device.id}>
                       {device.id} {device.description ? `- ${device.description}` : ''}
@@ -432,7 +437,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Start Date & Time
+                  {t('mapContainer.startDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -445,7 +450,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -453,7 +458,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -461,7 +466,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  End Date & Time
+                  {t('mapContainer.endDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -474,7 +479,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="23"
-                    placeholder="HH"
+                    placeholder={t('common.placeholders.hour')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                   <input
@@ -482,7 +487,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     type="number"
                     min="0"
                     max="59"
-                    placeholder="MM"
+                    placeholder={t('common.placeholders.minute')}
                     className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
                   />
                 </div>
@@ -521,7 +526,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   disabled={loading}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
                 >
-                  {loading ? 'Loading...' : 'Filter'}
+                  {loading ? t('mapContainer.loading') : t('mapContainer.filter')}
                 </button>
 
                 <button
@@ -546,7 +551,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   }}
                   className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium"
                 >
-                  Reset
+                  {t('mapContainer.reset')}
                 </button>
               </div>
             </div>
@@ -565,11 +570,11 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   </svg>
                 </div>
                 <p className={`${isModal ? 'text-sm' : ''} text-gray-600`}>
-                  Found <span className="font-bold text-blue-600">{locations.length}</span> GPS location(s)
+                  <span dangerouslySetInnerHTML={{ __html: t('mapContainer.found_plural', { count: locations.length }) }}></span>
                   {filteredLocations.length < locations.length && (
-                    <span className="text-gray-500"> (showing {filteredLocations.length} after filtering points within 10m)</span>
+                    <span className="text-gray-500"> {t('mapContainer.showing_filtered', { count: filteredLocations.length })}</span>
                   )}
-                  {selectedDevice && !isModal && ` from device ${selectedDevice}`}
+                  {selectedDevice && !isModal && t('mapContainer.from_device', { deviceId: selectedDevice })}
                 </p>
               </div>
 
@@ -582,7 +587,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                       </svg>
                     </div>
                     <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
-                      <span className="text-gray-500 mr-1">Total Distance:</span>
+                      <span className="text-gray-500 mr-1">{t('mapContainer.totalDistance')}</span>
                       <span className="text-green-700 font-bold">
                         {totalDistance >= 1000
                           ? (totalDistance / 1000).toFixed(2) + ' km'
@@ -599,9 +604,9 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                       </svg>
                     </div>
                     <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
-                      <span className="text-gray-500 mr-1">Total Time:</span>
+                      <span className="text-gray-500 mr-1">{t('mapContainer.totalTime')}</span>
                       <span className="text-purple-700 font-bold">
-                        {formatTimeDuration(totalTime)}
+                        {formatDurationTranslated(totalTime, t)}
                       </span>
                     </p>
                   </div>
@@ -620,7 +625,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
           >
             {!mapLoaded && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg">Loading map...</p>
+                <p className="text-gray-500 text-lg">{t('mapContainer.loadingMap')}</p>
               </div>
             )}
           </div>
@@ -629,7 +634,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         {/* Speed Chart Section */}
         {speedData.length > 0 && (
           <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Average Speed Analysis</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('mapContainer.speedAnalysis')}</h2>
             <div className="w-full h-96 bg-gray-50 rounded-lg p-4 border border-gray-200">
               <svg width="100%" height="100%" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" className="w-full h-full">
                 {(() => {
@@ -653,7 +658,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                           <g key={`y-${speed}`}>
                             <line x1="45" y1={y} x2="780" y2={y} stroke="#f0f0f0" strokeWidth="1" />
                             <text x="40" y={y + 5} fontSize="12" fill="#666" textAnchor="end">
-                              {speed.toFixed(0)} km/h
+                              {speed.toFixed(0)} {t('common.units.kmh')}
                             </text>
                           </g>
                         );
@@ -670,7 +675,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
                         return (
                           <g key={`bar-${idx}`}>
-                            <title>Speed: {data.speed.toFixed(2)} km/h at {data.time}</title>
+                            <title>{t('mapContainer.speedTooltip', { speed: data.speed.toFixed(2), time: data.time })}</title>
                             <rect
                               x={x}
                               y={y}
@@ -691,25 +696,25 @@ export default function MapContainer({ initialFilters = null, isModal = false })
             {/* Speed statistics */}
             <div className="grid grid-cols-4 gap-4 mt-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Average Speed</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.averageSpeed')}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {(speedData.reduce((sum, d) => sum + d.speed, 0) / speedData.length).toFixed(1)} km/h
+                  {(speedData.reduce((sum, d) => sum + d.speed, 0) / speedData.length).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Min Speed</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.minSpeed')}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {Math.min(...speedData.map(d => d.speed)).toFixed(1)} km/h
+                  {Math.min(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Max Speed</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.maxSpeed')}</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {Math.max(...speedData.map(d => d.speed)).toFixed(1)} km/h
+                  {Math.max(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Data Points</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.dataPoints')}</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {speedData.length}
                 </p>
@@ -721,7 +726,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         {/* Altitude Chart Section */}
         {altitudeData.length > 0 && (
           <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Altitude Analysis</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('mapContainer.altitudeAnalysis')}</h2>
             <div className="w-full h-96 bg-gray-50 rounded-lg p-4 border border-gray-200">
               <svg width="100%" height="100%" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" className="w-full h-full">
                 {(() => {
@@ -754,7 +759,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                           <g key={`y-${alt}`}>
                             <line x1="45" y1={y} x2="780" y2={y} stroke="#f0f0f0" strokeWidth="1" />
                             <text x="40" y={y + 5} fontSize="12" fill="#666" textAnchor="end">
-                              {alt.toFixed(0)} m
+                              {alt.toFixed(0)} {t('common.units.m')}
                             </text>
                           </g>
                         );
@@ -771,7 +776,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
                         return (
                           <g key={`bar-alt-${idx}`}>
-                            <title>Altitude: {data.altitude.toFixed(2)} m at {data.time}</title>
+                            <title>{t('mapContainer.altitudeTooltip', { altitude: data.altitude.toFixed(2), time: data.time })}</title>
                             <rect
                               x={x}
                               y={y}
@@ -792,25 +797,25 @@ export default function MapContainer({ initialFilters = null, isModal = false })
             {/* Altitude statistics */}
             <div className="grid grid-cols-4 gap-4 mt-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Average Altitude</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.averageAltitude')}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(altitudeData.reduce((sum, d) => sum + d.altitude, 0) / altitudeData.length).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Min Altitude</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.minAltitude')}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {Math.min(...altitudeData.map(d => d.altitude)).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Max Altitude</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.maxAltitude')}</p>
                 <p className="text-2xl font-bold text-red-600">
                   {Math.max(...altitudeData.map(d => d.altitude)).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Data Points</p>
+                <p className="text-sm text-gray-600">{t('mapContainer.dataPoints')}</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {altitudeData.length}
                 </p>

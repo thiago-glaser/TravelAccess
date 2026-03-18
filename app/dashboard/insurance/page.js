@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function ManageInsurancePage() {
     const [insurances, setInsurances] = useState([]);
@@ -18,6 +19,7 @@ export default function ManageInsurancePage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [userProfile, setUserProfile] = useState(null);
+    const { t } = useTranslation();
 
     // Fetch user profile on mount
     useEffect(() => {
@@ -60,7 +62,7 @@ export default function ManageInsurancePage() {
             }
         } catch (err) {
             console.error('Failed to fetch insurances', err);
-            setError('Failed to fetch insurance entries');
+            setError(t('insurance.loadingFailed') || 'Failed to fetch insurance entries');
         } finally {
             setLoading(false);
         }
@@ -73,7 +75,7 @@ export default function ManageInsurancePage() {
         setSuccess('');
 
         if (!selectedCarId || !paymentDate || !period || !amount) {
-            setError('Please fill in all mandatory fields');
+            setError(t('common.fillAllFields'));
             setSubmitting(false);
             return;
         }
@@ -81,7 +83,7 @@ export default function ManageInsurancePage() {
         try {
             const dateObj = new Date(paymentDate);
             if (isNaN(dateObj.getTime())) {
-                setError('Invalid date selected');
+                setError(t('insurance.invalidDate'));
                 setSubmitting(false);
                 return;
             }
@@ -107,23 +109,23 @@ export default function ManageInsurancePage() {
 
             const data = await res.json();
             if (data.success) {
-                setSuccess('Insurance entry added successfully!');
+                setSuccess(t('insurance.addSuccess'));
                 setPaymentDate('');
                 setPeriod('');
                 setAmount('');
                 fetchInsurances();
             } else {
-                setError(data.error || 'Failed to add insurance entry');
+                setError(data.error || t('insurance.addFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleRemoveInsurance = async (id) => {
-        if (!confirm(`Are you sure you want to remove this insurance entry?`)) return;
+        if (!confirm(t('insurance.removeConfirm'))) return;
 
         try {
             const res = await fetch(`/api/user/insurance?id=${id}`, {
@@ -131,13 +133,13 @@ export default function ManageInsurancePage() {
             });
             const data = await res.json();
             if (data.success) {
-                setSuccess('Insurance entry removed successfully');
+                setSuccess(t('insurance.removeSuccess'));
                 fetchInsurances();
             } else {
-                setError(data.error || 'Failed to remove insurance entry');
+                setError(data.error || t('insurance.removeFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         }
     };
 
@@ -146,25 +148,25 @@ export default function ManageInsurancePage() {
             <div className="max-w-3xl mx-auto">
                 <header className="mb-12">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        Manage Insurance
+                        {t('insurance.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">Track insurance expenses and coverage periods for your cars.</p>
+                    <p className="text-slate-400 mt-2">{t('insurance.subtitle')}</p>
                 </header>
 
                 <div className="grid gap-8">
                     {/* Add Form */}
                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-xl">
-                        <h2 className="text-xl font-semibold mb-4">Add Insurance Entry</h2>
+                        <h2 className="text-xl font-semibold mb-4">{t('insurance.addEntry')}</h2>
 
                         {cars.length === 0 && !loading && (
                             <div className="mb-4 text-orange-400 bg-orange-400/10 p-3 rounded-xl text-sm border border-orange-400/20">
-                                You need to add a car first before logging insurance. <Link href="/dashboard/cars" className="underline font-bold">Manage Cars</Link>
+                                {t('insurance.noCarWarning')} <Link href="/dashboard/cars" className="underline font-bold">{t('insurance.manageCars')}</Link>
                             </div>
                         )}
 
                         <form onSubmit={handleAddInsurance} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Car *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('insurance.carLabel')}</label>
                                 <select
                                     value={selectedCarId}
                                     onChange={(e) => setSelectedCarId(e.target.value)}
@@ -172,7 +174,7 @@ export default function ManageInsurancePage() {
                                     required
                                     disabled={cars.length === 0}
                                 >
-                                    <option value="" disabled>Select a Car</option>
+                                    <option value="" disabled>{t('insurance.selectCar')}</option>
                                     {cars.map(c => (
                                         <option key={c.ID} value={c.ID}>
                                             {c.DESCRIPTION ? `${c.DESCRIPTION} (${c.LICENSE_PLATE || 'N/A'})` : (c.LICENSE_PLATE || `Car #${c.ID}`)}
@@ -182,7 +184,7 @@ export default function ManageInsurancePage() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Payment Date *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('insurance.paymentDateLabel')}</label>
                                 <input
                                     type="date"
                                     value={paymentDate}
@@ -193,7 +195,7 @@ export default function ManageInsurancePage() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Period (Month/Year) *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('insurance.periodLabel')}</label>
                                 <input
                                     type="month"
                                     value={period}
@@ -204,7 +206,7 @@ export default function ManageInsurancePage() {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <label className="text-sm text-slate-400 font-medium">Amount *</label>
+                                <label className="text-sm text-slate-400 font-medium">{t('insurance.amountLabel')}</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
                                     <input
@@ -225,7 +227,7 @@ export default function ManageInsurancePage() {
                                 disabled={submitting || cars.length === 0 || userProfile?.isDemo}
                                 className="md:col-span-2 mt-4 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                             >
-                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Saving...' : 'Add Insurance')}
+                                {userProfile?.isDemo ? t('insurance.viewOnly') : (submitting ? t('insurance.saving') : t('insurance.addBtn'))}
                             </button>
                         </form>
 
@@ -236,15 +238,15 @@ export default function ManageInsurancePage() {
                     {/* List */}
                     <div className="bg-[#1e293b] rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
                         <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/20">
-                            <h2 className="text-xl font-semibold">Insurance Entries</h2>
-                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{insurances.length} Total</span>
+                            <h2 className="text-xl font-semibold">{t('insurance.entriesTitle')}</h2>
+                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{insurances.length} {t('insurance.total')}</span>
                         </div>
 
                         <div className="divide-y divide-slate-700">
                             {loading ? (
-                                <div className="p-10 text-center text-slate-500">Loading insurance entries...</div>
+                                <div className="p-10 text-center text-slate-500">{t('insurance.loading')}</div>
                             ) : insurances.length === 0 ? (
-                                <div className="p-10 text-center text-slate-500 font-medium italic">No insurance logged yet</div>
+                                <div className="p-10 text-center text-slate-500 font-medium italic">{t('insurance.noEntries')}</div>
                             ) : (
                                 insurances.map((entry) => {
                                     const rawDate = new Date(entry.paymentDate);
@@ -268,18 +270,18 @@ export default function ManageInsurancePage() {
                                                                 ${parseFloat(entry.amount).toFixed(2)}
                                                             </div>
                                                             <div className="text-sm font-medium text-blue-400">
-                                                                Period: {entry.period}
+                                                                {t('insurance.period')}: {entry.period}
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                                                         <div>
-                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Payment Date</span>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">{t('insurance.paymentDate')}</span>
                                                             <div className="text-sm text-slate-300">{localDate}</div>
                                                         </div>
                                                         <div>
-                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">Car</span>
+                                                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-1">{t('insurance.car')}</span>
                                                             <div className="text-sm text-slate-300 font-medium">
                                                                 {entry.carDescription || entry.carLicensePlate || `Car #${entry.carId}`}
                                                             </div>
@@ -294,7 +296,7 @@ export default function ManageInsurancePage() {
                                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                                                         disabled={submitting || userProfile?.isDemo}
                                                     >
-                                                        Delete
+                                                        {t('insurance.delete')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -311,7 +313,7 @@ export default function ManageInsurancePage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to Dashboard
+                        {t('insurance.backToDashboard')}
                     </Link>
                 </div>
             </div>

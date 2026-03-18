@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 function GoogleIcon() {
     return (
@@ -15,14 +16,6 @@ function GoogleIcon() {
     );
 }
 
-const GOOGLE_ERROR_MESSAGES = {
-    google_denied: 'Google sign-in was cancelled.',
-    google_no_code: 'No authorization code received from Google.',
-    google_no_token: 'Failed to obtain token from Google.',
-    google_no_email: 'Your Google account does not have an email address.',
-    google_db_error: 'A database error occurred. Please try again.',
-    google_server_error: 'An unexpected error occurred. Please try again.',
-};
 
 function LoginForm() {
     const [username, setUsername] = useState('');
@@ -32,6 +25,16 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { t, locale, changeLanguage } = useTranslation();
+
+    const GOOGLE_ERROR_MESSAGES = {
+        google_denied: t('login.googleErrors.denied'),
+        google_no_code: t('login.googleErrors.noCode'),
+        google_no_token: t('login.googleErrors.noToken'),
+        google_no_email: t('login.googleErrors.noEmail'),
+        google_db_error: t('login.googleErrors.dbError'),
+        google_server_error: t('login.googleErrors.serverError'),
+    };
 
     useEffect(() => {
         const registered = searchParams.get('registered');
@@ -39,15 +42,15 @@ function LoginForm() {
         const googleError = searchParams.get('error');
 
         if (registered === 'true') {
-            setSuccess('Account created! Please check your email to verify your account before signing in.');
+            setSuccess(t('login.successRegistered'));
         }
         if (verified === 'true') {
-            setSuccess('Email verified successfully! You can now sign in.');
+            setSuccess(t('login.successVerified'));
         }
         if (googleError && GOOGLE_ERROR_MESSAGES[googleError]) {
             setError(GOOGLE_ERROR_MESSAGES[googleError]);
         }
-    }, [searchParams]);
+    }, [searchParams, t]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -67,10 +70,10 @@ function LoginForm() {
                 router.push('/');
                 router.refresh();
             } else {
-                setError(data.error || 'Login failed');
+                setError(data.error || t('login.errorDefault'));
             }
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            setError(t('login.errorOccurred'));
         } finally {
             setLoading(false);
         }
@@ -85,25 +88,23 @@ function LoginForm() {
             <div className="max-w-md w-full p-8 rounded-2xl bg-[#1e293b] shadow-2xl border border-slate-700 backdrop-blur-sm">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        TravelAccess
+                        {t('login.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">Precision Travel & Expense Tracking</p>
+                    <p className="text-slate-400 mt-2">{t('login.subtitle')}</p>
                 </div>
 
                 <div className="mb-8 space-y-4">
                     <p className="text-sm text-slate-300 leading-relaxed text-center">
-                        The ultimate tool for <span className="text-blue-400 font-semibold">gig economy professionals</span>. 
-                        Whether you drive for <span className="text-indigo-300">Uber</span>, deliver with <span className="text-indigo-300">DoorDash</span>, 
-                        or manage a fleet, TravelAccess automates your mileage logs, fuel expenses, and tax-ready reports.
+                        {t('login.description')}
                     </p>
                     
                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                         <div className="flex items-center gap-3 mb-1">
                             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Try Demo Mode</span>
+                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{t('login.demoTitle')}</span>
                         </div>
                         <p className="text-xs text-slate-400">
-                            Explore all features instantly with our read-only trial.
+                            {t('login.demoDescription')}
                             <br />
                             <span className="text-slate-300 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
                         </p>
@@ -130,39 +131,39 @@ function LoginForm() {
                     className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white hover:bg-gray-50 text-gray-800 font-semibold rounded-xl transition-all shadow-lg mb-6 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <GoogleIcon />
-                    Sign in with Google
+                    {t('login.googleSignIn')}
                 </button>
 
                 {/* Divider */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="flex-1 h-px bg-slate-700" />
-                    <span className="text-slate-500 text-sm">or sign in with username</span>
+                    <span className="text-slate-500 text-sm">{t('login.divider')}</span>
                     <div className="flex-1 h-px bg-slate-700" />
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('login.username')}</label>
                         <input
                             id="input-username"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
-                            placeholder="Enter your username"
+                            placeholder={t('login.placeholderUsername')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('login.password')}</label>
                         <input
                             id="input-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
-                            placeholder="Enter your password"
+                            placeholder={t('login.placeholderPassword')}
                             required
                         />
                     </div>
@@ -173,26 +174,42 @@ function LoginForm() {
                         disabled={loading}
                         className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                     >
-                        {loading ? 'Signing in...' : 'Sign In'}
+                        {loading ? t('login.signingIn') : t('login.signIn')}
                     </button>
                 </form>
 
                 <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400 space-y-3">
                     <div>
-                        Don't have an account?{' '}
+                        {t('login.noAccount')}{' '}
                         <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
-                            Register here
+                            {t('login.register')}
                         </a>
                     </div>
                     <div>
                         <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-slate-300 transition-colors">
-                            Forgot your password?
+                            {t('login.forgotPassword')}
                         </a>
                     </div>
                     <div>
                         <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-slate-300 transition-colors text-xs opacity-80">
-                            Forgot your username?
+                            {t('login.forgotUsername')}
                         </a>
+                    </div>
+
+                    {/* Language Switcher on Login Page */}
+                    <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-800">
+                        <button
+                            onClick={() => changeLanguage('en')}
+                            className={`text-xs font-bold transition-all ${locale === 'en' ? 'text-blue-400 bg-blue-500/10 px-2 py-1 rounded' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                            ENGLISH
+                        </button>
+                        <button
+                            onClick={() => changeLanguage('pt-br')}
+                            className={`text-xs font-bold transition-all ${locale === 'pt-br' ? 'text-blue-400 bg-blue-500/10 px-2 py-1 rounded' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                            PORTUGUÊS
+                        </button>
                     </div>
                 </div>
             </div>
@@ -200,11 +217,16 @@ function LoginForm() {
     );
 }
 
+function LoadingContent() {
+    const { t } = useTranslation();
+    return <>{t('common.loading')}</>;
+}
+
 export default function LoginPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-                Loading...
+                <LoadingContent />
             </div>
         }>
             <LoginForm />

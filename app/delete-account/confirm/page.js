@@ -2,25 +2,27 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 function DeleteAccountConfirm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
+    const { t, changeLanguage, locale } = useTranslation();
 
     const [status, setStatus] = useState('verifying'); // 'verifying', 'confirming', 'success', 'error'
-    const [message, setMessage] = useState('Verifying your deletion request...');
+    const [message, setMessage] = useState(t('deleteAccount.verifying'));
 
     useEffect(() => {
         if (!token) {
             setStatus('error');
-            setMessage('Invalid deletion link. Please request a new one.');
+            setMessage(t('deleteAccount.invalidLink'));
         }
     }, [token]);
 
     const handleConfirm = async () => {
         setStatus('confirming');
-        setMessage('Processing account deletion...');
+        setMessage(t('deleteAccount.processing'));
 
         try {
             const res = await fetch('/api/auth/delete-account/confirm', {
@@ -39,16 +41,34 @@ function DeleteAccountConfirm() {
                 }, 5000);
             } else {
                 setStatus('error');
-                setMessage(data.error || 'Failed to delete account');
+                setMessage(data.error || t('deleteAccount.failed'));
             }
         } catch (err) {
             setStatus('error');
-            setMessage('An unexpected error occurred. Please try again.');
+            setMessage(t('common.errorOccurred'));
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative">
+            {/* Language Switcher */}
+            <div className="absolute top-4 right-4 z-20">
+                <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm p-1 rounded-lg border border-slate-700">
+                    <button
+                        onClick={() => changeLanguage('en')}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        EN
+                    </button>
+                    <button
+                        onClick={() => changeLanguage('pt-br')}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        PT
+                    </button>
+                </div>
+            </div>
+
             <div className="max-w-md w-full bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700 p-8 text-center animate-in fade-in zoom-in duration-300">
                 <div className="mb-6">
                     <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
@@ -67,7 +87,7 @@ function DeleteAccountConfirm() {
                         )}
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-2">
-                        {status === 'success' ? 'Account Deleted' : 'Account Deletion'}
+                        {status === 'success' ? t('deleteAccount.successTitle') : t('deleteAccount.deletionTitle')}
                     </h2>
                     <p className="text-slate-400">
                         {message}
@@ -79,13 +99,13 @@ function DeleteAccountConfirm() {
                         onClick={handleConfirm}
                         className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-900/40 transform hover:scale-[1.02] active:scale-[0.98]"
                     >
-                        Confirm Decisive Deletion
+                        {t('deleteAccount.confirmButton')}
                     </button>
                 )}
 
                 {status === 'success' && (
                     <div className="mt-6 text-sm text-slate-500 italic">
-                        All systems are being flushed. Redirecting you to login...
+                        {t('deleteAccount.redirecting')}
                     </div>
                 )}
 
@@ -94,7 +114,7 @@ function DeleteAccountConfirm() {
                         onClick={() => router.push('/')}
                         className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all"
                     >
-                        Back to Home
+                        {t('deleteAccount.backToHome')}
                     </button>
                 )}
             </div>
@@ -103,10 +123,11 @@ function DeleteAccountConfirm() {
 }
 
 export default function DeleteAccountPage() {
+    const { t } = useTranslation();
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-                <div className="text-white">Loading...</div>
+                <div className="text-white">{t('common.loading')}</div>
             </div>
         }>
             <DeleteAccountConfirm />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function ManageDevicesPage() {
     const [devices, setDevices] = useState([]);
@@ -13,6 +14,7 @@ export default function ManageDevicesPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [userProfile, setUserProfile] = useState(null);
+    const { t } = useTranslation();
 
     // Fetch user profile on mount
     useEffect(() => {
@@ -61,15 +63,15 @@ export default function ManageDevicesPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setSuccess('Device added successfully!');
+                setSuccess(t('devices.addSuccess'));
                 setNewDeviceId('');
                 setNewDescription('');
                 fetchDevices();
             } else {
-                setError(data.error || 'Failed to add device');
+                setError(data.error || t('devices.addFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         } finally {
             setSubmitting(false);
         }
@@ -92,15 +94,15 @@ export default function ManageDevicesPage() {
                 setEditingId(null);
                 fetchDevices();
             } else {
-                setError(data.error || 'Failed to update description');
+                setError(data.error || t('devices.updateFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         }
     };
 
     const handleRemoveDevice = async (deviceId) => {
-        if (!confirm(`Are you sure you want to remove device ${deviceId}?`)) return;
+        if (!confirm(t('devices.removeConfirm', { deviceId }))) return;
 
         try {
             const res = await fetch(`/api/user/devices?deviceId=${deviceId}`, {
@@ -108,13 +110,13 @@ export default function ManageDevicesPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setSuccess('Device removed successfully');
+                setSuccess(t('devices.removeSuccess'));
                 fetchDevices();
             } else {
-                setError(data.error || 'Failed to remove device');
+                setError(data.error || t('devices.removeFailed'));
             }
         } catch (err) {
-            setError('An error occurred');
+            setError(t('common.errorOccurred'));
         }
     };
 
@@ -123,21 +125,21 @@ export default function ManageDevicesPage() {
             <div className="max-w-3xl mx-auto">
                 <header className="mb-12">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        Manage Your Devices
+                        {t('devices.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">Associate device IDs with your account and manage descriptions</p>
+                    <p className="text-slate-400 mt-2">{t('devices.subtitle')}</p>
                 </header>
 
                 <div className="grid gap-8">
                     {/* Add Device Form */}
                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-xl">
-                        <h2 className="text-xl font-semibold mb-4">Add Device</h2>
+                        <h2 className="text-xl font-semibold mb-4">{t('devices.addDevice')}</h2>
                         <form onSubmit={handleAddDevice} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input
                                 type="text"
                                 value={newDeviceId}
                                 onChange={(e) => setNewDeviceId(e.target.value)}
-                                placeholder="Device ID (e.g. 55cdd1...)"
+                                placeholder={t('devices.deviceIdPlaceholder')}
                                 className="px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-600 font-mono"
                                 required
                             />
@@ -145,7 +147,7 @@ export default function ManageDevicesPage() {
                                 type="text"
                                 value={newDescription}
                                 onChange={(e) => setNewDescription(e.target.value)}
-                                placeholder="Description (e.g. BMW X5)"
+                                placeholder={t('devices.descriptionPlaceholder')}
                                 className="px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-600"
                             />
                             <button
@@ -153,7 +155,7 @@ export default function ManageDevicesPage() {
                                 disabled={submitting || userProfile?.isDemo}
                                 className="md:col-span-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? 'View Only Mode' : (submitting ? 'Adding...' : 'Add Device')}
+                                {userProfile?.isDemo ? t('devices.viewOnly') : (submitting ? t('devices.adding') : t('devices.addDevice'))}
                             </button>
                         </form>
 
@@ -164,28 +166,28 @@ export default function ManageDevicesPage() {
                     {/* Devices List */}
                     <div className="bg-[#1e293b] rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
                         <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/20">
-                            <h2 className="text-xl font-semibold">Your Authorized Devices</h2>
-                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{devices.length} Total</span>
+                            <h2 className="text-xl font-semibold">{t('devices.yourDevices')}</h2>
+                            <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">{devices.length} {t('devices.total')}</span>
                         </div>
 
                         <div className="divide-y divide-slate-700">
                             {loading ? (
-                                <div className="p-10 text-center text-slate-500">Loading devices...</div>
+                                <div className="p-10 text-center text-slate-500">{t('devices.loading')}</div>
                             ) : devices.length === 0 ? (
-                                <div className="p-10 text-center text-slate-500 font-medium italic">No devices authorized yet</div>
+                                <div className="p-10 text-center text-slate-500 font-medium italic">{t('devices.noDevices')}</div>
                             ) : (
                                 devices.map((device) => (
                                     <div key={device.DEVICE_ID} className="p-6 hover:bg-slate-800/30 transition-colors">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-xs font-bold text-blue-400 tracking-wider uppercase">Device ID</span>
+                                                    <span className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('devices.deviceId')}</span>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
                                                 </div>
                                                 <div className="font-mono text-lg text-slate-200">{device.DEVICE_ID}</div>
 
                                                 <div className="mt-3">
-                                                    <span className="text-xs font-bold text-slate-500 tracking-wider uppercase block mb-1">Description</span>
+                                                    <span className="text-xs font-bold text-slate-500 tracking-wider uppercase block mb-1">{t('devices.description')}</span>
                                                     {editingId === device.DEVICE_ID ? (
                                                         <div className="flex gap-2">
                                                             <input
@@ -204,13 +206,13 @@ export default function ManageDevicesPage() {
                                                                 disabled={userProfile?.isDemo}
                                                                 className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50"
                                                             >
-                                                                Save
+                                                                {t('devices.save')}
                                                             </button>
                                                             <button
                                                                 onClick={() => setEditingId(null)}
                                                                 className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-600 transition-colors"
                                                             >
-                                                                Cancel
+                                                                {t('devices.cancel')}
                                                             </button>
                                                         </div>
                                                     ) : (
@@ -219,7 +221,7 @@ export default function ManageDevicesPage() {
                                                             className="flex items-center gap-2 group cursor-pointer"
                                                         >
                                                             <div className="text-slate-400 text-sm py-1">
-                                                                {device.DESCRIPTION || <span className="italic text-slate-600">No description...</span>}
+                                                                {device.DESCRIPTION || <span className="italic text-slate-600">{t('devices.noDescription')}</span>}
                                                             </div>
                                                             <svg className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 transition-colors opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -235,7 +237,7 @@ export default function ManageDevicesPage() {
                                                     disabled={userProfile?.isDemo}
                                                     className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg border border-transparent hover:border-red-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
-                                                    Remove
+                                                    {t('devices.remove')}
                                                 </button>
                                             </div>
                                         </div>
@@ -251,7 +253,7 @@ export default function ManageDevicesPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to Dashboard
+                        {t('cars.backToDashboard')}
                     </a>
                 </div>
             </div>
