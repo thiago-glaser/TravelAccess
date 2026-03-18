@@ -508,7 +508,8 @@
     "addFailed": "Failed to add insurance entry",
     "removeSuccess": "Insurance entry removed successfully",
     "removeFailed": "Failed to remove insurance entry",
-    "removeConfirm": "Are you sure you want to remove this insurance entry?"
+    "removeConfirm": "Are you sure you want to remove this insurance entry?",
+    "invalidDate": "Invalid date selected"
   },
   "keys": {
     "title": "API Access Keys",

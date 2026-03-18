@@ -511,7 +511,8 @@
     "addFailed": "Falha ao adicionar lançamento de seguro",
     "removeSuccess": "Lançamento de seguro removido com sucesso",
     "removeFailed": "Falha ao remover lançamento de seguro",
-    "removeConfirm": "Tem certeza de que deseja remover este lançamento de seguro?"
+    "removeConfirm": "Tem certeza de que deseja remover este lançamento de seguro?",
+    "invalidDate": "Data selecionada inválida"
   },
   "keys": {
     "title": "Chaves de Acesso à API",

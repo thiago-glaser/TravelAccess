@@ -83,7 +83,7 @@ export default function ManageInsurancePage() {
         try {
             const dateObj = new Date(paymentDate);
             if (isNaN(dateObj.getTime())) {
-                setError('Invalid date selected');
+                setError(t('insurance.invalidDate'));
                 setSubmitting(false);
                 return;
             }
