@@ -15,6 +15,7 @@ export default function VerifyEmailPage() {
             if (!token) return;
 
             try {
+                console.log('Verifying token...', { token });
                 const res = await fetch('/api/auth/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -22,6 +23,7 @@ export default function VerifyEmailPage() {
                 });
 
                 const data = await res.json();
+                console.log('Verification response:', data);
 
                 if (data.success) {
                     setStatus('success');
