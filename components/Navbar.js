@@ -9,16 +9,18 @@ import { useTranslation } from '@/lib/i18n/LanguageContext';
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
-    const { t, locale, changeLanguage } = useTranslation();
+    const { t, locale, changeLanguage, languages } = useTranslation();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isReportsOpen, setIsReportsOpen] = useState(false);
     const [isDataOpen, setIsDataOpen] = useState(false);
     const [isMapsOpen, setIsMapsOpen] = useState(false);
+    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [mobileReportsOpen, setMobileReportsOpen] = useState(false);
     const [mobileMapsOpen, setMobileMapsOpen] = useState(false);
     const [mobileDataOpen, setMobileDataOpen] = useState(false);
     const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+    const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -31,6 +33,7 @@ export default function Navbar() {
     const dropdownReportsRef = useRef(null);
     const dropdownDataRef = useRef(null);
     const dropdownMapsRef = useRef(null);
+    const dropdownLangRef = useRef(null);
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -45,6 +48,9 @@ export default function Navbar() {
             }
             if (dropdownMapsRef.current && !dropdownMapsRef.current.contains(event.target)) {
                 setIsMapsOpen(false);
+            }
+            if (dropdownLangRef.current && !dropdownLangRef.current.contains(event.target)) {
+                setIsLanguageOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -537,19 +543,36 @@ export default function Navbar() {
                         </button>
 
                         {/* Language Switcher */}
-                        <div className="flex items-center ml-2 border-l border-gray-100 pl-2 gap-1">
+                        <div className="relative ml-2 border-l border-gray-100 pl-2" ref={dropdownLangRef}>
                             <button
-                                onClick={() => changeLanguage('en')}
-                                className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${locale === 'en' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-blue-600 hover:bg-gray-50'}`}
+                                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-all duration-200"
                             >
-                                EN
+                                <span className="text-lg">{languages.find(l => l.code === locale)?.flag}</span>
+                                <span className="uppercase">{locale.split('-')[0]}</span>
+                                <svg className={`w-3 h-3 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
                             </button>
-                            <button
-                                onClick={() => changeLanguage('pt-br')}
-                                className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-blue-600 hover:bg-gray-50'}`}
-                            >
-                                PT
-                            </button>
+
+                            {isLanguageOpen && (
+                                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] animate-in fade-in zoom-in-95">
+                                    {languages.map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={() => {
+                                                changeLanguage(lang.code);
+                                                setIsLanguageOpen(false);
+                                            }}
+                                            className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${locale === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <span className="text-lg">{lang.flag}</span>
+                                            <span>{lang.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -847,26 +870,37 @@ export default function Navbar() {
                     </button>
 
                     {/* Mobile Language Switcher */}
-                    <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-gray-100">
-                        <button
-                            onClick={() => {
-                                changeLanguage('en');
-                                setIsMobileMenuOpen(false);
-                            }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-400 hover:bg-gray-50'}`}
-                        >
-                            English
-                        </button>
-                        <button
-                            onClick={() => {
-                                changeLanguage('pt-br');
-                                setIsMobileMenuOpen(false);
-                            }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-400 hover:bg-gray-50'}`}
-                        >
-                            Português
-                        </button>
-                    </div>
+                    <div className="border-t border-gray-100 my-1 mx-2"></div>
+                    <button
+                        onClick={() => setMobileLanguageOpen(!mobileLanguageOpen)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-gray-400 uppercase tracking-wider hover:bg-gray-50 transition-colors pt-2"
+                    >
+                        {locale.split('-')[0] === 'pt' ? 'Idioma' : 'Language'}
+                        <div className="flex items-center gap-2">
+                            <span>{languages.find(l => l.code === locale)?.flag}</span>
+                            <svg className={`w-4 h-4 transition-transform duration-200 ${mobileLanguageOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </button>
+                    {mobileLanguageOpen && (
+                        <div className="space-y-1 ml-2 border-l-2 border-blue-50 pl-2 animate-in slide-in-from-top-1 duration-200">
+                            {languages.map((lang) => (
+                                <button
+                                    key={lang.code}
+                                    onClick={() => {
+                                        changeLanguage(lang.code);
+                                        setMobileLanguageOpen(false);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${locale === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    <span className="text-xl">{lang.flag}</span>
+                                    {lang.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
