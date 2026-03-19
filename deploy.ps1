@@ -150,18 +150,31 @@ if (-not $SkipRuntimeFiles) {
     }
     Write-OK "Certificates uploaded"
 
-    Write-Step "Step 4 - Upload Oracle Wallet"
-    $walletDir = Join-Path $LocalDir "oracle_wallet"
-    if (Test-Path $walletDir) {
-        foreach ($wf in (Get-ChildItem -Path $walletDir -File)) {
-            Write-Host "    $($wf.Name)" -ForegroundColor DarkGray
-            Invoke-SCP -Src $wf.FullName -Dst "$RemoteDir/oracle_wallet/"
-            if ($LASTEXITCODE -ne 0) { Write-Fail "Failed: $($wf.Name)"; exit 1 }
-        }
-        Write-OK "Oracle wallet uploaded"
+    Write-Step "Step 4 - Upload Oracle Wallet (Compressed)"
+    $walletDir = "oracle_wallet"
+    $localWalletPath = Join-Path $LocalDir $walletDir
+    if (Test-Path $localWalletPath) {
+        $tempWalletArchive = Join-Path $env:TEMP "oracle_wallet.tar.gz"
+        $remoteWalletArchive = "/tmp/oracle_wallet.tar.gz"
+
+        Write-Host "    Archiving Oracle wallet..." -ForegroundColor DarkGray
+        & tar -czf $tempWalletArchive -C $LocalDir $walletDir
+        if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to archive Oracle wallet"; exit 1 }
+
+        Write-Host "    Uploading Oracle wallet archive..." -ForegroundColor DarkGray
+        Invoke-SCP -Src $tempWalletArchive -Dst $remoteWalletArchive
+        if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upload Oracle wallet archive"; exit 1 }
+
+        Write-Host "    Extracting Oracle wallet on server..." -ForegroundColor DarkGray
+        # -C specifies the directory to extract into, -z for gzip
+        Invoke-SSH "tar -xzf $remoteWalletArchive -C $RemoteDir && rm -f $remoteWalletArchive"
+        if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to extract Oracle wallet on server"; exit 1 }
+
+        Remove-Item $tempWalletArchive -Force
+        Write-OK "Oracle wallet uploaded and extracted"
     }
     else {
-        Write-Warn "oracle_wallet not found locally - skipping"
+        Write-Warn "oracle_wallet directory not found locally - skipping"
     }
 }
 else {
