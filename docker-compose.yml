@@ -40,6 +40,8 @@ services:
       - GEOCODE_JOB_API_KEY=${GEOCODE_JOB_API_KEY}
       - MERGE_JOB_API_KEY=${MERGE_JOB_API_KEY}
       - DEMO_RESET_JOB_API_KEY=${DEMO_RESET_JOB_API_KEY}
+      - INTERNAL_TRACK_SECRET=${INTERNAL_TRACK_SECRET}
+      - INTERNAL_TRACK_URL=${INTERNAL_TRACK_URL}
     volumes:
       - ./certificates/Cloud:/app/certs:ro
       - ./oracle_wallet:/app/oracle_wallet:ro

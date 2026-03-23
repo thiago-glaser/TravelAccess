@@ -30,7 +30,8 @@
       "setupDemoData": "Configurar Dados-Demo",
       "forceDemoReset": "Resetar Demo Forçado",
       "cleanDemoData": "Limpar Dados-Demo",
-      "viewDemoLogs": "Ver Logs Demo"
+      "viewDemoLogs": "Ver Logs Demo",
+      "viewUsageStats": "Ver Estatísticas de Uso"
     },
     "logout": "Sair",
     "demoMode": "Modo Demo",
