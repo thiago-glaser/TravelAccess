@@ -103,6 +103,7 @@
     "anyMonth": "Any Month",
     "perPage": "per page",
     "clearAll": "Clear All",
+    "cancel": "Cancel",
     "previous": "Previous",
     "next": "Next",
     "ago": "ago",
@@ -217,7 +218,18 @@
     "updateError": "Error updating session type: {{error}}",
     "updateFailed": "Update failed: {{error}}",
     "expandToggleTitle": "Expand session details",
-    "typeToggleTitle": "Click to toggle between Personal and Business"
+    "typeToggleTitle": "Click to toggle between Personal and Business",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this session record? This action only removes the session entry and cannot be undone.",
+    "deleteSuccess": "Session deleted successfully.",
+    "deleteError": "Error deleting session: {{error}}",
+    "endSession": "End Session",
+    "endSessionWithTime": "End Session with Time",
+    "endSessionConfirm": "Are you sure you want to end this session at the specified time?",
+    "endSessionSuccess": "Session ended successfully.",
+    "endSessionError": "Error ending session: {{error}}",
+    "selectEndDate": "Select End Date & Time",
+    "actions": "Actions"
   },
   "months": {
     "1": "January", "2": "February", "3": "March", "4": "April",

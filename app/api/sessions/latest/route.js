@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth';
-import { SessionView, Device, sequelize } from '@/lib/models/index.js';
+import { SessionView, SessionData, Device, sequelize } from '@/lib/models/index.js';
 import { Op } from 'sequelize';
 
 // Returns the single most recent session for the authenticated user, ignoring all filters.
@@ -13,13 +13,22 @@ export async function GET(request) {
     try {
         const userId = session.USER_ID || session.id || session.ID;
 
-        // Using findOne with an eager-loaded Device to fall back for a description
+        // Using findOne with an eager-loaded Device and SessionData to filter by isDeleted
         const latestSession = await SessionView.findOne({
-            include: [{
-                model: Device,
-                as: 'deviceInfo',
-                attributes: ['description']
-            }],
+            include: [
+                {
+                    model: Device,
+                    as: 'deviceInfo',
+                    attributes: ['description']
+                },
+                {
+                    model: SessionData,
+                    as: 'sessionData',
+                    attributes: [],
+                    where: { isDeleted: 0 },
+                    required: true
+                }
+            ],
             where: sequelize.where(
                 sequelize.literal(`"SessionView"."DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
                 true

@@ -63,6 +63,7 @@ export async function GET(request) {
                     model: SessionData,
                     as: 'sessionData',
                     attributes: ['valueConfirmed'],
+                    where: { isDeleted: 0 },
                     required: true
                 },
                 {
@@ -163,6 +164,50 @@ export async function PATCH(request) {
         return Response.json({ success: true });
     } catch (error) {
         console.error('Database error in sessions PATCH API:', error);
+        return Response.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(request) {
+    const session = await getSession(request);
+    if (!session || (session.authType === 'api-key' && !session.IS_ADMIN)) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.isDemo === 'Y' || session.isDemo === true) {
+        return Response.json({ success: false, error: 'Demo users cannot perform write operations' }, { status: 403 });
+    }
+
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
+        }
+
+        const userId = session.USER_ID || session.id || session.ID;
+
+        // Perform soft delete
+        const [updatedRows] = await SessionData.update(
+            { isDeleted: 1, updatedAt: new Date() },
+            {
+                where: {
+                    [Op.and]: [
+                        sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM('${id.trim()}'))`),
+                        sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                    ]
+                }
+            }
+        );
+
+        if (updatedRows === 0) {
+            return Response.json({ success: false, error: 'Session not found or already deleted' }, { status: 404 });
+        }
+
+        return Response.json({ success: true });
+    } catch (error) {
+        console.error('Database error in sessions DELETE API:', error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }

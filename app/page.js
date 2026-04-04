@@ -41,6 +41,10 @@ export default function SessionsPage() {
     const [now, setNow] = useState(() => new Date());
     const [latestSession, setLatestSession] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
+    const [isEndSessionModalOpen, setIsEndSessionModalOpen] = useState(false);
+    const [endSessionId, setEndSessionId] = useState(null);
+    const [endSessionDeviceId, setEndSessionDeviceId] = useState(null);
+    const [endSessionDateTime, setEndSessionDateTime] = useState('');
     const { t, locale } = useTranslation();
 
     // Fetch user profile on mount
@@ -348,6 +352,60 @@ export default function SessionsPage() {
         }
     };
 
+    const deleteSession = async (e, sessionId) => {
+        e.stopPropagation();
+        if (userProfile?.isDemo) {
+            alert(t('sessions.demoWarning'));
+            return;
+        }
+        if (!confirm(t('sessions.deleteConfirm'))) {
+            return;
+        }
+        try {
+            const response = await fetch(`/api/sessions?id=${sessionId}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (result.success) {
+                setSessions(sessions.filter(s => s.id !== sessionId));
+                // If it's the latest session, refresh it
+                if (latestSession && latestSession.id === sessionId) {
+                    fetchLatestSession();
+                }
+            } else {
+                alert(t('sessions.deleteError', { error: result.error }));
+            }
+        } catch (err) {
+            alert(t('sessions.deleteError', { error: err.message }));
+        }
+    };
+
+    const endSessionWithTime = async (deviceId, timestamp_utc, id = null) => {
+        if (userProfile?.isDemo) {
+            alert(t('sessions.demoWarning'));
+            return;
+        }
+        try {
+            const response = await fetch('/api/Session/end-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId, timestamp_utc, id: id || endSessionId })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                fetchLatestSession();
+                fetchSessions(pagination.page);
+                setIsEndSessionModalOpen(false);
+                setEndSessionId(null);
+                setEndSessionDeviceId(null);
+            } else {
+                alert(t('sessions.endSessionError', { error: result.message }));
+            }
+        } catch (err) {
+            alert(t('sessions.endSessionError', { error: err.message }));
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -375,6 +433,25 @@ export default function SessionsPage() {
                                         <span className="font-mono text-green-700 tabular-nums">
                                             {formatElapsed(now - parseUTC(timerSession.startTime))}
                                         </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const d = new Date();
+                                                // Adjust to local time string for datetime-local input
+                                                const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                                setEndSessionDateTime(localIso);
+                                                setEndSessionId(timerSession.id);
+                                                setEndSessionDeviceId(timerSession.deviceId);
+                                                setIsEndSessionModalOpen(true);
+                                            }}
+                                            className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold hover:bg-red-200 transition-colors flex items-center gap-1"
+                                            title={t('sessions.endSessionWithTime')}
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {t('sessions.endSession')}
+                                        </button>
                                     </>
                                 ) : (
                                     <>
@@ -628,6 +705,7 @@ export default function SessionsPage() {
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.startLocTitle')}>{t('sessions.table.startLoc')}</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.endLocTitle')}>{t('sessions.table.endLoc')}</th>
                                                 <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.type')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 text-left">
@@ -695,6 +773,38 @@ export default function SessionsPage() {
                                                                     session.type === 'B' ? t('common.business') :
                                                                         (session.type || t('common.standard'))}
                                                             </button>
+                                                        </td>
+                                                        <td className="px-2 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center gap-2">
+                                                                {!session.endTime && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const d = new Date();
+                                                                            const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                                                            setEndSessionDateTime(localIso);
+                                                                            setEndSessionId(session.id);
+                                                                            setEndSessionDeviceId(session.deviceId);
+                                                                            setIsEndSessionModalOpen(true);
+                                                                        }}
+                                                                        className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors group/end"
+                                                                        title={t('sessions.endSession')}
+                                                                    >
+                                                                        <svg className="w-4 h-4 group-hover/end:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                        </svg>
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    onClick={(e) => deleteSession(e, session.id)}
+                                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors group/del"
+                                                                    title={t('sessions.delete')}
+                                                                >
+                                                                    <svg className="w-4 h-4 group-hover/del:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                     {expandedSessionIds.includes(session.id) && (
@@ -811,6 +921,59 @@ export default function SessionsPage() {
                                     />
                                 )
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isEndSessionModalOpen && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsEndSessionModalOpen(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in slide-in-from-bottom-4 duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">{t('sessions.selectEndDate')}</h3>
+                        </div>
+                        
+                        <div className="space-y-4 mb-6">
+                            <p className="text-sm text-gray-600">
+                                {t('sessions.endSessionConfirm')}
+                            </p>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.table.endTime')}</label>
+                                <input
+                                    type="datetime-local"
+                                    value={endSessionDateTime}
+                                    onChange={(e) => setEndSessionDateTime(e.target.value)}
+                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setIsEndSessionModalOpen(false)}
+                                className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const date = new Date(endSessionDateTime);
+                                    if (isNaN(date.getTime())) {
+                                        alert(t('maintenance.invalidDate'));
+                                        return;
+                                    }
+                                    endSessionWithTime(endSessionDeviceId, date.toISOString(), endSessionId);
+                                }}
+                                className="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 active:scale-95"
+                            >
+                                {t('sessions.endSession')}
+                            </button>
                         </div>
                     </div>
                 </div>

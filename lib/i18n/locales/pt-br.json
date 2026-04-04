@@ -103,6 +103,7 @@
     "anyMonth": "Qualquer Mês",
     "perPage": "por página",
     "clearAll": "Limpar Tudo",
+    "cancel": "Cancelar",
     "previous": "Anterior",
     "next": "Próximo",
     "ago": "atrás",
@@ -217,7 +218,18 @@
     "updateError": "Erro ao atualizar tipo de sessão: {{error}}",
     "updateFailed": "Falha na atualização: {{error}}",
     "expandToggleTitle": "Expandir detalhes da sessão",
-    "typeToggleTitle": "Clique para alternar entre Pessoal e Trabalho"
+    "typeToggleTitle": "Clique para alternar entre Pessoal e Trabalho",
+    "delete": "Excluir",
+    "deleteConfirm": "Tem certeza de que deseja excluir este registro de sessão? Esta ação remove apenas a entrada da sessão e não pode ser desfeita.",
+    "deleteSuccess": "Sessão excluída com sucesso.",
+    "deleteError": "Erro ao excluir sessão: {{error}}",
+    "endSession": "Encerrar Sessão",
+    "endSessionWithTime": "Encerrar Sessão com Hora",
+    "endSessionConfirm": "Tem certeza de que deseja encerrar esta sessão na hora especificada?",
+    "endSessionSuccess": "Sessão encerrada com sucesso.",
+    "endSessionError": "Erro ao encerrar sessão: {{error}}",
+    "selectEndDate": "Selecionar Data e Hora de Término",
+    "actions": "Ações"
   },
   "months": {
     "1": "Janeiro", "2": "Fevereiro", "3": "Março", "4": "Abril",

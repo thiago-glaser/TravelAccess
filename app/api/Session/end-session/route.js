@@ -13,7 +13,7 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { device_id, timestamp_utc } = body;
+        const { device_id, timestamp_utc, id } = body;
 
         if (!device_id || !timestamp_utc) {
             return Response.json({ message: "Provide a device_id and timestamp_utc." }, { status: 400 });
@@ -27,17 +27,34 @@ export async function POST(request) {
             return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
         }
 
-        const updateSql = `
-            UPDATE SESSION_DATA
-            SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-            WHERE DEVICE_ID = :deviceId AND END_UTC IS NULL
-            AND START_UTC = (SELECT MAX(START_UTC) FROM SESSION_DATA WHERE DEVICE_ID = :deviceId AND END_UTC IS NULL)
-        `;
+        let updateSql;
+        let params;
 
-        const result = await query(updateSql, {
-            endUtc: endUtc,
-            deviceId: device_id
-        });
+        if (id) {
+            updateSql = `
+                UPDATE SESSION_DATA
+                SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                WHERE RTRIM(LTRIM(ID)) = RTRIM(LTRIM(:id)) AND RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId))
+            `;
+            params = {
+                id: id.trim(),
+                endUtc: endUtc,
+                deviceId: device_id.trim()
+            };
+        } else {
+            updateSql = `
+                UPDATE SESSION_DATA
+                SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                WHERE RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId)) AND END_UTC IS NULL
+                AND START_UTC = (SELECT MAX(START_UTC) FROM SESSION_DATA WHERE RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId)) AND END_UTC IS NULL)
+            `;
+            params = {
+                endUtc: endUtc,
+                deviceId: device_id.trim()
+            };
+        }
+
+        const result = await query(updateSql, params);
 
         const updated = result.rowsAffected || 0;
 
@@ -45,7 +62,8 @@ export async function POST(request) {
         console.log(`Session ended. Device: ${device_id} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);
 
         if (updated === 0) {
-            return Response.json({ message: "No open session found for the device." }, { status: 404 });
+            const msg = id ? "Session not found or already closed." : "No open session found for the device.";
+            return Response.json({ message: msg }, { status: 404 });
         }
 
         return Response.json({ updated }, { status: 200 });
