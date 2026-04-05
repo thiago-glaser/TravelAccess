@@ -11,10 +11,16 @@ import { query } from '@/lib/db';
  * header set in middleware.js) so it cannot be abused externally.
  */
 
-const INTERNAL_SECRET = process.env.INTERNAL_TRACK_SECRET || 'travel-access-internal';
+const INTERNAL_SECRET = process.env.INTERNAL_TRACK_SECRET;
 
 export async function POST(request) {
     // Guard: only allow calls that carry the shared secret
+    // Fail closed if the secret is not configured
+    if (!INTERNAL_SECRET) {
+        console.error('[track-usage] INTERNAL_TRACK_SECRET environment variable is not set');
+        return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     const secret = request.headers.get('x-internal-secret');
     if (secret !== INTERNAL_SECRET) {
         return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
