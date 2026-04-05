@@ -29,10 +29,16 @@ export async function POST(request) {
             return Response.json({ error: "Missing token" }, { status: 400 });
         }
 
+        const expectedAudience = process.env.GOOGLE_CLIENT_ID;
+        if (!expectedAudience) {
+            console.error('[RISC Webhook] GOOGLE_CLIENT_ID not configured');
+            return Response.json({ error: 'Server misconfiguration' }, { status: 500 });
+        }
+
         // Verify the Token using Google's public certificates
-        // It must be issued by Google (accounts.google.com)
+        // It must be issued by Google (accounts.google.com) and intended for this application (audience)
         return new Promise((resolve) => {
-            jwt.verify(token, getKey, { issuer: 'https://accounts.google.com' }, async (err, decoded) => {
+            jwt.verify(token, getKey, { issuer: 'https://accounts.google.com', audience: expectedAudience }, async (err, decoded) => {
                 if (err) {
                     console.error('[RISC Webhook] JWT Verification Error:', err.message);
                     // Return 400 for invalid tokens so Google knows it failed validation
