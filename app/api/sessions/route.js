@@ -17,7 +17,14 @@ export async function GET(request) {
     const yearFilter = searchParams.get('year');
     const monthFilter = searchParams.get('month');
     const typeFilter = searchParams.get('type');
-    const tzFilter = searchParams.get('tz') || 'UTC';
+
+    // Validate timezone to prevent SQL injection - only allow safe characters for IANA timezone names
+    const rawTz = searchParams.get('tz') || 'UTC';
+    const tzPattern = /^[a-zA-Z0-9_\/+-]+$/;
+    if (!tzPattern.test(rawTz) || rawTz.length > 50) {
+        return Response.json({ success: false, error: 'Invalid timezone format' }, { status: 400 });
+    }
+    const tzFilter = rawTz;
 
     try {
         const userId = session.USER_ID || session.id || session.ID;
