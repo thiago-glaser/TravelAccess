@@ -55,10 +55,10 @@ function trackUsage(request, pathname) {
         body: JSON.stringify({ path: normalizedPath })
     }).then(res => {
         if (!res.ok) {
-            console.error(`[proxy] Tracking failed for ${normalizedPath}: ${res.status} ${res.statusText}`);
+            console.error('[proxy] Tracking failed for %s: %s %s', normalizedPath, res.status, res.statusText);
         }
     }).catch(err => {
-        console.error(`[proxy] Tracking error for ${normalizedPath}:`, err.message);
+        console.error('[proxy] Tracking error for %s:', normalizedPath, err.message);
     });
 }
 

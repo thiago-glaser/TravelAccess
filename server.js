@@ -52,7 +52,6 @@ function scheduleJob(name, path, intervalMs, apiKey) {
         console.log(`[Job Runner] Executing ${name}...`);
 
         http.get(`${baseUrl}${path}`, { 
-            rejectUnauthorized: false,
             headers: { 
                 'x-internal-job': 'true',
                 'x-api-key': currentKey || ''
@@ -60,8 +59,8 @@ function scheduleJob(name, path, intervalMs, apiKey) {
         }, (res) => {
             let data = '';
             res.on('data', chunk => (data += chunk));
-            res.on('end', () => console.log(`[Job Runner] ${name} result:`, res.statusCode));
-        }).on('error', (e) => console.error(`[Job Runner] ${name} error:`, e.message));
+            res.on('end', () => console.log('[Job Runner] %s result:', name, res.statusCode));
+        }).on('error', (e) => console.error('[Job Runner] %s error:', name, e.message));
     }, intervalMs);
 }
 
@@ -74,7 +73,6 @@ function scheduleDailyJob(name, path, hourUtc, apiKey) {
         console.log(`[Job Runner] Executing daily ${name}...`);
         
         http.get(`${baseUrl}${path}`, { 
-            rejectUnauthorized: false,
             headers: { 
                 'x-internal-job': 'true',
                 'x-api-key': currentKey || ''
@@ -82,8 +80,8 @@ function scheduleDailyJob(name, path, hourUtc, apiKey) {
         }, (res) => {
             let data = '';
             res.on('data', chunk => (data += chunk));
-            res.on('end', () => console.log(`[Job Runner] Daily ${name} result:`, res.statusCode));
-        }).on('error', (e) => console.error(`[Job Runner] Daily ${name} error:`, e.message));
+            res.on('end', () => console.log('[Job Runner] Daily %s result:', name, res.statusCode));
+        }).on('error', (e) => console.error('[Job Runner] Daily %s error:', name, e.message));
         
         setTimeout(scheduleNext, 60000);
     };
