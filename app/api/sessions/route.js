@@ -151,8 +151,8 @@ export async function PATCH(request) {
         const [updatedRows] = await SessionData.update(updateData, {
             where: {
                 [Op.and]: [
-                    sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM('${id.trim()}'))`),
-                    sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                    sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM(${sequelize.escape(id.trim())}))`),
+                    sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM(${sequelize.escape(userId.trim())}))`),
                 ]
             }
         });
@@ -194,8 +194,8 @@ export async function DELETE(request) {
             {
                 where: {
                     [Op.and]: [
-                        sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM('${id.trim()}'))`),
-                        sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                        sequelize.literal(`RTRIM(LTRIM("ID")) = RTRIM(LTRIM(${sequelize.escape(id.trim())}))`),
+                        sequelize.literal(`RTRIM(LTRIM("DEVICE_ID")) IN (SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM(${sequelize.escape(userId.trim())}))`),
                     ]
                 }
             }
