@@ -19,7 +19,8 @@
       "insurance": "Insurance",
       "maintenance": "Maintenance",
       "devices": "Devices",
-      "bluetooth": "Bluetooth"
+      "bluetooth": "Bluetooth",
+      "otherExpenses": "Other Expenses"
     },
     "settings": {
       "title": "Settings",
@@ -232,9 +233,18 @@
     "actions": "Actions"
   },
   "months": {
-    "1": "January", "2": "February", "3": "March", "4": "April",
-    "5": "May", "6": "June", "7": "July", "8": "August",
-    "9": "September", "10": "October", "11": "November", "12": "December"
+    "1": "January",
+    "2": "February",
+    "3": "March",
+    "4": "April",
+    "5": "May",
+    "6": "June",
+    "7": "July",
+    "8": "August",
+    "9": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December"
   },
   "register": {
     "title": "Create Account",
@@ -661,5 +671,34 @@
       "disclaimer": "* Some values are estimated based on past/future efficiency records."
     },
     "downloadPdfTitle": "Download Report as PDF"
+  },
+  "expenses": {
+    "manageTypesTitle": "Manage Expense Types",
+    "manageTypesSubtitle": "Create categories for your other expenses",
+    "addType": "Add Expense Type",
+    "fillMandatory": "Please fill all mandatory fields",
+    "typeAddSuccess": "Type added successfully",
+    "typeRemoveConfirm": "Delete this expense type?",
+    "title": "Other Expenses",
+    "subtitle": "Manage trackable expenses for your vehicles",
+    "addEntry": "Add Expense Entry",
+    "manageTypesBtn": "Manage Types",
+    "noCarWarning": "You need a car to add an expense.",
+    "noTypeWarning": "You need an expense type to add an expense.",
+    "carLabel": "Car *",
+    "selectCar": "Select a Car",
+    "typeLabel": "Expense Type *",
+    "selectType": "Select Type",
+    "dateTimeLabel": "Date & Time *",
+    "amountLabel": "Amount *",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Enter details...",
+    "receiptLabel": "Receipt (Optional)",
+    "invalidDate": "Invalid date selected",
+    "addSuccess": "Expense added successfully",
+    "removeConfirm": "Delete this expense record?",
+    "removeSuccess": "Removed successfully",
+    "logsTitle": "Expense Logs",
+    "loadingFailed": "Failed to fetch expenses"
   }
 }

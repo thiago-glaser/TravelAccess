@@ -19,7 +19,8 @@
       "insurance": "Seguro",
       "maintenance": "Manutenção",
       "devices": "Dispositivos",
-      "bluetooth": "Bluetooth"
+      "bluetooth": "Bluetooth",
+      "otherExpenses": "Outras Despesas"
     },
     "settings": {
       "title": "Configurações",
@@ -232,9 +233,18 @@
     "actions": "Ações"
   },
   "months": {
-    "1": "Janeiro", "2": "Fevereiro", "3": "Março", "4": "Abril",
-    "5": "Maio", "6": "Junho", "7": "Julho", "8": "Agosto",
-    "9": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+    "1": "Janeiro",
+    "2": "Fevereiro",
+    "3": "Março",
+    "4": "Abril",
+    "5": "Maio",
+    "6": "Junho",
+    "7": "Julho",
+    "8": "Agosto",
+    "9": "Setembro",
+    "10": "Outubro",
+    "11": "Novembro",
+    "12": "Dezembro"
   },
   "register": {
     "title": "Criar Conta",
@@ -664,5 +674,34 @@
       "disclaimer": "* Alguns valores são estimados com base em registros de eficiência passados/futuros."
     },
     "downloadPdfTitle": "Baixar Relatório como PDF"
+  },
+  "expenses": {
+    "manageTypesTitle": "Gerenciar Tipos de Despesa",
+    "manageTypesSubtitle": "Crie categorias para suas outras despesas",
+    "addType": "Adicionar Tipo de Despesa",
+    "fillMandatory": "Por favor, preencha todos os campos obrigatórios",
+    "typeAddSuccess": "Tipo adicionado com sucesso",
+    "typeRemoveConfirm": "Excluir este tipo de despesa?",
+    "title": "Outras Despesas",
+    "subtitle": "Gerencie despesas rastreáveis para seus veículos",
+    "addEntry": "Adicionar Lançamento de Despesa",
+    "manageTypesBtn": "Gerenciar Tipos",
+    "noCarWarning": "Você precisa de um carro para adicionar uma despesa.",
+    "noTypeWarning": "Você precisa de um tipo de despesa para adicionar uma despesa.",
+    "carLabel": "Carro *",
+    "selectCar": "Selecione um Carro",
+    "typeLabel": "Tipo de Despesa *",
+    "selectType": "Selecione o Tipo",
+    "dateTimeLabel": "Data e Hora *",
+    "amountLabel": "Valor *",
+    "descriptionLabel": "Descrição *",
+    "descriptionPlaceholder": "Digite os detalhes...",
+    "receiptLabel": "Recibo (Opcional)",
+    "invalidDate": "Data selecionada inválida",
+    "addSuccess": "Despesa adicionada com sucesso",
+    "removeConfirm": "Excluir este registro de despesa?",
+    "removeSuccess": "Removido com sucesso",
+    "logsTitle": "Histórico de Despesas",
+    "loadingFailed": "Falha ao carregar despesas"
   }
 }
