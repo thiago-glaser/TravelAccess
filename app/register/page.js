@@ -55,35 +55,35 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white relative">
+        <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 relative">
             {/* Language Switcher */}
             <div className="absolute top-4 right-4 z-20">
-                <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm p-1 rounded-lg border border-slate-700">
+                <div className="flex items-center gap-2 bg-gray-100 backdrop-blur-sm p-1 rounded-lg border border-gray-200">
                     <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         EN
                     </button>
                     <button
                         onClick={() => changeLanguage('pt-br')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         PT
                     </button>
                 </div>
             </div>
 
-            <div className="max-w-md w-full p-8 rounded-2xl bg-[#1e293b] shadow-2xl border border-slate-700 backdrop-blur-sm">
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-2xl border border-gray-200 backdrop-blur-sm">
                 <div className="text-center mb-10">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         {t('register.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">{t('register.subtitle')}</p>
+                    <p className="text-gray-500 mt-2">{t('register.subtitle')}</p>
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-600 text-sm">
                         {error}
                     </div>
                 )}
@@ -108,39 +108,39 @@ export default function RegisterPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('register.username')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('register.username')}</label>
                         <input
                             id="input-register-username"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('register.usernamePlaceholder')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('register.email')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('register.email')}</label>
                         <input
                             id="input-register-email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('register.emailPlaceholder')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('register.password')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('register.password')}</label>
                         <input
                             id="input-register-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('register.passwordPlaceholder')}
                             required
                         />
@@ -150,15 +150,15 @@ export default function RegisterPage() {
                         id="btn-register"
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-slate-900 font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                         {loading ? t('register.creatingButton') : t('register.createButton')}
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400">
+                <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
                     {t('register.alreadyHaveAccount')}{' '}
-                    <a href="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
+                    <a href="/login" className="text-blue-600 hover:text-blue-300 transition-colors">
                         {t('register.signIn')}
                     </a>
                 </div>

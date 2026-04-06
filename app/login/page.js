@@ -84,41 +84,41 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-            <div className="max-w-md w-full p-8 rounded-2xl bg-[#1e293b] shadow-2xl border border-slate-700 backdrop-blur-sm">
+        <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-2xl border border-gray-200 backdrop-blur-sm">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         {t('login.title')}
                     </h1>
-                    <p className="text-slate-400 mt-2">{t('login.subtitle')}</p>
+                    <p className="text-gray-500 mt-2">{t('login.subtitle')}</p>
                 </div>
 
                 <div className="mb-8 space-y-4">
-                    <p className="text-sm text-slate-300 leading-relaxed text-center">
+                    <p className="text-sm text-gray-600 leading-relaxed text-center">
                         {t('login.description')}
                     </p>
                     
-                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                    <div className="p-3 bg-blue-100 border border-blue-200 rounded-xl">
                         <div className="flex items-center gap-3 mb-1">
                             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{t('login.demoTitle')}</span>
+                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('login.demoTitle')}</span>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-gray-500">
                             {t('login.demoDescription')}
                             <br />
-                            <span className="text-slate-300 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
+                            <span className="text-gray-600 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
                         </p>
                     </div>
                 </div>
 
                 {success && (
-                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400 text-sm">
+                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-600 text-sm">
                         {success}
                     </div>
                 )}
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-600 text-sm">
                         {error}
                     </div>
                 )}
@@ -143,26 +143,26 @@ function LoginForm() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('login.username')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('login.username')}</label>
                         <input
                             id="input-username"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('login.placeholderUsername')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">{t('login.password')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('login.password')}</label>
                         <input
                             id="input-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('login.placeholderPassword')}
                             required
                         />
@@ -172,26 +172,26 @@ function LoginForm() {
                         id="btn-signin"
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-slate-900 font-semibold rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                         {loading ? t('login.signingIn') : t('login.signIn')}
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-700 text-center text-sm text-slate-400 space-y-3">
+                <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500 space-y-3">
                     <div>
                         {t('login.noAccount')}{' '}
-                        <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+                        <a href="/register" className="text-blue-600 hover:text-blue-300 transition-colors">
                             {t('login.register')}
                         </a>
                     </div>
                     <div>
-                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-slate-300 transition-colors">
+                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-gray-600 transition-colors">
                             {t('login.forgotPassword')}
                         </a>
                     </div>
                     <div>
-                        <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-slate-300 transition-colors text-xs opacity-80">
+                        <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-gray-600 transition-colors text-xs opacity-80">
                             {t('login.forgotUsername')}
                         </a>
                     </div>
@@ -200,13 +200,13 @@ function LoginForm() {
                     <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-800">
                         <button
                             onClick={() => changeLanguage('en')}
-                            className={`text-xs font-bold transition-all ${locale === 'en' ? 'text-blue-400 bg-blue-500/10 px-2 py-1 rounded' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`text-xs font-bold transition-all ${locale === 'en' ? 'text-blue-600 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600'}`}
                         >
                             ENGLISH
                         </button>
                         <button
                             onClick={() => changeLanguage('pt-br')}
-                            className={`text-xs font-bold transition-all ${locale === 'pt-br' ? 'text-blue-400 bg-blue-500/10 px-2 py-1 rounded' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`text-xs font-bold transition-all ${locale === 'pt-br' ? 'text-blue-600 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600'}`}
                         >
                             PORTUGUÊS
                         </button>
@@ -225,7 +225,7 @@ function LoadingContent() {
 export default function LoginPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
+            <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
                 <LoadingContent />
             </div>
         }>

@@ -50,30 +50,30 @@ function DeleteAccountConfirm() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
             {/* Language Switcher */}
             <div className="absolute top-4 right-4 z-20">
-                <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm p-1 rounded-lg border border-slate-700">
+                <div className="flex items-center gap-2 bg-gray-100 backdrop-blur-sm p-1 rounded-lg border border-gray-200">
                     <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         EN
                     </button>
                     <button
                         onClick={() => changeLanguage('pt-br')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         PT
                     </button>
                 </div>
             </div>
 
-            <div className="max-w-md w-full bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700 p-8 text-center animate-in fade-in zoom-in duration-300">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 text-center animate-in fade-in zoom-in duration-300">
                 <div className="mb-6">
                     <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                        status === 'success' ? 'bg-green-500/20 text-green-400' : 
-                        status === 'error' ? 'bg-red-500/20 text-red-400' : 
+                        status === 'success' ? 'bg-green-500/20 text-green-600' : 
+                        status === 'error' ? 'bg-red-500/20 text-red-600' : 
                         'bg-red-500/20 text-red-500 animate-pulse'
                     }`}>
                         {status === 'success' ? (
@@ -86,10 +86,10 @@ function DeleteAccountConfirm() {
                             </svg>
                         )}
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-gray-900xl font-bold text-slate-900 mb-2">
                         {status === 'success' ? t('deleteAccount.successTitle') : t('deleteAccount.deletionTitle')}
                     </h2>
-                    <p className="text-slate-400">
+                    <p className="text-gray-500">
                         {message}
                     </p>
                 </div>
@@ -97,7 +97,7 @@ function DeleteAccountConfirm() {
                 {status === 'verifying' && token && (
                     <button
                         onClick={handleConfirm}
-                        className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-900/40 transform hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full py-4 bg-red-600 hover:bg-red-500 text-slate-900 font-bold rounded-xl transition-all shadow-lg shadow-red-900/40 transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                         {t('deleteAccount.confirmButton')}
                     </button>
@@ -112,7 +112,7 @@ function DeleteAccountConfirm() {
                 {(status === 'error' || !token) && (
                     <button
                         onClick={() => router.push('/')}
-                        className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all"
+                        className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-slate-900 font-semibold rounded-xl transition-all"
                     >
                         {t('deleteAccount.backToHome')}
                     </button>
@@ -126,8 +126,8 @@ export default function DeleteAccountPage() {
     const { t } = useTranslation();
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-                <div className="text-white">{t('common.loading')}</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="text-slate-900">{t('common.loading')}</div>
             </div>
         }>
             <DeleteAccountConfirm />

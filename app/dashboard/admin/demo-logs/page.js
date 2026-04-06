@@ -31,27 +31,27 @@ export default function DemoLogsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white p-8">
+        <div className="min-h-screen bg-gray-50 text-slate-900 p-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                             {t('admin.title')}
                         </h1>
-                        <p className="text-slate-400 mt-2">{t('admin.subtitle')}</p>
+                        <p className="text-gray-500 mt-2">{t('admin.subtitle')}</p>
                     </div>
                     <button 
                         onClick={fetchLogs}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-slate-700"
+                        className="px-4 py-2 bg-gray-100 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-gray-200"
                     >
                         {t('admin.refresh')}
                     </button>
                 </header>
 
-                <div className="bg-[#1e293b] rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-wider">
+                            <thead className="bg-gray-100 text-gray-500 text-xs uppercase tracking-wider">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">{t('admin.table.time')}</th>
                                     <th className="px-6 py-4 font-semibold">{t('admin.table.ip')}</th>
@@ -70,14 +70,14 @@ export default function DemoLogsPage() {
                                     </tr>
                                 ) : (
                                     logs.map((log) => (
-                                        <tr key={log.ID} className="hover:bg-slate-800/30 transition-colors">
-                                            <td className="px-6 py-4 text-sm text-slate-300">
+                                        <tr key={log.ID} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 text-sm text-gray-600">
                                                 {new Date(log.accessTime).toLocaleString()}
                                             </td>
-                                            <td className="px-6 py-4 text-sm font-mono text-blue-400">
+                                            <td className="px-6 py-4 text-sm font-mono text-blue-600">
                                                 {log.ipAddress}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-400 max-w-xs truncate" title={log.userAgent}>
+                                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={log.userAgent}>
                                                 {log.userAgent}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-slate-500 italic">
@@ -92,7 +92,7 @@ export default function DemoLogsPage() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <Link href="/" className="text-slate-500 hover:text-blue-400 transition-colors inline-flex items-center gap-2">
+                    <Link href="/" className="text-slate-500 hover:text-blue-600 transition-colors inline-flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         {t('admin.backToDashboard')}
                     </Link>

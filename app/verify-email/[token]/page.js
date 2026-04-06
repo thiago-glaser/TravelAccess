@@ -46,34 +46,34 @@ export default function VerifyEmailPage() {
     }, [token, router]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white relative">
+        <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 relative">
             {/* Language Switcher */}
             <div className="absolute top-4 right-4 z-20">
-                <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm p-1 rounded-lg border border-slate-700">
+                <div className="flex items-center gap-2 bg-gray-100 backdrop-blur-sm p-1 rounded-lg border border-gray-200">
                     <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         EN
                     </button>
                     <button
                         onClick={() => changeLanguage('pt-br')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
                     >
                         PT
                     </button>
                 </div>
             </div>
 
-            <div className="max-w-md w-full p-8 rounded-2xl bg-[#1e293b] shadow-2xl border border-slate-700 backdrop-blur-sm text-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-6">
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-2xl border border-gray-200 backdrop-blur-sm text-center">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">
                     TravelAccess
                 </h1>
 
                 {status === 'verifying' && (
                     <div className="space-y-4">
                         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                        <p className="text-slate-300">{t('verifyEmail.verifying')}</p>
+                        <p className="text-gray-600">{t('verifyEmail.verifying')}</p>
                     </div>
                 )}
 
@@ -82,8 +82,8 @@ export default function VerifyEmailPage() {
                         <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl">
                             ✓
                         </div>
-                        <h2 className="text-2xl font-semibold text-green-400">{t('verifyEmail.successTitle')}</h2>
-                        <p className="text-slate-400">{t('verifyEmail.successMessage')}</p>
+                        <h2 className="text-gray-900xl font-semibold text-green-600">{t('verifyEmail.successTitle')}</h2>
+                        <p className="text-gray-500">{t('verifyEmail.successMessage')}</p>
                     </div>
                 )}
 
@@ -92,9 +92,9 @@ export default function VerifyEmailPage() {
                         <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-3xl">
                             ✕
                         </div>
-                        <h2 className="text-2xl font-semibold text-red-400">{t('verifyEmail.errorTitle')}</h2>
-                        <p className="text-slate-400">{error}</p>
-                        <a href="/login" className="inline-block mt-4 text-blue-400 hover:text-blue-300 transition-colors">
+                        <h2 className="text-gray-900xl font-semibold text-red-600">{t('verifyEmail.errorTitle')}</h2>
+                        <p className="text-gray-500">{error}</p>
+                        <a href="/login" className="inline-block mt-4 text-blue-600 hover:text-blue-300 transition-colors">
                             {t('verifyEmail.backToLogin')}
                         </a>
                     </div>

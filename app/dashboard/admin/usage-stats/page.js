@@ -26,7 +26,7 @@ function StatCard({ label, value, sub, color = 'indigo' }) {
     return (
         <div className={`rounded-2xl border bg-gradient-to-br p-5 ${colors[color]}`}>
             <p className="text-xs uppercase tracking-widest opacity-70 mb-1">{label}</p>
-            <p className="text-3xl font-bold text-white">{value?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-slate-900">{value?.toLocaleString()}</p>
             {sub && <p className="text-xs mt-1 opacity-60">{sub}</p>}
         </div>
     );
@@ -77,7 +77,7 @@ export default function UsageStatsPage() {
     const maxHits = filtered.length > 0 ? Math.max(...filtered.map(r => r.HIT_COUNT || 0)) : 1;
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0f1e', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
+        <div style={{ minHeight: '100vh', background: '#f9fafb', color: '#1e293b', fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
             <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
                 {/* Header */}
@@ -151,14 +151,14 @@ export default function UsageStatsPage() {
                             { label: 'Unique Paths',value: usageRows.length, sub: 'Distinct endpoints',                    color: '#34d399' },
                         ].map(card => (
                             <div key={card.label} style={{
-                                background: 'linear-gradient(135deg, rgba(30,40,80,0.7), rgba(15,20,40,0.9))',
+                                background: '#ffffff',
                                 border: `1px solid ${card.color}44`,
                                 borderRadius: '1rem',
                                 padding: '1.25rem',
                                 backdropFilter: 'blur(8px)'
                             }}>
                                 <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, marginBottom: '0.25rem', opacity: 0.8 }}>{card.label}</p>
-                                <p style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>{card.value?.toLocaleString()}</p>
+                                <p style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{card.value?.toLocaleString()}</p>
                                 <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>{card.sub}</p>
                             </div>
                         ))}
@@ -166,11 +166,11 @@ export default function UsageStatsPage() {
                 )}
 
                 {/* Table */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid #1e293b', borderRadius: '1rem', overflow: 'hidden' }}>
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '1rem', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: 'rgba(30,41,59,0.8)', borderBottom: '1px solid #1e293b' }}>
+                                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                                     <th style={thStyle}>#</th>
                                     <th style={thStyle}>Path</th>
                                     <th style={thStyle}>Type</th>
@@ -198,10 +198,10 @@ export default function UsageStatsPage() {
                                         const barColor = isApi ? '#818cf8' : '#38bdf8';
                                         return (
                                             <tr key={row.PATH} style={{
-                                                borderBottom: '1px solid #0f172a',
+                                                borderBottom: '1px solid #e2e8f0',
                                                 transition: 'background 0.15s'
                                             }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(30,41,59,0.5)'}
+                                                onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                             >
                                                 <td style={tdStyle}>
@@ -210,7 +210,7 @@ export default function UsageStatsPage() {
                                                     </span>
                                                 </td>
                                                 <td style={tdStyle}>
-                                                    <code style={{ fontSize: '0.8rem', color: '#cbd5e1', wordBreak: 'break-all' }}>
+                                                    <code style={{ fontSize: '0.8rem', color: '#334155', wordBreak: 'break-all' }}>
                                                         {row.PATH}
                                                     </code>
                                                 </td>
@@ -227,11 +227,11 @@ export default function UsageStatsPage() {
                                                         {isApi ? 'API' : 'Page'}
                                                     </span>
                                                 </td>
-                                                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
+                                                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#0f172a', fontVariantNumeric: 'tabular-nums' }}>
                                                     {(row.HIT_COUNT || 0).toLocaleString()}
                                                 </td>
                                                 <td style={tdStyle}>
-                                                    <div style={{ background: '#1e293b', borderRadius: '999px', height: '6px', overflow: 'hidden' }}>
+                                                    <div style={{ background: '#e2e8f0', borderRadius: '999px', height: '6px', overflow: 'hidden' }}>
                                                         <div style={{
                                                             height: '100%',
                                                             width: `${pct}%`,
@@ -251,7 +251,7 @@ export default function UsageStatsPage() {
 
                     {/* Footer summary */}
                     {!loading && filtered.length > 0 && (
-                        <div style={{ padding: '0.75rem 1.5rem', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#475569' }}>
+                        <div style={{ padding: '0.75rem 1.5rem', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#475569' }}>
                             <span>Showing {filtered.length} of {usageRows.length} paths</span>
                             <span>Total: <strong style={{ color: '#94a3b8' }}>{totalHits.toLocaleString()} hits</strong> in {MONTH_NAMES[selectedMonth]} {selectedYear}</span>
                         </div>
@@ -271,12 +271,12 @@ export default function UsageStatsPage() {
                                     onClick={() => { setSelectedYear(m.YEAR_NUM); setSelectedMonth(m.MONTH_NUM); }}
                                     style={{
                                         background: (selectedYear === m.YEAR_NUM && selectedMonth === m.MONTH_NUM)
-                                            ? 'rgba(129,140,248,0.25)' : 'rgba(30,41,59,0.5)',
+                                            ? '#eff6ff' : '#ffffff',
                                         border: (selectedYear === m.YEAR_NUM && selectedMonth === m.MONTH_NUM)
-                                            ? '1px solid #818cf8' : '1px solid #1e293b',
+                                            ? '1px solid #818cf8' : '1px solid #e2e8f0',
                                         borderRadius: '0.5rem',
                                         padding: '0.35rem 0.75rem',
-                                        color: '#94a3b8',
+                                        color: '#334155',
                                         fontSize: '0.8rem',
                                         cursor: 'pointer',
                                         transition: 'all 0.15s'
@@ -296,10 +296,10 @@ export default function UsageStatsPage() {
 
 // Inline styles
 const selectStyle = {
-    background: '#1e293b',
-    border: '1px solid #334155',
+    background: '#ffffff',
+    border: '1px solid #e2e8f0',
     borderRadius: '0.5rem',
-    color: '#e2e8f0',
+    color: '#1e293b',
     padding: '0.4rem 0.75rem',
     fontSize: '0.875rem',
     cursor: 'pointer',
