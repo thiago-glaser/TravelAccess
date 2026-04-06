@@ -160,7 +160,7 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    { userId: userId.trim() },
+                    { userId: String(userId).trim().padEnd(36, " ") },
                     { deviceId: deviceId }
                 )
             }

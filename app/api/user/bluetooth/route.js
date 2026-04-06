@@ -62,11 +62,12 @@ export async function POST(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+        const paddedUserId = String(userId).trim().padEnd(36, ' ');
 
         // Check if device already exists for this user to avoid duplicates
         const existingCheck = await Bluetooth.findOne({
             where: sequelize.and(
-                { userId: userId.trim() },
+                { userId: paddedUserId },
                 { address: address, isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -107,6 +108,8 @@ export async function PATCH(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+        const paddedId = String(id).trim().padEnd(36, ' ');
+        const paddedUserId = String(userId).trim().padEnd(36, ' ');
 
         const [updatedRowsCount] = await Bluetooth.update(
             { 
@@ -118,8 +121,8 @@ export async function PATCH(request) {
             },
             {
                 where: sequelize.and(
-                    { id: id.trim() },
-                    { userId: userId.trim() },
+                    { id: paddedId },
+                    { userId: paddedUserId },
                     { isDeleted: { [Op.or]: [0, null] } }
                 )
             }
@@ -154,13 +157,15 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+        const paddedId = String(id).trim().padEnd(36, ' ');
+        const paddedUserId = String(userId).trim().padEnd(36, ' ');
 
         const [updatedRowsCount] = await Bluetooth.update(
             { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    { id: id.trim() },
-                    { userId: userId.trim() }
+                    { id: paddedId },
+                    { userId: paddedUserId }
                 )
             }
         );

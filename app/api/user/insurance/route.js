@@ -76,8 +76,8 @@ export async function POST(request) {
         // Ensure Car belongs to User
         const carExists = await Car.findOne({
             where: sequelize.and(
-                { id: carId.trim() },
-                { userId: userId.trim() },
+                { id: String(carId).trim().padEnd(36, " ") },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -125,8 +125,8 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             { 
                 where: sequelize.and(
-                    { id: id.trim() },
-                    { userId: userId.trim() }
+                    { id: String(id).trim().padEnd(36, " ") },
+                    { userId: String(userId).trim().padEnd(36, " ") }
                 )
             }
         );

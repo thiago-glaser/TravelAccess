@@ -84,6 +84,8 @@ export async function PATCH(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+        const paddedCarId = String(carId).trim().padEnd(36, ' ');
+        const paddedUserId = String(userId).trim().padEnd(36, ' ');
 
         const [updatedRowsCount] = await Car.update(
             { 
@@ -93,8 +95,8 @@ export async function PATCH(request) {
             },
             {
                 where: sequelize.and(
-                    { id: carId.trim() },
-                    { userId: userId.trim() },
+                    { id: paddedCarId },
+                    { userId: paddedUserId },
                     { isDeleted: { [Op.or]: [0, null] } }
                 )
             }
@@ -129,13 +131,15 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
+        const paddedCarId = String(carId).trim().padEnd(36, ' ');
+        const paddedUserId = String(userId).trim().padEnd(36, ' ');
 
         const [updatedRowsCount] = await Car.update(
             { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    { id: carId.trim() },
-                    { userId: userId.trim() }
+                    { id: paddedCarId },
+                    { userId: paddedUserId }
                 )
             }
         );

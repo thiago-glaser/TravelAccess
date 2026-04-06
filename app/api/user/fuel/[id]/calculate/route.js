@@ -27,8 +27,8 @@ export async function POST(request, context) {
         // 1. Get current fuel record F2
         const f2 = await Fuel.findOne({
             where: sequelize.and(
-                { id: fuelId.trim() },
-                { userId: userId.trim() },
+                { id: String(fuelId).trim().padEnd(36, " ") },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -46,7 +46,7 @@ export async function POST(request, context) {
         const f1 = await Fuel.findOne({
             where: sequelize.and(
                 { carId: carId },
-                { userId: userId.trim() },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { timestampUtc: { [Op.lt]: f2Timestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
@@ -130,7 +130,7 @@ export async function POST(request, context) {
         const f3 = await Fuel.findOne({
             where: sequelize.and(
                 { carId: carId },
-                { userId: userId.trim() },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { timestampUtc: { [Op.gt]: f2Timestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),

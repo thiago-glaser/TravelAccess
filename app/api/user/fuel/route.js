@@ -87,8 +87,8 @@ export async function POST(request) {
         // Ensure Car belongs to User
         const carExists = await Car.findOne({
             where: sequelize.and(
-                { id: carId.trim() },
-                { userId: userId.trim() },
+                { id: String(carId).trim().padEnd(36, " ") },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -146,8 +146,8 @@ export async function DELETE(request) {
         // Find the carId and timestamp before deleting the fuel entry
         const deletedFuel = await Fuel.findOne({
             where: sequelize.and(
-                { id: id.trim() },
-                { userId: userId.trim() },
+                { id: String(id).trim().padEnd(36, " ") },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -163,7 +163,7 @@ export async function DELETE(request) {
         const priorFuel = await Fuel.findOne({
             where: sequelize.and(
                 { carId: carId },
-                { userId: userId.trim() },
+                { userId: String(userId).trim().padEnd(36, " ") },
                 { timestampUtc: { [Op.lt]: deletedTimestamp } },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
@@ -175,8 +175,8 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             {
                 where: sequelize.and(
-                    { id: id.trim() },
-                    { userId: userId.trim() }
+                    { id: String(id).trim().padEnd(36, " ") },
+                    { userId: String(userId).trim().padEnd(36, " ") }
                 )
             }
         );
