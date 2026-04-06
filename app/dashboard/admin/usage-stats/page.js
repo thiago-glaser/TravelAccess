@@ -90,8 +90,8 @@ export default function UsageStatsPage() {
                             Hit counts per page and API endpoint
                         </p>
                     </div>
-                    <Link href="/dashboard" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        ← Back to Dashboard
+                    <Link href="/" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        ← Back to Home
                     </Link>
                 </header>
 
