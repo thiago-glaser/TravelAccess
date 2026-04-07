@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth';
-import { Fuel, SessionView, LocationData, sequelize } from '@/lib/models/index.js';
+import { Fuel, SessionView, SessionData, LocationData, sequelize } from '@/lib/models/index.js';
 import { calculateTotalDistance, filterLocationsByDistance } from '@/lib/gpsUtils';
 import { Op } from 'sequelize';
 
@@ -36,9 +36,15 @@ export async function GET(request) {
         const lastFuelTimestamp = lastFuel.get('timestampUtc');
 
         // 2. Find all sessions for this car where START_UTC > last_fuel_timestamp
-        // We use V_SESSIONS as done in the fuel calculation
+        // We use V_SESSIONS as done in the fuel calculation, checking for soft-deletes via SessionData
         const sessions = await SessionView.findAll({
             attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
+            include: [{
+                model: SessionData,
+                as: 'sessionData',
+                attributes: [],
+                where: { isDeleted: { [Op.or]: [0, null] } }
+            }],
             where: sequelize.and(
                 { carId: String(carId).trim().padEnd(36, " ") },
                 { startUtc: { [Op.gt]: lastFuelTimestamp } }
