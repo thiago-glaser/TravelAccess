@@ -7,7 +7,7 @@ const MapContainer = dynamic(() => import('@/components/MapContainer'), {
     ssr: false,
     loading: () => {
         const { t } = useTranslation();
-        return <div className="w-full h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-500">{t('sessions.loadingMap')}</p></div>;
+        return <div className="w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-slate-800"><p className="text-xl text-gray-500 dark:text-slate-400">{t('sessions.loadingMap')}</p></div>;
     },
 });
 
@@ -15,7 +15,7 @@ const HeatMapContainer = dynamic(() => import('@/components/HeatMapContainer'), 
     ssr: false,
     loading: () => {
         const { t } = useTranslation();
-        return <div className="w-full h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-500">{t('sessions.loadingHeatMap')}</p></div>;
+        return <div className="w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-slate-800"><p className="text-xl text-gray-500 dark:text-slate-400">{t('sessions.loadingHeatMap')}</p></div>;
     },
 });
 
@@ -407,21 +407,21 @@ export default function SessionsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-800/50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">
                             {t('sessions.title')}
                         </h1>
-                        <p className="mt-2 text-lg text-gray-600">
+                        <p className="mt-2 text-lg text-gray-600 dark:text-slate-400">
                             {t('sessions.subtitle')}
                         </p>
                         {/* Session timer widget — always shows true latest session regardless of filters */}
                         {timerSession && (
                             <div className={`mt-3 inline-flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border ${isActive
                                     ? 'bg-green-50 border-green-200 text-green-800'
-                                    : 'bg-gray-50 border-gray-200 text-gray-600'
+                                    : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400'
                                 }`}>
                                 {isActive ? (
                                     <>
@@ -455,11 +455,11 @@ export default function SessionsPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span>{t('sessions.lastSessionEnded')}</span>
-                                        <span className="font-mono text-gray-800">
+                                        <span className="font-mono text-gray-800 dark:text-slate-200">
                                             {formatAgo(now - parseUTC(timerSession.endTime))}
                                         </span>
                                     </>
@@ -491,11 +491,11 @@ export default function SessionsPage() {
                                             onClick={() => setIsDropdownOpen(false)}
                                         ></div>
                                         
-                                        <div className="absolute top-full mt-2 w-full sm:w-48 bg-white border border-gray-100 rounded-lg shadow-xl z-50 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 right-0 sm:right-auto">
+                                        <div className="absolute top-full mt-2 w-full sm:w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-lg shadow-xl z-50 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 right-0 sm:right-auto">
                                             <div className="py-1 flex flex-col">
                                                 <button
                                                     onClick={() => handleViewSelectedMap('routes')}
-                                                    className="px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full"
+                                                    className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:bg-blue-900/30 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A2 2 0 013 15.492V4.508a2 2 0 011.553-1.954L9 1h6l5.447 2.554A2 2 0 0121 5.508v10.984a2 2 0 01-1.553 1.954L15 21H9z" />
@@ -504,7 +504,7 @@ export default function SessionsPage() {
                                                 </button>
                                                 <button
                                                     onClick={() => handleViewSelectedMap('heatmap')}
-                                                    className="px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full border-t border-gray-50"
+                                                    className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:bg-blue-900/30 hover:text-blue-700 transition-colors flex items-center gap-2 text-left w-full border-t border-gray-50"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -520,7 +520,7 @@ export default function SessionsPage() {
                         )}
                         <button
                             onClick={() => fetchSessions(pagination.page)}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                            className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-800/50 transition-colors shadow-sm flex items-center gap-2"
                         >
                             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -530,17 +530,17 @@ export default function SessionsPage() {
                     </div>
                 </header>
 
-                <div className="bg-white shadow-md rounded-xl p-4 mb-4 border border-gray-100">
+                <div className="bg-white dark:bg-slate-900 shadow-md rounded-xl p-4 mb-4 border border-gray-100 dark:border-slate-800">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap items-end gap-4">
                         <div className="w-full md:flex-1 md:min-w-[200px]">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('sessions.carFilter')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.carFilter')}</label>
                             <select
                                 value={filters.carId}
                                 onChange={(e) => {
                                     setFilters(prev => ({ ...prev, carId: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('sessions.allCars')}</option>
                                 {cars.map(car => (
@@ -551,14 +551,14 @@ export default function SessionsPage() {
                             </select>
                         </div>
                         <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('sessions.year')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.year')}</label>
                             <select
                                 value={filters.year}
                                 onChange={(e) => {
                                     setFilters(prev => ({ ...prev, year: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('common.anyYear')}</option>
                                 {[2024, 2025, 2026].map(year => (
@@ -567,14 +567,14 @@ export default function SessionsPage() {
                             </select>
                         </div>
                         <div className="w-full md:w-40">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('sessions.month')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.month')}</label>
                             <select
                                 value={filters.month}
                                 onChange={(e) => {
                                     setFilters(prev => ({ ...prev, month: e.target.value }));
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('common.anyMonth')}</option>
                                 {[
@@ -588,14 +588,14 @@ export default function SessionsPage() {
                             </select>
                         </div>
                         <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('sessions.pageSize')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.pageSize')}</label>
                             <select
                                 value={pagination.limit === 1000000 ? 'all' : pagination.limit}
                                 onChange={(e) => {
                                     const newLimit = e.target.value === 'all' ? 1000000 : parseInt(e.target.value);
                                     setPagination(p => ({ ...p, limit: newLimit, page: 1 }));
                                 }}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="20">20 {t('common.perPage')}</option>
                                 <option value="50">50 {t('common.perPage')}</option>
@@ -611,7 +611,7 @@ export default function SessionsPage() {
                                     setSelectedSessionIds([]);
                                     setSelectedSessionsData({});
                                 }}
-                                className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm font-semibold text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:bg-slate-800 rounded-lg transition-colors"
                             >
                                 {t('common.clearAll')}
                             </button>
@@ -620,7 +620,7 @@ export default function SessionsPage() {
                 </div>
 
                 {selectedSessionIds.length > 0 && (
-                    <div className="mb-4 px-6 py-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between text-sm animate-in slide-in-from-top-2 duration-200">
+                    <div className="mb-4 px-6 py-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 rounded-xl flex items-center justify-between text-sm animate-in slide-in-from-top-2 duration-200">
                         <div className="flex items-center gap-2 text-blue-700 font-medium">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -649,7 +649,7 @@ export default function SessionsPage() {
                                 setSelectedSessionIds([]);
                                 setSelectedSessionsData({});
                             }}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-xs font-bold uppercase tracking-wider"
                         >
                             {t('sessions.clearSelection')}
                         </button>
@@ -665,22 +665,22 @@ export default function SessionsPage() {
                     </div>
                 )}
 
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+                <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800">
                     <div className="p-0 text-center">
                         {loading && sessions.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20">
                                 <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-gray-500 font-medium">{t('sessions.loadingHistory')}</p>
+                                <p className="text-gray-500 dark:text-slate-400 font-medium">{t('sessions.loadingHistory')}</p>
                             </div>
                         ) : sessions.length === 0 ? (
                             <div className="py-20">
-                                <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-20 h-20 bg-gray-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-slate-800">
+                                    <svg className="w-10 h-10 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('sessions.noSessionsFound')}</h3>
-                                <p className="text-gray-500 max-w-sm mx-auto">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">{t('sessions.noSessionsFound')}</h3>
+                                <p className="text-gray-500 dark:text-slate-400 max-w-sm mx-auto">
                                     {t('sessions.noSessionsDescription')}
                                 </p>
                             </div>
@@ -689,23 +689,23 @@ export default function SessionsPage() {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-100">
+                                            <tr className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
                                                 <th className="px-4 py-4 w-10">
                                                     <input
                                                         type="checkbox"
-                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                        className="w-4 h-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-slate-600 rounded focus:ring-blue-500 cursor-pointer"
                                                         checked={sessions.length > 0 && sessions.every(s => selectedSessionIds.includes(s.id))}
                                                         onChange={toggleSelectAll}
                                                     />
                                                 </th>
                                                 <th className="px-2 py-4 w-10"></th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.car')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.startTime')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.endTime')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.startLocTitle')}>{t('sessions.table.startLoc')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left" title={t('sessions.table.endLocTitle')}>{t('sessions.table.endLoc')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.table.type')}</th>
-                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest text-left">{t('sessions.actions')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left">{t('sessions.table.car')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left">{t('sessions.table.startTime')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left">{t('sessions.table.endTime')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left" title={t('sessions.table.startLocTitle')}>{t('sessions.table.startLoc')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left" title={t('sessions.table.endLocTitle')}>{t('sessions.table.endLoc')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left">{t('sessions.table.type')}</th>
+                                                <th className="px-2 py-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-left">{t('sessions.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 text-left">
@@ -713,19 +713,19 @@ export default function SessionsPage() {
                                                 <Fragment key={session.id}>
                                                     <tr
                                                         onClick={() => handleRowClick(session)}
-                                                        className={`hover:bg-blue-50/50 transition-colors group cursor-pointer ${selectedSessionIds.includes(session.id) ? 'bg-blue-50/30' : ''}`}
+                                                        className={`hover:bg-blue-50 dark:bg-blue-900/30/50 transition-colors group cursor-pointer ${selectedSessionIds.includes(session.id) ? 'bg-blue-50 dark:bg-blue-900/30/30' : ''}`}
                                                     >
                                                         <td className="px-4 py-4 w-10" onClick={(e) => e.stopPropagation()}>
                                                             <input
                                                                 type="checkbox"
-                                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                                className="w-4 h-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-slate-600 rounded focus:ring-blue-500 cursor-pointer"
                                                                 checked={selectedSessionIds.includes(session.id)}
                                                                 onChange={(e) => toggleSelectSession(e, session)}
                                                             />
                                                         </td>
                                                         <td className="px-2 py-4 w-10" onClick={(e) => toggleExpandSession(e, session.id)}>
                                                             <button
-                                                                className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors cursor-pointer"
+                                                                className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:text-blue-400 hover:bg-blue-200 transition-colors cursor-pointer"
                                                                 title={t('sessions.expandToggleTitle')}
                                                             >
                                                                 {expandedSessionIds.includes(session.id) ? (
@@ -737,25 +737,25 @@ export default function SessionsPage() {
                                                         </td>
                                                         <td className="px-2 py-4 whitespace-nowrap">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-bold text-gray-900">{session.description || t('common.unknownCar')}</span>
+                                                                <span className="text-sm font-bold text-gray-900 dark:text-slate-100">{session.description || t('common.unknownCar')}</span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
                                                             {session.startTime ? parseUTC(session.startTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'medium' }) : 'N/A'}
                                                         </td>
-                                                        <td className="px-2 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
                                                             {session.endTime ? parseUTC(session.endTime).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'medium' }) : (
                                                                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
                                                                     {t('common.activeNow')}
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-2 py-4 text-sm text-gray-600">
+                                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                                                             <div className="max-w-[220px] truncate" title={session.locationStart}>
                                                                 {session.locationStart || '-'}
                                                             </div>
                                                         </td>
-                                                        <td className="px-2 py-4 text-sm text-gray-600">
+                                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                                                             <div className="max-w-[220px] truncate" title={session.locationEnd}>
                                                                 {session.locationEnd || '-'}
                                                             </div>
@@ -765,7 +765,7 @@ export default function SessionsPage() {
                                                                 onClick={(e) => toggleSessionType(e, session.id, session.type)}
                                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${session.type === 'P' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
                                                                     session.type === 'B' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
-                                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:bg-slate-700'
                                                                     }`}
                                                                 title={t('sessions.typeToggleTitle')}
                                                             >
@@ -809,8 +809,8 @@ export default function SessionsPage() {
                                                     </tr>
                                                     {expandedSessionIds.includes(session.id) && (
                                                         <tr>
-                                                            <td colSpan="8" className="p-0 bg-gray-50/80">
-                                                                <div className="py-2 px-6 border-b border-gray-200">
+                                                            <td colSpan="8" className="p-0 bg-gray-50 dark:bg-slate-800/50/80">
+                                                                <div className="py-2 px-6 border-b border-gray-200 dark:border-slate-700">
                                                                     <SessionPointsList session={session} />
                                                                 </div>
                                                             </td>
@@ -822,8 +822,8 @@ export default function SessionsPage() {
                                     </table>
                                 </div>
 
-                                <div className="bg-gray-50 px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-100 gap-4">
-                                    <div className="text-sm text-gray-500">
+                                <div className="bg-gray-50 dark:bg-slate-800/50 px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-100 dark:border-slate-800 gap-4">
+                                    <div className="text-sm text-gray-500 dark:text-slate-400">
                                         {t('sessions.showingSessions', { 
                                             start: (pagination.page - 1) * pagination.limit + 1, 
                                             end: Math.min(pagination.page * pagination.limit, pagination.total), 
@@ -834,7 +834,7 @@ export default function SessionsPage() {
                                         <button
                                             onClick={() => handlePageChange(pagination.page - 1)}
                                             disabled={pagination.page === 1 || loading}
-                                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                            className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-800/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                                         >
                                             {t('common.previous')}
                                         </button>
@@ -857,7 +857,7 @@ export default function SessionsPage() {
                                                         onClick={() => handlePageChange(pageNum)}
                                                         className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${pagination.page === pageNum
                                                             ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                            : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-800/50'
                                                             }`}
                                                     >
                                                         {pageNum}
@@ -868,7 +868,7 @@ export default function SessionsPage() {
                                         <button
                                             onClick={() => handlePageChange(pagination.page + 1)}
                                             disabled={pagination.page === pagination.totalPages || loading}
-                                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                            className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-800/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                                         >
                                             {t('common.next')}
                                         </button>
@@ -887,21 +887,21 @@ export default function SessionsPage() {
                         onClick={closeModal}
                     ></div>
 
-                    <div className="relative bg-white w-full max-w-6xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+                    <div className="relative bg-white dark:bg-slate-900 w-full max-w-6xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
                                     {modalMode === 'multi' ? t('sessions.modalMultiTitle', { count: selectedSessionIds.length }) : t('sessions.modalSingleTitle')}
                                 </h3>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-slate-400">
                                     {modalMode === 'multi' ? t('sessions.modalMultiSubtitle') : t('sessions.modalSingleSubtitle')}
                                 </p>
                             </div>
                             <button
                                 onClick={closeModal}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                                className="p-2 hover:bg-gray-100 dark:bg-slate-800 rounded-full transition-colors group"
                             >
-                                <svg className="w-6 h-6 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-6 h-6 text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -929,27 +929,27 @@ export default function SessionsPage() {
             {isEndSessionModalOpen && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsEndSessionModalOpen(false)}></div>
-                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in slide-in-from-bottom-4 duration-300">
+                    <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in slide-in-from-bottom-4 duration-300">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900">{t('sessions.selectEndDate')}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('sessions.selectEndDate')}</h3>
                         </div>
                         
                         <div className="space-y-4 mb-6">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-400">
                                 {t('sessions.endSessionConfirm')}
                             </p>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 ml-1">{t('sessions.table.endTime')}</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">{t('sessions.table.endTime')}</label>
                                 <input
                                     type="datetime-local"
                                     value={endSessionDateTime}
                                     onChange={(e) => setEndSessionDateTime(e.target.value)}
-                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                                 />
                             </div>
                         </div>
@@ -957,7 +957,7 @@ export default function SessionsPage() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setIsEndSessionModalOpen(false)}
-                                className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                                className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:bg-slate-800 rounded-xl transition-colors"
                             >
                                 {t('common.cancel')}
                             </button>

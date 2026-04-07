@@ -40,34 +40,34 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 relative">
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900 text-slate-900 relative">
             {/* Language Switcher */}
             <div className="absolute top-4 right-4 z-20">
-                <div className="flex items-center gap-2 bg-gray-100 backdrop-blur-sm p-1 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 backdrop-blur-sm p-1 rounded-lg border border-gray-200 dark:border-slate-700">
                     <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'en' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 dark:text-slate-400 hover:text-slate-900'}`}
                     >
                         EN
                     </button>
                     <button
                         onClick={() => changeLanguage('pt-br')}
-                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 hover:text-slate-900'}`}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-all ${locale === 'pt-br' ? 'bg-blue-600 text-slate-900 shadow-lg' : 'text-gray-500 dark:text-slate-400 hover:text-slate-900'}`}
                     >
                         PT
                     </button>
                 </div>
             </div>
 
-            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-2xl border border-gray-200 backdrop-blur-sm">
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700 backdrop-blur-sm">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         TravelAccess
                     </h1>
-                    <p className="text-gray-500 mt-2">{t('forgotPassword.title')}</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-2">{t('forgotPassword.title')}</p>
                 </div>
 
-                <div className="mb-8 font-light text-gray-600 text-sm leading-relaxed text-center">
+                <div className="mb-8 font-light text-gray-600 dark:text-slate-400 text-sm leading-relaxed text-center">
                     {t('forgotPassword.description')}
                 </div>
 
@@ -85,13 +85,13 @@ export default function ForgotPasswordPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('forgotPassword.email')}</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-400 mb-2">{t('forgotPassword.email')}</label>
                         <input
                             id="input-email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('forgotPassword.emailPlaceholder')}
                             required
                         />
@@ -107,8 +107,8 @@ export default function ForgotPasswordPage() {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-                    <a href="/login" className="text-blue-600 hover:text-blue-300 transition-colors">
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700 text-center text-sm text-gray-500 dark:text-slate-400">
+                    <a href="/login" className="text-blue-600 dark:text-blue-400 hover:text-blue-300 transition-colors">
                         {t('forgotPassword.backToLogin')}
                     </a>
                 </div>

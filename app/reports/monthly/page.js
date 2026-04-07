@@ -516,27 +516,27 @@ export default function MonthlyReportsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-800/50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <header className="mb-8 flex justify-between items-end">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">
                             {t('reports.monthlyTitle')}
                         </h1>
-                        <p className="mt-2 text-lg text-gray-600">
+                        <p className="mt-2 text-lg text-gray-600 dark:text-slate-400">
                             {t('reports.monthlySubtitle')}
                         </p>
                     </div>
                 </header>
 
-                <div className="bg-white shadow-md rounded-xl p-4 mb-6 border border-gray-100">
+                <div className="bg-white dark:bg-slate-900 shadow-md rounded-xl p-4 mb-6 border border-gray-100 dark:border-slate-800">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.car')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('reports.car')}</label>
                             <select
                                 value={filters.carId}
                                 onChange={(e) => setFilters(prev => ({ ...prev, carId: e.target.value }))}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('reports.allCars')}</option>
                                 {cars.map(car => (
@@ -545,22 +545,22 @@ export default function MonthlyReportsPage() {
                             </select>
                         </div>
                         <div className="w-32">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.year')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('reports.year')}</label>
                             <select
                                 value={filters.year}
                                 onChange={(e) => setFilters(prev => ({ ...prev, year: e.target.value }))}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('common.anyYear')}</option>
                                 {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040].map(y => <option key={y} value={y}>{y}</option>)}
                             </select>
                         </div>
                         <div className="w-40">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">{t('reports.type')}</label>
+                            <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">{t('reports.type')}</label>
                             <select
                                 value={filters.type}
                                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                                className="w-full px-3 py-2 bg-gray-200/50 border border-gray-300 rounded-lg text-sm text-gray-900 transition-all hover:bg-white hover:border-blue-400"
+                                className="w-full px-3 py-2 bg-gray-200 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-slate-100 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                             >
                                 <option value="">{t('reports.allTypes')}</option>
                                 <option value="P">{t('reports.personalOnly')}</option>
@@ -592,14 +592,14 @@ export default function MonthlyReportsPage() {
                                         breakdown: { P: { distance: 0, duration: 0, cost: 0 }, B: { distance: 0, duration: 0, cost: 0 } }
                                     });
                                 }}
-                                className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                                className="px-4 py-2 text-sm font-semibold text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:bg-slate-800 rounded-lg"
                             >
                                 {t('reports.reset')}
                             </button>
                             {reportData.length > 0 && (
                                 <button
                                     onClick={handleDownloadPDF}
-                                    className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                                    className="px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 border border-blue-600 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
                                     title={t('reports.downloadPdfTitle')}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -614,11 +614,11 @@ export default function MonthlyReportsPage() {
 
                 {loading && progress.total > 0 && (
                     <div className="mb-6">
-                        <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-2">
+                        <div className="flex justify-between text-xs font-bold text-gray-400 dark:text-slate-500 uppercase mb-2">
                             <span>{t('reports.processingSessions')}</span>
                             <span>{progress.current} / {progress.total} ({Math.round((progress.current / progress.total) * 100)}%)</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                             <div
                                 className="bg-blue-600 h-full transition-all duration-300 ease-out"
                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
@@ -638,19 +638,19 @@ export default function MonthlyReportsPage() {
 
                 {reportData.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalDistance')}</p>
-                            <p className="text-3xl font-black text-blue-600 font-mono">{totals.distance.toFixed(2)} <span className="text-sm">KM</span></p>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+                            <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">{t('reports.totalDistance')}</p>
+                            <p className="text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">{totals.distance.toFixed(2)} <span className="text-sm">KM</span></p>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalDuration')}</p>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+                            <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">{t('reports.totalDuration')}</p>
                             <p className="text-3xl font-black text-green-600 font-mono">{formatDuration(totals.duration)}</p>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('reports.totalSessions')}</p>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+                            <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">{t('reports.totalSessions')}</p>
                             <p className="text-3xl font-black text-purple-600 font-mono">{totals.count}</p>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 border-l-4 border-l-emerald-500">
                             <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">{t('reports.totalCost')}</p>
                             <p className="text-3xl font-black text-emerald-600 font-mono">${totals.cost.toFixed(2)}</p>
                             {(reportData.some(s => s.hasProjected) || totals.insurance > 0) && (
@@ -664,27 +664,27 @@ export default function MonthlyReportsPage() {
 
                 {reportData.length > 0 && totals.insurance > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 border-l-4 border-l-indigo-500">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">{t('reports.personalInsurance')}</p>
                                     <p className="text-3xl font-black text-indigo-600 font-mono">${totals.personalInsurance.toFixed(2)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
-                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%</p>
+                                    <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase mb-1">{t('reports.propAllocation')}</p>
+                                    <p className="text-sm font-bold text-gray-600 dark:text-slate-400">{totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-pink-500">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 border-l-4 border-l-pink-500">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="text-xs font-bold text-pink-500 uppercase tracking-widest mb-1">{t('reports.businessInsurance')}</p>
                                     <p className="text-3xl font-black text-pink-600 font-mono">${totals.businessInsurance.toFixed(2)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
-                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%</p>
+                                    <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase mb-1">{t('reports.propAllocation')}</p>
+                                    <p className="text-sm font-bold text-gray-600 dark:text-slate-400">{totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%</p>
                                 </div>
                             </div>
                         </div>
@@ -692,15 +692,15 @@ export default function MonthlyReportsPage() {
                 )}
 
                 {reportData.length > 0 && !filters.type && (
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('reports.breakdownTitle')}</h3>
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                        <h3 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t('reports.breakdownTitle')}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">{t('reports.distDist')}</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: {totals.distance.toFixed(1)} km</span>
+                                    <span className="text-gray-600 dark:text-slate-400 font-medium">{t('reports.distDist')}</span>
+                                    <span className="text-gray-400 dark:text-slate-500 font-mono text-xs italic">{t('common.total')}: {totals.distance.toFixed(1)} km</span>
                                 </div>
-                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-blue-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.P.distance / totals.distance) * 100 : 0}%` }}
@@ -715,21 +715,21 @@ export default function MonthlyReportsPage() {
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.personal')} ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.personal')} ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-yellow-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.business')} ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.business')} ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">{t('reports.timeDist')}</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: {Math.round(totals.duration)}h</span>
+                                    <span className="text-gray-600 dark:text-slate-400 font-medium">{t('reports.timeDist')}</span>
+                                    <span className="text-gray-400 dark:text-slate-500 font-mono text-xs italic">{t('common.total')}: {Math.round(totals.duration)}h</span>
                                 </div>
-                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-blue-400 h-full transition-all duration-500"
                                         style={{ width: `${totals.duration > 0 ? (totals.breakdown.P.duration / totals.duration) * 100 : 0}%` }}
@@ -744,21 +744,21 @@ export default function MonthlyReportsPage() {
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-blue-400 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.personal')} ({totals.duration > 0 ? Math.round((totals.breakdown.P.duration / totals.duration) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.personal')} ({totals.duration > 0 ? Math.round((totals.breakdown.P.duration / totals.duration) * 100) : 0}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.business')} ({totals.duration > 0 ? Math.round((totals.breakdown.B.duration / totals.duration) * 100) : 0}%)</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.business')} ({totals.duration > 0 ? Math.round((totals.breakdown.B.duration / totals.duration) * 100) : 0}%)</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">{t('reports.costDist')}</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: ${totals.cost.toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-slate-400 font-medium">{t('reports.costDist')}</span>
+                                    <span className="text-gray-400 dark:text-slate-500 font-mono text-xs italic">{t('common.total')}: ${totals.cost.toFixed(2)}</span>
                                 </div>
-                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-emerald-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.cost > 0 ? (totals.breakdown.P.cost / totals.cost) * 100 : 0}%` }}
@@ -773,21 +773,21 @@ export default function MonthlyReportsPage() {
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.personal')} (${totals.breakdown.P.cost.toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.personal')} (${totals.breakdown.P.cost.toFixed(2)})</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-orange-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.business')} (${totals.breakdown.B.cost.toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.business')} (${totals.breakdown.B.cost.toFixed(2)})</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">{t('reports.insuranceAllocation')}</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: ${totals.insurance.toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-slate-400 font-medium">{t('reports.insuranceAllocation')}</span>
+                                    <span className="text-gray-400 dark:text-slate-500 font-mono text-xs italic">{t('common.total')}: ${totals.insurance.toFixed(2)}</span>
                                 </div>
-                                <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                                <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-indigo-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.P.distance / totals.distance) * 100 : 0}%` }}
@@ -802,11 +802,11 @@ export default function MonthlyReportsPage() {
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-indigo-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.personal')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.personal')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)})</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-pink-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.business')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600 dark:text-slate-400">{t('reports.business')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)})</span>
                                     </div>
                                 </div>
                             </div>
@@ -814,49 +814,49 @@ export default function MonthlyReportsPage() {
                     </div>
                 )}
 
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+                <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-100">
+                            <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.month')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.car')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('reports.type')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.sessions')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.distance')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.duration')}</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t('reports.table.estCost')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{t('reports.month')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{t('reports.car')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{t('reports.type')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-right">{t('reports.table.sessions')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-right">{t('reports.table.distance')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-right">{t('reports.table.duration')}</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest text-right">{t('reports.table.estCost')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {reportData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-20 text-center text-gray-400 italic">
+                                        <td colSpan="7" className="px-6 py-20 text-center text-gray-400 dark:text-slate-500 italic">
                                             {loading ? t('reports.table.loadingMsg') : t('reports.table.noSessionsMsg')}
                                         </td>
                                     </tr>
                                 ) : (
                                     <>
                                         {reportData.map((s) => (
-                                            <tr key={`${s.monthSort}_${s.carId}_${s.type}`} className="hover:bg-gray-50 transition-colors">
+                                            <tr key={`${s.monthSort}_${s.carId}_${s.type}`} className="hover:bg-gray-50 dark:bg-slate-800/50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900">{s.monthDisplay}</div>
+                                                    <div className="font-bold text-gray-900 dark:text-slate-100">{s.monthDisplay}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">
+                                                <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
                                                     {s.carDesc}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${s.type === 'P' ? 'bg-blue-100 text-blue-700' : s.type === 'B' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${s.type === 'P' ? 'bg-blue-100 text-blue-700' : s.type === 'B' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'}`}>
                                                         {s.type === 'P' ? t('reports.personal') : s.type === 'B' ? t('reports.business') : t('reports.other')}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-mono text-gray-600">
+                                                <td className="px-6 py-4 text-right font-mono text-gray-600 dark:text-slate-400">
                                                     {s.count}
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-mono font-bold text-blue-600">
+                                                <td className="px-6 py-4 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
                                                     {s.distanceKm.toFixed(2)} km
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-mono text-gray-600">
+                                                <td className="px-6 py-4 text-right font-mono text-gray-600 dark:text-slate-400">
                                                     {formatDuration(s.durationHours)}
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
@@ -869,8 +869,8 @@ export default function MonthlyReportsPage() {
                                                 </td>
                                             </tr>
                                         ))}
-                                        <tr className="bg-gray-50 font-black border-t-2 border-gray-200">
-                                            <td colSpan="4" className="px-6 py-6 text-right text-gray-900 text-base uppercase tracking-widest">{t('reports.table.grandTotal')}</td>
+                                        <tr className="bg-gray-50 dark:bg-slate-800/50 font-black border-t-2 border-gray-200 dark:border-slate-700">
+                                            <td colSpan="4" className="px-6 py-6 text-right text-gray-900 dark:text-slate-100 text-base uppercase tracking-widest">{t('reports.table.grandTotal')}</td>
                                             <td className="px-6 py-6 text-right text-xl text-blue-700 font-mono">
                                                 {totals.distance.toFixed(2)} km
                                             </td>
@@ -883,18 +883,18 @@ export default function MonthlyReportsPage() {
                                         </tr>
                                         {totals.insurance > 0 && (
                                             <>
-                                                <tr className="bg-white/50 border-t border-gray-100">
-                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">{t('reports.propPersonalInsurance')}</td>
-                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                <tr className="bg-white dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800">
+                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">{t('reports.propPersonalInsurance')}</td>
+                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 dark:text-slate-500 text-xs italic">
                                                         ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
                                                     </td>
                                                     <td className="px-6 py-3 text-right text-indigo-600 font-mono font-bold">
                                                         ${totals.personalInsurance.toFixed(2)}
                                                     </td>
                                                 </tr>
-                                                <tr className="bg-white/50 border-t border-gray-100">
-                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">{t('reports.propBusinessInsurance')}</td>
-                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                <tr className="bg-white dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800">
+                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">{t('reports.propBusinessInsurance')}</td>
+                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 dark:text-slate-500 text-xs italic">
                                                         ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
                                                     </td>
                                                     <td className="px-6 py-3 text-right text-pink-600 font-mono font-bold">

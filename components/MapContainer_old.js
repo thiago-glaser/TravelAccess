@@ -39,10 +39,10 @@ export default function MapContainer() {
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
           <div class="p-3 text-sm">
-            <h3 class="font-bold text-gray-900">${location.name || 'Location'}</h3>
-            <p class="text-gray-600 text-xs">Date: ${new Date(location.date).toLocaleDateString()}</p>
-            <p class="text-gray-600 text-xs">Latitude: ${location.lat.toFixed(4)}</p>
-            <p class="text-gray-600 text-xs">Longitude: ${location.lng.toFixed(4)}</p>
+            <h3 class="font-bold text-gray-900 dark:text-slate-100">${location.name || 'Location'}</h3>
+            <p class="text-gray-600 dark:text-slate-400 text-xs">Date: ${new Date(location.date).toLocaleDateString()}</p>
+            <p class="text-gray-600 dark:text-slate-400 text-xs">Latitude: ${location.lat.toFixed(4)}</p>
+            <p class="text-gray-600 dark:text-slate-400 text-xs">Longitude: ${location.lng.toFixed(4)}</p>
           </div>
         `,
       });
@@ -174,21 +174,21 @@ export default function MapContainer() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-800 p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 mb-8">
           Travel Access GPS Tracker
         </h1>
 
         {/* Filter Section */}
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+        <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">
             Filter GPS Data by Date and Device
           </h2>
 
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Device
               </label>
               <select
@@ -196,7 +196,7 @@ export default function MapContainer() {
                 onChange={(e) => {
                   setSelectedDevice(e.target.value);
                 }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900"
               >
                 <option value="">All Devices</option>
                 {devices.map(device => (
@@ -208,24 +208,24 @@ export default function MapContainer() {
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Start Date
               </label>
               <input
                 id="startDate"
                 type="date"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 End Date
               </label>
               <input
                 id="endDate"
                 type="date"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -272,23 +272,23 @@ export default function MapContainer() {
           </div>
 
           {locations.length > 0 && (
-            <p className="mt-4 text-sm text-gray-600">
-              Found <span className="font-bold text-blue-600">{locations.length}</span> GPS location(s)
+            <p className="mt-4 text-sm text-gray-600 dark:text-slate-400">
+              Found <span className="font-bold text-blue-600 dark:text-blue-400">{locations.length}</span> GPS location(s)
               {selectedDevice && ` from device ${selectedDevice}`}
             </p>
           )}
         </div>
 
         {/* Map Section */}
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg overflow-hidden">
           <div
             ref={mapContainer}
-            className="w-full h-screen bg-gray-200"
+            className="w-full h-screen bg-gray-200 dark:bg-slate-700"
             style={{ minHeight: '600px' }}
           >
             {!googleLoaded && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg">Loading map...</p>
+                <p className="text-gray-500 dark:text-slate-400 text-lg">Loading map...</p>
               </div>
             )}
           </div>

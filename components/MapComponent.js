@@ -121,7 +121,7 @@ export default {
     },
   },
   template: `
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 shadow-lg rounded-lg overflow-hidden">
       <div class="h-96 md:h-screen w-full" ref="mapContainer">
         <!-- Map will be rendered here -->
       </div>

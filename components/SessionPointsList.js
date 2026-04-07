@@ -72,7 +72,7 @@ export default function SessionPointsList({ session }) {
     }, [session.id, session.startTime, session.endTime, session.deviceId]);
 
     if (loading) {
-        return <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.loading')}</div>;
+        return <div className="p-4 text-center text-gray-500 dark:text-slate-400 text-sm">{t('sessionPointsList.loading')}</div>;
     }
 
     if (error) {
@@ -80,37 +80,37 @@ export default function SessionPointsList({ session }) {
     }
 
     if (locations.length === 0) {
-        return <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.noPoints')}</div>;
+        return <div className="p-4 text-center text-gray-500 dark:text-slate-400 text-sm">{t('sessionPointsList.noPoints')}</div>;
     }
 
     return (
-        <div className="bg-white p-4 overflow-x-auto border-t border-gray-100">
-            <h4 className="font-bold text-gray-800 mb-3 text-sm">{t('sessionPointsList.title', { count: locations.length })}</h4>
-            <div className="max-h-80 overflow-y-auto rounded border border-gray-200">
+        <div className="bg-white dark:bg-slate-900 p-4 overflow-x-auto border-t border-gray-100 dark:border-slate-800">
+            <h4 className="font-bold text-gray-800 dark:text-slate-200 mb-3 text-sm">{t('sessionPointsList.title', { count: locations.length })}</h4>
+            <div className="max-h-80 overflow-y-auto rounded border border-gray-200 dark:border-slate-700">
                 <table className="w-full text-left text-xs">
-                    <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
+                    <thead className="bg-gray-50 dark:bg-slate-800/50 sticky top-0 shadow-sm z-10">
                         <tr>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.dateTime')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.latitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.longitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.altitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalDistTitle')}>{t('sessionPointsList.headers.totalDist')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalTimeTitle')}>{t('sessionPointsList.headers.totalTime')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.speed')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400">{t('sessionPointsList.headers.dateTime')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400">{t('sessionPointsList.headers.latitude')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400">{t('sessionPointsList.headers.longitude')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400">{t('sessionPointsList.headers.altitude')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400" title={t('sessionPointsList.headers.totalDistTitle')}>{t('sessionPointsList.headers.totalDist')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400" title={t('sessionPointsList.headers.totalTimeTitle')}>{t('sessionPointsList.headers.totalTime')}</th>
+                            <th className="px-3 py-2 font-semibold text-gray-500 dark:text-slate-400">{t('sessionPointsList.headers.speed')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {locations.map((loc, idx) => (
-                            <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-700">
+                            <tr key={idx} className="hover:bg-blue-50 dark:bg-blue-900/30/50 transition-colors">
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-slate-300">
                                     {loc.localDate.toLocaleDateString(locale)} {loc.localDate.toLocaleTimeString(locale)}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lat.toFixed(6)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lng.toFixed(6)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.altitude != null ? loc.altitude.toFixed(1) : '-'}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.cumulativeDistanceKm.toFixed(2)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 font-mono text-xs">{loc.formattedCumulativeTime}</td>
-                                <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{loc.speedKmH.toFixed(1)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-slate-400">{loc.lat.toFixed(6)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-slate-400">{loc.lng.toFixed(6)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-slate-400">{loc.altitude != null ? loc.altitude.toFixed(1) : '-'}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-slate-400">{loc.cumulativeDistanceKm.toFixed(2)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-slate-400 font-mono text-xs">{loc.formattedCumulativeTime}</td>
+                                <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800 dark:text-slate-200">{loc.speedKmH.toFixed(1)}</td>
                             </tr>
                         ))}
                     </tbody>

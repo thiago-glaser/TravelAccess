@@ -60,29 +60,29 @@ export default {
     };
   },
   template: `
-    <div class="bg-white shadow-lg rounded-lg p-6 mb-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Filter GPS Data by Date</h2>
+    <div class="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">Filter GPS Data by Date</h2>
       
       <div class="flex flex-col md:flex-row gap-4 items-end">
         <div class="flex-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Start Date
           </label>
           <input
             v-model="startDate"
             type="date"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         <div class="flex-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             End Date
           </label>
           <input
             v-model="endDate"
             type="date"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 

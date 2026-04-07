@@ -84,29 +84,29 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
-            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-2xl border border-gray-200 backdrop-blur-sm">
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900 text-slate-900">
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700 backdrop-blur-sm">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         {t('login.title')}
                     </h1>
-                    <p className="text-gray-500 mt-2">{t('login.subtitle')}</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-2">{t('login.subtitle')}</p>
                 </div>
 
                 <div className="mb-8 space-y-4">
-                    <p className="text-sm text-gray-600 leading-relaxed text-center">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed text-center">
                         {t('login.description')}
                     </p>
                     
                     <div className="p-3 bg-blue-100 border border-blue-200 rounded-xl">
                         <div className="flex items-center gap-3 mb-1">
                             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('login.demoTitle')}</span>
+                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{t('login.demoTitle')}</span>
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                             {t('login.demoDescription')}
                             <br />
-                            <span className="text-gray-600 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
+                            <span className="text-gray-600 dark:text-slate-400 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
                         </p>
                     </div>
                 </div>
@@ -128,7 +128,7 @@ function LoginForm() {
                     id="btn-google-signin"
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white hover:bg-gray-50 text-gray-800 font-semibold rounded-xl transition-all shadow-lg mb-6 transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:bg-slate-800/50 text-gray-800 dark:text-slate-200 font-semibold rounded-xl transition-all shadow-lg mb-6 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <GoogleIcon />
                     {t('login.googleSignIn')}
@@ -143,26 +143,26 @@ function LoginForm() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('login.username')}</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-400 mb-2">{t('login.username')}</label>
                         <input
                             id="input-username"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('login.placeholderUsername')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-2">{t('login.password')}</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-400 mb-2">{t('login.password')}</label>
                         <input
                             id="input-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
                             placeholder={t('login.placeholderPassword')}
                             required
                         />
@@ -178,20 +178,20 @@ function LoginForm() {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500 space-y-3">
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700 text-center text-sm text-gray-500 dark:text-slate-400 space-y-3">
                     <div>
                         {t('login.noAccount')}{' '}
-                        <a href="/register" className="text-blue-600 hover:text-blue-300 transition-colors">
+                        <a href="/register" className="text-blue-600 dark:text-blue-400 hover:text-blue-300 transition-colors">
                             {t('login.register')}
                         </a>
                     </div>
                     <div>
-                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-gray-600 transition-colors">
+                        <a href="/forgot-password" id="link-forgot-password" className="text-slate-500 hover:text-gray-600 dark:text-slate-400 transition-colors">
                             {t('login.forgotPassword')}
                         </a>
                     </div>
                     <div>
-                        <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-gray-600 transition-colors text-xs opacity-80">
+                        <a href="/forgot-username" id="link-forgot-username-recovery" className="text-slate-500 hover:text-gray-600 dark:text-slate-400 transition-colors text-xs opacity-80">
                             {t('login.forgotUsername')}
                         </a>
                     </div>
@@ -200,13 +200,13 @@ function LoginForm() {
                     <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-800">
                         <button
                             onClick={() => changeLanguage('en')}
-                            className={`text-xs font-bold transition-all ${locale === 'en' ? 'text-blue-600 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600'}`}
+                            className={`text-xs font-bold transition-all ${locale === 'en' ? 'text-blue-600 dark:text-blue-400 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600 dark:text-slate-400'}`}
                         >
                             ENGLISH
                         </button>
                         <button
                             onClick={() => changeLanguage('pt-br')}
-                            className={`text-xs font-bold transition-all ${locale === 'pt-br' ? 'text-blue-600 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600'}`}
+                            className={`text-xs font-bold transition-all ${locale === 'pt-br' ? 'text-blue-600 dark:text-blue-400 bg-blue-100 px-2 py-1 rounded' : 'text-slate-500 hover:text-gray-600 dark:text-slate-400'}`}
                         >
                             PORTUGUÊS
                         </button>
@@ -225,7 +225,7 @@ function LoadingContent() {
 export default function LoginPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900 text-slate-900">
                 <LoadingContent />
             </div>
         }>

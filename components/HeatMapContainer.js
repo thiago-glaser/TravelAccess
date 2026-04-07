@@ -159,22 +159,22 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-800/50 pb-8">
       <div className={`${isModal ? 'max-w-full px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} py-8`}>
 
         {/* Filter Section */}
         {!isModal && (
-          <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">
               {t('mapContainer.heatMapTitle')}
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
               {t('mapContainer.subtitle')}
             </p>
 
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.device')}
                 </label>
                 <select
@@ -182,7 +182,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                   onChange={(e) => {
                     setSelectedDevice(e.target.value);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200/50 text-gray-900 transition-all hover:bg-white hover:border-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 dark:bg-slate-700/50 text-gray-900 dark:text-slate-100 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                 >
                   <option value="">{t('mapContainer.allDevices')}</option>
                   {devices.map(device => (
@@ -194,14 +194,14 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
               </div>
 
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.startDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     id="startDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="startHour"
@@ -209,7 +209,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     min="0"
                     max="23"
                     placeholder={t('common.placeholders.hour')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="startMinute"
@@ -217,20 +217,20 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     min="0"
                     max="59"
                     placeholder={t('common.placeholders.minute')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                 </div>
               </div>
 
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.endDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     id="endDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="endHour"
@@ -238,7 +238,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     min="0"
                     max="23"
                     placeholder={t('common.placeholders.hour')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="endMinute"
@@ -246,7 +246,7 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
                     min="0"
                     max="59"
                     placeholder={t('common.placeholders.minute')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                 </div>
               </div>
@@ -318,16 +318,16 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
 
         {/* Statistics Bar */}
         {locations.length > 0 && (
-          <div className={`${isModal ? 'bg-white border-b border-gray-100 px-6 py-4 mb-0' : 'mt-4 mb-4 text-sm text-gray-600'}`}>
+          <div className={`${isModal ? 'bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 px-6 py-4 mb-0' : 'mt-4 mb-4 text-sm text-gray-600 dark:text-slate-400'}`}>
             <div className={`flex flex-col md:flex-row ${isModal ? 'md:items-center md:justify-between' : 'gap-2'}`}>
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <p className={`${isModal ? 'text-sm' : ''} text-gray-600`}>
+                <p className={`${isModal ? 'text-sm' : ''} text-gray-600 dark:text-slate-400`}>
                   <span dangerouslySetInnerHTML={{ __html: t('mapContainer.showing_plural', { count: locations.length }) }}></span>
                   {selectedDevice && !isModal && t('mapContainer.from_device', { deviceId: selectedDevice })}
                 </p>
@@ -337,15 +337,15 @@ export default function HeatMapContainer({ initialFilters = null, isModal = fals
         )}
 
         {/* Map Section */}
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg overflow-hidden">
           <div
             ref={mapContainer}
-            className="w-full h-screen bg-gray-200"
+            className="w-full h-screen bg-gray-200 dark:bg-slate-700"
             style={{ minHeight: '600px' }}
           >
             {!mapLoaded && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg">{t('mapContainer.loadingHeatMap')}</p>
+                <p className="text-gray-500 dark:text-slate-400 text-lg">{t('mapContainer.loadingHeatMap')}</p>
               </div>
             )}
           </div>

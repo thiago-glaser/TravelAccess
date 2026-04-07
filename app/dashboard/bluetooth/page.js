@@ -156,18 +156,18 @@ export default function ManageBluetoothPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 text-slate-900 p-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-800/50 text-slate-900 p-8">
             <div className="max-w-3xl mx-auto">
                 <header className="mb-12">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         {t('bluetooth.title')}
                     </h1>
-                    <p className="text-gray-500 mt-2">{t('bluetooth.subtitle')}</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-2">{t('bluetooth.subtitle')}</p>
                 </header>
 
                 <div className="grid gap-8">
                     {/* Add Form */}
-                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl">
                         <h2 className="text-xl font-semibold mb-4">{t('bluetooth.addDevice')}</h2>
                         <form onSubmit={handleAddBluetooth} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input
@@ -175,7 +175,7 @@ export default function ManageBluetoothPage() {
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
                                 placeholder={t('bluetooth.deviceNamePlaceholder')}
-                                className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 font-semibold text-gray-700"
+                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 font-semibold text-gray-700 dark:text-slate-300"
                                 required
                             />
                             <input
@@ -183,7 +183,7 @@ export default function ManageBluetoothPage() {
                                 value={newAddress}
                                 onChange={(e) => setNewAddress(e.target.value)}
                                 placeholder={t('bluetooth.addressPlaceholder')}
-                                className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 font-mono text-gray-600"
+                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 font-mono text-gray-600 dark:text-slate-400"
                                 required
                             />
                             <input
@@ -191,12 +191,12 @@ export default function ManageBluetoothPage() {
                                 value={newDescription}
                                 onChange={(e) => setNewDescription(e.target.value)}
                                 placeholder={t('bluetooth.descriptionOptional')}
-                                className="md:col-span-2 px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 text-gray-600"
+                                className="md:col-span-2 px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400 text-gray-600 dark:text-slate-400"
                             />
                             <select
                                 value={newCarId}
                                 onChange={(e) => setNewCarId(e.target.value)}
-                                className="md:col-span-2 px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-600 appearance-none"
+                                className="md:col-span-2 px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-600 dark:text-slate-400 appearance-none"
                             >
                                 <option value="">{t('bluetooth.noCarAssigned')}</option>
                                 {cars.map(car => (
@@ -217,10 +217,10 @@ export default function ManageBluetoothPage() {
                     </div>
 
                     {/* List */}
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
-                        <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                        <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50">
                             <h2 className="text-xl font-semibold">{t('bluetooth.listTitle')}</h2>
-                            <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full border border-gray-200">{bluetoothDevices.length} {t('bluetooth.total')}</span>
+                            <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-3 py-1 rounded-full border border-gray-200 dark:border-slate-700">{bluetoothDevices.length} {t('bluetooth.total')}</span>
                         </div>
 
                         <div className="divide-y divide-slate-700">
@@ -230,7 +230,7 @@ export default function ManageBluetoothPage() {
                                 <div className="p-10 text-center text-slate-500 font-medium italic">{t('bluetooth.noDevices')}</div>
                             ) : (
                                 bluetoothDevices.map((device) => (
-                                    <div key={device.ID} className="p-6 hover:bg-gray-50 transition-colors">
+                                    <div key={device.ID} className="p-6 hover:bg-gray-50 dark:bg-slate-800/50 transition-colors">
                                         <div className="flex flex-col md:flex-row justify-between gap-4">
                                             <div className="flex-1">
                                                 {editingId === device.ID ? (
@@ -241,14 +241,14 @@ export default function ManageBluetoothPage() {
                                                                 value={editName}
                                                                 onChange={(e) => setEditName(e.target.value)}
                                                                 placeholder={t('bluetooth.editPlaceholder')}
-                                                                className="px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-700"
+                                                                className="px-3 py-2 bg-white dark:bg-slate-900 border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-700 dark:text-slate-300"
                                                             />
                                                             <input
                                                                 type="text"
                                                                 value={editAddress}
                                                                 onChange={(e) => setEditAddress(e.target.value)}
                                                                 placeholder={t('bluetooth.addressEditPlaceholder')}
-                                                                className="px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 font-mono text-gray-600"
+                                                                className="px-3 py-2 bg-white dark:bg-slate-900 border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 font-mono text-gray-600 dark:text-slate-400"
                                                             />
                                                         </div>
                                                         <input
@@ -256,12 +256,12 @@ export default function ManageBluetoothPage() {
                                                             value={editDescription}
                                                             onChange={(e) => setEditDescription(e.target.value)}
                                                             placeholder={t('bluetooth.descEditPlaceholder')}
-                                                            className="px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-600"
+                                                            className="px-3 py-2 bg-white dark:bg-slate-900 border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-600 dark:text-slate-400"
                                                         />
                                                         <select
                                                             value={editCarId}
                                                             onChange={(e) => setEditCarId(e.target.value)}
-                                                            className="px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-600"
+                                                            className="px-3 py-2 bg-white dark:bg-slate-900 border border-blue-300 rounded-lg text-sm outline-none ring-2 ring-blue-200 text-gray-600 dark:text-slate-400"
                                                         >
                                                             <option value="">{t('bluetooth.noCarAssigned')}</option>
                                                             {cars.map(car => (
@@ -278,7 +278,7 @@ export default function ManageBluetoothPage() {
                                                             </button>
                                                             <button
                                                                 onClick={() => setEditingId(null)}
-                                                                className="px-4 py-2 bg-slate-700 text-gray-600 rounded-lg text-xs font-semibold hover:bg-slate-600 transition-colors"
+                                                                className="px-4 py-2 bg-slate-700 text-gray-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-600 transition-colors"
                                                             >
                                                                 {t('bluetooth.cancel')}
                                                             </button>
@@ -291,12 +291,12 @@ export default function ManageBluetoothPage() {
                                                     >
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs font-bold text-blue-600 tracking-wider">{t('bluetooth.nameLabel')}</span>
+                                                                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wider">{t('bluetooth.nameLabel')}</span>
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
                                                             </div>
-                                                            <div className="text-lg text-gray-700 font-medium flex items-center gap-2">
+                                                            <div className="text-lg text-gray-700 dark:text-slate-300 font-medium flex items-center gap-2">
                                                                 {device.NAME}
-                                                                <svg className="w-4 h-4 text-slate-600 group-hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <svg className="w-4 h-4 text-slate-600 group-hover:text-blue-600 dark:text-blue-400 transition-colors opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                                 </svg>
                                                             </div>
@@ -305,12 +305,12 @@ export default function ManageBluetoothPage() {
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                                                             <div>
                                                                 <span className="text-xs font-bold text-slate-500 tracking-wider block mb-1">{t('bluetooth.addressLabel')}</span>
-                                                                <div className="text-gray-600 font-mono text-sm">{device.ADDRESS}</div>
+                                                                <div className="text-gray-600 dark:text-slate-400 font-mono text-sm">{device.ADDRESS}</div>
                                                             </div>
                                                             {device.CAR_DESCRIPTION && (
                                                                 <div>
                                                                     <span className="text-xs font-bold text-slate-500 tracking-wider block mb-1">{t('bluetooth.linkedCarLabel')}</span>
-                                                                    <div className="text-gray-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis bg-gray-100 inline-block px-2 py-1 rounded text-xs">{device.CAR_DESCRIPTION}</div>
+                                                                    <div className="text-gray-600 dark:text-slate-400 text-sm whitespace-nowrap overflow-hidden text-ellipsis bg-gray-100 dark:bg-slate-800 inline-block px-2 py-1 rounded text-xs">{device.CAR_DESCRIPTION}</div>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -318,7 +318,7 @@ export default function ManageBluetoothPage() {
                                                         {device.DESCRIPTION && (
                                                             <div className="mt-2">
                                                                 <span className="text-xs font-bold text-slate-500 tracking-wider block mb-1">{t('bluetooth.descriptionLabel')}</span>
-                                                                <div className="text-gray-500 text-sm">{device.DESCRIPTION}</div>
+                                                                <div className="text-gray-500 dark:text-slate-400 text-sm">{device.DESCRIPTION}</div>
                                                             </div>
                                                         )}
                                                     </div>
@@ -345,7 +345,7 @@ export default function ManageBluetoothPage() {
                 </div>
 
                 <div className="mt-12 text-center">
-                    <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors font-medium">
+                    <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 dark:text-blue-400 transition-colors font-medium">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>

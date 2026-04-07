@@ -401,22 +401,22 @@ export default function MapContainer({ initialFilters = null, isModal = false })
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-800/50 pb-8">
       <div className={`${isModal ? 'max-w-full px-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} py-8`}>
 
         {/* Filter Section */}
         {!isModal && (
-          <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">
               {t('mapContainer.title')}
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
               {t('mapContainer.subtitle')}
             </p>
 
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.device')}
                 </label>
                 <select
@@ -424,7 +424,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                   onChange={(e) => {
                     setSelectedDevice(e.target.value);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200/50 text-gray-900 transition-all hover:bg-white hover:border-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 dark:bg-slate-700/50 text-gray-900 dark:text-slate-100 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                 >
                   <option value="">{t('mapContainer.allDevices')}</option>
                   {devices.map(device => (
@@ -436,14 +436,14 @@ export default function MapContainer({ initialFilters = null, isModal = false })
               </div>
 
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.startDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     id="startDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="startHour"
@@ -451,7 +451,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="23"
                     placeholder={t('common.placeholders.hour')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="startMinute"
@@ -459,20 +459,20 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="59"
                     placeholder={t('common.placeholders.minute')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                 </div>
               </div>
 
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">
                   {t('mapContainer.endDate')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     id="endDate"
                     type="date"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="endHour"
@@ -480,7 +480,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="23"
                     placeholder={t('common.placeholders.hour')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                   <input
                     id="endMinute"
@@ -488,7 +488,7 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                     min="0"
                     max="59"
                     placeholder={t('common.placeholders.minute')}
-                    className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-center text-lg bg-gray-200/50 transition-all hover:bg-white hover:border-blue-400"
+                    className="w-24 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-slate-100 text-center text-lg bg-gray-200 dark:bg-slate-700/50 transition-all hover:bg-white dark:bg-slate-900 hover:border-blue-400"
                   />
                 </div>
               </div>
@@ -560,19 +560,19 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
         {/* Statistics Bar - Shown in both regular and modal modes if data exists */}
         {locations.length > 0 && (
-          <div className={`${isModal ? 'bg-white border-b border-gray-100 px-6 py-4 mb-0' : 'mt-4 text-sm text-gray-600'}`}>
+          <div className={`${isModal ? 'bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 px-6 py-4 mb-0' : 'mt-4 text-sm text-gray-600 dark:text-slate-400'}`}>
             <div className={`flex flex-col md:flex-row ${isModal ? 'md:items-center md:justify-between' : 'gap-2'}`}>
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <p className={`${isModal ? 'text-sm' : ''} text-gray-600`}>
+                <p className={`${isModal ? 'text-sm' : ''} text-gray-600 dark:text-slate-400`}>
                   <span dangerouslySetInnerHTML={{ __html: t('mapContainer.found_plural', { count: locations.length }) }}></span>
                   {filteredLocations.length < locations.length && (
-                    <span className="text-gray-500"> {t('mapContainer.showing_filtered', { count: filteredLocations.length })}</span>
+                    <span className="text-gray-500 dark:text-slate-400"> {t('mapContainer.showing_filtered', { count: filteredLocations.length })}</span>
                   )}
                   {selectedDevice && !isModal && t('mapContainer.from_device', { deviceId: selectedDevice })}
                 </p>
@@ -586,8 +586,8 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
                     </div>
-                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
-                      <span className="text-gray-500 mr-1">{t('mapContainer.totalDistance')}</span>
+                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 dark:text-slate-400 font-medium`}>
+                      <span className="text-gray-500 dark:text-slate-400 mr-1">{t('mapContainer.totalDistance')}</span>
                       <span className="text-green-700 font-bold">
                         {totalDistance >= 1000
                           ? (totalDistance / 1000).toFixed(2) + ' km'
@@ -603,8 +603,8 @@ export default function MapContainer({ initialFilters = null, isModal = false })
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 font-medium`}>
-                      <span className="text-gray-500 mr-1">{t('mapContainer.totalTime')}</span>
+                    <p className={`${isModal ? 'text-sm' : ''} text-gray-600 dark:text-slate-400 font-medium`}>
+                      <span className="text-gray-500 dark:text-slate-400 mr-1">{t('mapContainer.totalTime')}</span>
                       <span className="text-purple-700 font-bold">
                         {formatDurationTranslated(totalTime, t)}
                       </span>
@@ -617,15 +617,15 @@ export default function MapContainer({ initialFilters = null, isModal = false })
         )}
 
         {/* Map Section */}
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg overflow-hidden">
           <div
             ref={mapContainer}
-            className="w-full h-screen bg-gray-200"
+            className="w-full h-screen bg-gray-200 dark:bg-slate-700"
             style={{ minHeight: '600px' }}
           >
             {!mapLoaded && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg">{t('mapContainer.loadingMap')}</p>
+                <p className="text-gray-500 dark:text-slate-400 text-lg">{t('mapContainer.loadingMap')}</p>
               </div>
             )}
           </div>
@@ -633,9 +633,9 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
         {/* Speed Chart Section */}
         {speedData.length > 0 && (
-          <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('mapContainer.speedAnalysis')}</h2>
-            <div className="w-full h-96 bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mt-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">{t('mapContainer.speedAnalysis')}</h2>
+            <div className="w-full h-96 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
               <svg width="100%" height="100%" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" className="w-full h-full">
                 {(() => {
                   // Calculate max speed and round up to a nice number
@@ -695,26 +695,26 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
             {/* Speed statistics */}
             <div className="grid grid-cols-4 gap-4 mt-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.averageSpeed')}</p>
-                <p className="text-2xl font-bold text-blue-600">
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.averageSpeed')}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {(speedData.reduce((sum, d) => sum + d.speed, 0) / speedData.length).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.minSpeed')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.minSpeed')}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {Math.min(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.maxSpeed')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.maxSpeed')}</p>
                 <p className="text-2xl font-bold text-red-600">
                   {Math.max(...speedData.map(d => d.speed)).toFixed(1)} {t('common.units.kmh')}
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.dataPoints')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.dataPoints')}</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {speedData.length}
                 </p>
@@ -725,9 +725,9 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
         {/* Altitude Chart Section */}
         {altitudeData.length > 0 && (
-          <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('mapContainer.altitudeAnalysis')}</h2>
-            <div className="w-full h-96 bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="bg-white dark:bg-slate-900 shadow-lg rounded-lg p-6 mt-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">{t('mapContainer.altitudeAnalysis')}</h2>
+            <div className="w-full h-96 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
               <svg width="100%" height="100%" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" className="w-full h-full">
                 {(() => {
                   const maxAlt = Math.max(...altitudeData.map(d => d.altitude));
@@ -796,26 +796,26 @@ export default function MapContainer({ initialFilters = null, isModal = false })
 
             {/* Altitude statistics */}
             <div className="grid grid-cols-4 gap-4 mt-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.averageAltitude')}</p>
-                <p className="text-2xl font-bold text-blue-600">
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.averageAltitude')}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {(altitudeData.reduce((sum, d) => sum + d.altitude, 0) / altitudeData.length).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.minAltitude')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.minAltitude')}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {Math.min(...altitudeData.map(d => d.altitude)).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.maxAltitude')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.maxAltitude')}</p>
                 <p className="text-2xl font-bold text-red-600">
                   {Math.max(...altitudeData.map(d => d.altitude)).toFixed(1)} m
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">{t('mapContainer.dataPoints')}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{t('mapContainer.dataPoints')}</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {altitudeData.length}
                 </p>
