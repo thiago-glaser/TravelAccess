@@ -63,6 +63,12 @@ export async function POST(request, context) {
         // V_SESSIONS is a view, mapped to SessionView
         const sessions = await SessionView.findAll({
             attributes: ['id', 'deviceId', 'startUtc', 'endUtc'],
+            include: [{
+                model: SessionData,
+                as: 'sessionData',
+                attributes: [],
+                where: { isDeleted: { [Op.or]: [0, null] } }
+            }],
             where: {
                 carId: carId,
                 startUtc: {
