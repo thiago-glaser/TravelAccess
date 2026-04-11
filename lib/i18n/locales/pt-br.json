@@ -208,7 +208,8 @@
       "endLoc": "Local Fim",
       "startLocTitle": "Local de Início",
       "endLocTitle": "Local de Fim",
-      "type": "Tipo"
+      "type": "Tipo",
+      "device": "Dispositivo"
     },
     "showingSessions": "Mostrando {{start}} a {{end}} de {{total}} sessões",
     "modalMultiTitle": "Caminho Multi-Sessão ({{count}} Selecionadas)",
@@ -230,7 +231,10 @@
     "endSessionSuccess": "Sessão encerrada com sucesso.",
     "endSessionError": "Erro ao encerrar sessão: {{error}}",
     "selectEndDate": "Selecionar Data e Hora de Término",
-    "actions": "Ações"
+    "actions": "Ações",
+    "addSession": "Adicionar Sessão",
+    "selectDevice": "Selecionar Dispositivo",
+    "selectCar": "Selecionar Carro"
   },
   "months": {
     "1": "Janeiro",

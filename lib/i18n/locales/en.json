@@ -208,7 +208,8 @@
       "endLoc": "End Loc",
       "startLocTitle": "Starting Location",
       "endLocTitle": "Ending Location",
-      "type": "Type"
+      "type": "Type",
+      "device": "Device"
     },
     "showingSessions": "Showing {{start}} to {{end}} of {{total}} sessions",
     "modalMultiTitle": "Multi-Session Path ({{count}} Selected)",
@@ -230,7 +231,10 @@
     "endSessionSuccess": "Session ended successfully.",
     "endSessionError": "Error ending session: {{error}}",
     "selectEndDate": "Select End Date & Time",
-    "actions": "Actions"
+    "actions": "Actions",
+    "addSession": "Add Session",
+    "selectDevice": "Select Device",
+    "selectCar": "Select Car"
   },
   "months": {
     "1": "January",

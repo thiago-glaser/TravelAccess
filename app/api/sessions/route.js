@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth';
-import { SessionView, SessionData, Device, sequelize } from '@/lib/models/index.js';
+import { SessionView, SessionData, Device, UserDevice, sequelize } from '@/lib/models/index.js';
 import { Op } from 'sequelize';
 
 export async function GET(request) {
@@ -177,6 +177,56 @@ export async function PATCH(request) {
         return Response.json({ success: true });
     } catch (error) {
         console.error('Database error in sessions PATCH API:', error);
+        return Response.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
+export async function POST(request) {
+    const session = await getSession(request);
+    if (!session || (session.authType === 'api-key' && !session.IS_ADMIN)) {
+        return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.isDemo === 'Y' || session.isDemo === true) {
+        return Response.json({ success: false, error: 'Demo users cannot perform write operations' }, { status: 403 });
+    }
+
+    try {
+        const body = await request.json();
+        const { deviceId, carId, startUtc, endUtc, sessionType } = body;
+
+        if (!deviceId || !startUtc) {
+            return Response.json({ success: false, error: 'Device ID and Start Time are required' }, { status: 400 });
+        }
+
+        const userId = session.USER_ID || session.id || session.ID;
+
+        // Verify device ownership
+        const userDevice = await UserDevice.findOne({
+            where: {
+                userId: userId,
+                deviceId: deviceId,
+                isDeleted: { [Op.or]: [0, null] }
+            }
+        });
+
+        if (!userDevice) {
+            return Response.json({ success: false, error: 'Forbidden: Device does not belong to the user.' }, { status: 403 });
+        }
+
+        // Create the session
+        const newSession = await SessionData.create({
+            deviceId,
+            carId: carId || null,
+            startUtc: new Date(startUtc),
+            endUtc: endUtc ? new Date(endUtc) : null,
+            sessionType: sessionType || 'P',
+            valueConfirmed: 'Y' // Manually added sessions are usually confirmed
+        });
+
+        return Response.json({ success: true, id: newSession.id.trim() });
+    } catch (error) {
+        console.error('Database error in sessions POST API:', error);
         return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
