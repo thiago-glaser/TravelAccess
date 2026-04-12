@@ -23,10 +23,16 @@ param(
     [string]$ImageName = "travelaccess",
     [string]$Tag = "latest",
     [string]$RemoteDir = "~/TravelAccess",
-    [switch]$SkipRuntimeFiles  # skip certs/wallet/env upload (already on server)
+    [switch]$SkipRuntimeFiles,  # skip certs/wallet/env upload (already on server)
+    [switch]$Dev  # Deploy to dev environment
 )
 
 $LocalDir = $PSScriptRoot
+
+if ($Dev) {
+    if ($Tag -eq "latest") { $Tag = "dev" }
+    if ($RemoteDir -eq "~/TravelAccess") { $RemoteDir = "~/TravelAccessDev" }
+}
 
 function TS { Get-Date -Format '[HH:mm:ss]' }
 function Write-Step {
@@ -235,7 +241,8 @@ $ProxyDeployScript = "C:\code\proxy\deploy.ps1"
 
 if (Test-Path $ProxyDeployScript) {
     Write-Host "    Delegating to Proxy deployment script..." -ForegroundColor DarkGray
-    & $ProxyDeployScript -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath $SshKeyPath -LogContainer travelaccess-web
+    $containerName = if ($Dev) { "travelaccess-web-dev" } else { "travelaccess-web" }
+    & $ProxyDeployScript -RemoteUser $RemoteUser -RemoteHost $RemoteHost -SshKeyPath $SshKeyPath -LogContainer $containerName
     if ($LASTEXITCODE -ne 0) { Write-Fail "Proxy deploy failed"; exit 1 }
 }
 else {
