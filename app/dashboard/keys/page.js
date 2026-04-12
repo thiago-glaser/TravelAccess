@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
 
 export default function ApiKeysPage() {
@@ -61,7 +62,8 @@ export default function ApiKeysPage() {
     };
 
     const handleRevokeKey = async (id) => {
-        if (!confirm(t('keys.revokeConfirm'))) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('keys.revokeConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/api/auth/api-keys?id=${id}`, {

@@ -12,9 +12,9 @@ const oracleModels = await import('../../lib/models/index.js');
 
 // Setup MySQL Connection
 const mysqlSequelize = new Sequelize(
-    process.env.MYSQL_DATABASE, 
-    process.env.MYSQL_USER, 
-    process.env.MYSQL_PASSWORD, 
+    process.env.MYSQL_DATABASE,
+    process.env.MYSQL_USER,
+    process.env.MYSQL_PASSWORD,
     {
         host: process.env.MYSQL_HOST,
         port: process.env.MYSQL_PORT || 3306,
@@ -38,20 +38,34 @@ async function run() {
         await mysqlSequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
 
         const mysqlModelsObj = {};
+        const oracleRecordsCount = {};
         const viewsToSkip = ['SessionView', 'SessionCalc'];
 
         // 1. Define models on MySQL
         for (const [modelName, OracleModel] of Object.entries(oracleModels)) {
             if (modelName === 'sequelize' || viewsToSkip.includes(modelName)) continue;
 
+            // PRE-CHECK: Confirm table exists in Oracle and get total records to avoid queries on missing tables
+            let totalRecords = 0;
+            try {
+                totalRecords = await OracleModel.count();
+                oracleRecordsCount[modelName] = totalRecords;
+            } catch (err) {
+                if (err.message && err.message.includes('ORA-00942') || (err.parent && err.parent.message && err.parent.message.includes('ORA-00942'))) {
+                    console.warn(`[WARN] Skipping model ${modelName} - Table ${OracleModel.tableName} does not exist in Oracle.`);
+                    continue;
+                }
+                throw err;
+            }
+
             const attributes = { ...OracleModel.getAttributes() };
-            
+
             // Clean up attributes
             const cleanAttributes = {};
             for (const key in attributes) {
                 cleanAttributes[key] = { ...attributes[key] };
                 delete cleanAttributes[key].Model;
-                
+
                 // Normalize DataTypes because Sequelize type instances carry dialect-specific 
                 // characteristics (like NVARCHAR2 for Oracle) over to MySQL if we copy them blindly.
                 const oldType = cleanAttributes[key].type;
@@ -115,15 +129,15 @@ async function run() {
 
         // 4. Copy data in batches
         for (const [modelName, OracleModel] of Object.entries(oracleModels)) {
-            if (modelName === 'sequelize' || viewsToSkip.includes(modelName)) continue;
-            
-            const totalRecords = await OracleModel.count();
+            if (modelName === 'sequelize' || viewsToSkip.includes(modelName) || !mysqlModelsObj[modelName] || oracleRecordsCount[modelName] === undefined) continue;
+
+            const totalRecords = oracleRecordsCount[modelName];
             console.log(`Reading ${totalRecords} records from Oracle for ${modelName}...`);
-            
+
             if (totalRecords > 0) {
                 const MysqlModel = mysqlModelsObj[modelName];
-                const batchSize = 1000;
-                
+                const batchSize = 25000;
+
                 // Identify a column to order by for consistent pagination. Usually 'id', or just the first PK.
                 let orderColumn = [];
                 const primaryKeys = Object.keys(OracleModel.primaryKeys || {});
@@ -132,6 +146,7 @@ async function run() {
                 }
 
                 for (let offset = 0; offset < totalRecords; offset += batchSize) {
+                    const batchStart = Date.now();
                     const queryOptions = {
                         raw: true,
                         limit: batchSize,
@@ -142,10 +157,11 @@ async function run() {
                     }
 
                     const records = await OracleModel.findAll(queryOptions);
-                    
+
                     if (records.length > 0) {
                         await MysqlModel.bulkCreate(records, { validate: false, ignoreDuplicates: true });
-                        console.log(` - Migrated ${offset + records.length} / ${totalRecords} for ${modelName}`);
+                        const duration = ((Date.now() - batchStart) / 1000).toFixed(2);
+                        console.log(` - Migrated ${offset + records.length} / ${totalRecords} for ${modelName} in ${duration}s`);
                     }
                 }
             }

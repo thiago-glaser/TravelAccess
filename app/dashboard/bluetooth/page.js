@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
 
@@ -137,7 +138,8 @@ export default function ManageBluetoothPage() {
     };
 
     const handleRemoveBluetooth = async (id) => {
-        if (!confirm(t('bluetooth.removeConfirm'))) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('bluetooth.removeConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/api/user/bluetooth?id=${id}`, {

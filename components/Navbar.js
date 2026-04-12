@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useState, useRef, useEffect } from 'react';
@@ -115,7 +116,8 @@ export default function Navbar() {
         }
     };
     const handleAccountDeletion = async () => {
-        if (!confirm('Are you sure you want to delete your account? A confirmation email will be sent to your inbox to finalize the process.')) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String('Are you sure you want to delete your account? A confirmation email will be sent to your inbox to finalize the process.'), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         setDeleteStatus({ loading: true, error: '', success: '' });
         try {
@@ -137,7 +139,8 @@ export default function Navbar() {
         if (mode === 'force') confirmMsg = 'Warning: This will DELETE all existing demo user data and recreate it. Continue?';
         if (mode === 'clean') confirmMsg = 'Warning: This will DELETE all existing demo user data. Continue?';
 
-        if (!confirm(confirmMsg)) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(confirmMsg), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         setDemoStatus({ loading: true, message: 'Processing...' });
         try {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
 
@@ -154,7 +155,8 @@ export default function ManageOtherExpensesPage() {
     };
 
     const handleRemoveExpense = async (id) => {
-        if (!confirm(t('expenses.removeConfirm') || 'Delete this expense?')) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('expenses.removeConfirm') || 'Delete this expense?'), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/api/user/other-expenses?id=${id}`, { method: 'DELETE' });

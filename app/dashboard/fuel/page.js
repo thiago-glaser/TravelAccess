@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
@@ -144,7 +145,8 @@ export default function ManageFuelPage() {
     };
 
     const handleRemoveFuel = async (id) => {
-        if (!confirm(t('fuel.removeConfirm'))) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('fuel.removeConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/api/user/fuel?id=${id}`, {

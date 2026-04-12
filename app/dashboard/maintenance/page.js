@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
 
@@ -143,7 +144,8 @@ export default function ManageMaintenancePage() {
     };
 
     const handleRemoveMaintenance = async (id) => {
-        if (!confirm(t('maintenance.removeConfirm'))) return;
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('maintenance.removeConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/api/user/maintenance?id=${id}`, {

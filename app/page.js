@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Fragment } from 'react';
+import Swal from 'sweetalert2';
 import dynamic from 'next/dynamic';
 
 const MapContainer = dynamic(() => import('@/components/MapContainer'), {
@@ -374,9 +375,8 @@ export default function SessionsPage() {
             alert(t('sessions.demoWarning'));
             return;
         }
-        if (!confirm(t('sessions.deleteConfirm'))) {
-            return;
-        }
+        const result = await Swal.fire({ title: 'Confirmation', text: String(t('sessions.deleteConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
+        if (!result.isConfirmed) return;
         try {
             const response = await fetch(`/api/sessions?id=${sessionId}`, {
                 method: 'DELETE'
