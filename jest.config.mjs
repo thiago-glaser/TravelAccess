@@ -12,8 +12,6 @@ const config = {
         '^@/(.*)$': '<rootDir>/$1',
         // Stub geographiclib-geodesic (uses flat-earth approx in tests)
         '^geographiclib-geodesic$': '<rootDir>/__mocks__/geographiclib-geodesic.js',
-        // Stub heavy Oracle driver
-        '^oracledb$': '<rootDir>/__mocks__/oracledb.js',
     },
     testMatch: ['**/__tests__/**/*.test.js'],
     collectCoverageFrom: [

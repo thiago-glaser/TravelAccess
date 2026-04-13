@@ -38,7 +38,7 @@ export async function POST(request) {
 
         const insertSql = `
             INSERT INTO SESSION_DATA (ID, DEVICE_ID, CAR_ID, START_UTC, END_UTC, SESSION_TYPE)
-            VALUES (Sys_guid(), :deviceId, :carId, :startUtc, NULL, 'P')
+            VALUES (UUID(), :deviceId, :carId, :startUtc, NULL, 'P')
         `;
 
         const result = await query(insertSql, {
@@ -47,7 +47,7 @@ export async function POST(request) {
             startUtc: startUtc
         });
 
-        const inserted = result.rowsAffected;
+        const inserted = result.rows ? result.rows.affectedRows : 0;
 
         const elapsed = Date.now() - startTime;
         console.log(`Session started. Device: ${device_id} Elapsed time: ${elapsed} ms`);

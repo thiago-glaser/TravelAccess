@@ -30,7 +30,7 @@ export async function GET(request) {
                 }
             ],
             where: sequelize.where(
-                sequelize.literal(`"SessionView"."DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                sequelize.literal(`\`SessionView\`.\`DEVICE_ID\` IN (SELECT \`DEVICE_ID\` FROM \`USER_DEVICES\` WHERE TRIM(\`USER_ID\`) = TRIM('${userId.trim()}'))`),
                 true
             ),
             order: [['startUtc', 'DESC']]

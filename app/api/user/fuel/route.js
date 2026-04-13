@@ -195,13 +195,11 @@ export async function DELETE(request) {
                 };
             }
 
-            // Note VALUE_CONFIRMED might not exist if we missed it in model generation.
-            // Let's use raw update for complex session update if valueConfirmed missing
             await sequelize.query(`
                 UPDATE SESSION_DATA
                 SET COST = NULL, DISTANCE = NULL, TIME_TRAVELED = NULL,
                     VALUE_CONFIRMED = 'N',
-                    UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
+                    UPDATED_AT = UTC_TIMESTAMP()
                 WHERE TRIM(CAR_ID) = :carId
                   ${priorFuel ? `AND START_UTC > :priorTimestamp` : ''}
                   AND START_UTC < :deletedTimestamp

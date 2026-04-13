@@ -33,8 +33,8 @@ export async function POST(request) {
         if (id) {
             updateSql = `
                 UPDATE SESSION_DATA
-                SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE RTRIM(LTRIM(ID)) = RTRIM(LTRIM(:id)) AND RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId))
+                SET END_UTC = :endUtc, UPDATED_AT = UTC_TIMESTAMP()
+                WHERE TRIM(ID) = TRIM(:id) AND TRIM(DEVICE_ID) = TRIM(:deviceId)
             `;
             params = {
                 id: id.trim(),
@@ -44,9 +44,9 @@ export async function POST(request) {
         } else {
             updateSql = `
                 UPDATE SESSION_DATA
-                SET END_UTC = :endUtc, UPDATED_AT = SYS_EXTRACT_UTC(SYSTIMESTAMP)
-                WHERE RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId)) AND END_UTC IS NULL
-                AND START_UTC = (SELECT MAX(START_UTC) FROM SESSION_DATA WHERE RTRIM(LTRIM(DEVICE_ID)) = RTRIM(LTRIM(:deviceId)) AND END_UTC IS NULL)
+                SET END_UTC = :endUtc, UPDATED_AT = UTC_TIMESTAMP()
+                WHERE TRIM(DEVICE_ID) = TRIM(:deviceId) AND END_UTC IS NULL
+                ORDER BY START_UTC DESC LIMIT 1
             `;
             params = {
                 endUtc: endUtc,
@@ -56,7 +56,7 @@ export async function POST(request) {
 
         const result = await query(updateSql, params);
 
-        const updated = result.rowsAffected || 0;
+        const updated = result.rows ? result.rows.affectedRows : 0;
 
         const elapsed = Date.now() - startTime;
         console.log(`Session ended. Device: ${device_id} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);

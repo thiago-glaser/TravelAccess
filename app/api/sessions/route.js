@@ -32,7 +32,7 @@ export async function GET(request) {
         // Build where clauses for the ORM abstraction
         const whereConditions = {
             [Op.and]: [
-                sequelize.literal(`"SessionView"."DEVICE_ID" IN (SELECT "DEVICE_ID" FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM('${userId.trim()}')))`),
+                sequelize.literal(`\`SessionView\`.\`DEVICE_ID\` IN (SELECT \`DEVICE_ID\` FROM \`USER_DEVICES\` WHERE TRIM(\`USER_ID\`) = TRIM('${userId.trim()}'))`),
             ]
         };
 
@@ -43,7 +43,7 @@ export async function GET(request) {
         if (yearFilter) {
             whereConditions[Op.and].push(
                 sequelize.where(
-                    sequelize.literal(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST("SessionView"."START_UTC" AS TIMESTAMP), 'UTC') AT TIME ZONE CAST('${tzFilter}' AS VARCHAR2(50)), 'YYYY'))`),
+                    sequelize.literal(`YEAR(CONVERT_TZ(\`SessionView\`.\`START_UTC\`, '+00:00', '${tzFilter}'))`),
                     parseInt(yearFilter)
                 )
             );
@@ -52,7 +52,7 @@ export async function GET(request) {
         if (monthFilter) {
             whereConditions[Op.and].push(
                 sequelize.where(
-                    sequelize.literal(`TO_NUMBER(TO_CHAR(FROM_TZ(CAST("SessionView"."START_UTC" AS TIMESTAMP), 'UTC') AT TIME ZONE CAST('${tzFilter}' AS VARCHAR2(50)), 'MM'))`),
+                    sequelize.literal(`MONTH(CONVERT_TZ(\`SessionView\`.\`START_UTC\`, '+00:00', '${tzFilter}'))`),
                     parseInt(monthFilter)
                 )
             );
@@ -164,7 +164,7 @@ export async function PATCH(request) {
                     ),
                     sequelize.where(
                         sequelize.fn('RTRIM', sequelize.fn('LTRIM', sequelize.col('DEVICE_ID'))),
-                        { [Op.in]: sequelize.literal(`(SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM(${sequelize.escape(userId.trim())})))`) }
+                        { [Op.in]: sequelize.literal(`(SELECT TRIM(\`DEVICE_ID\`) FROM \`USER_DEVICES\` WHERE TRIM(\`USER_ID\`) = TRIM(${sequelize.escape(userId.trim())}))`) }
                     ),
                 ]
             }
@@ -263,7 +263,7 @@ export async function DELETE(request) {
                         ),
                         sequelize.where(
                             sequelize.fn('RTRIM', sequelize.fn('LTRIM', sequelize.col('DEVICE_ID'))),
-                            { [Op.in]: sequelize.literal(`(SELECT RTRIM(LTRIM("DEVICE_ID")) FROM "USER_DEVICES" WHERE RTRIM(LTRIM("USER_ID")) = RTRIM(LTRIM(${sequelize.escape(userId.trim())})))`) }
+                            { [Op.in]: sequelize.literal(`(SELECT TRIM(\`DEVICE_ID\`) FROM \`USER_DEVICES\` WHERE TRIM(\`USER_ID\`) = TRIM(${sequelize.escape(userId.trim())}))`) }
                         ),
                     ]
                 }

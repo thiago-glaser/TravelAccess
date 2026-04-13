@@ -61,8 +61,8 @@ export async function GET(request) {
                 SELECT PATH, YEAR_NUM, MONTH_NUM, HIT_COUNT
                 FROM PAGE_USAGE_MONTHLY
                 WHERE (YEAR_NUM * 100 + MONTH_NUM) >=
-                      (EXTRACT(YEAR FROM ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -11)) * 100 +
-                       EXTRACT(MONTH FROM ADD_MONTHS(SYS_EXTRACT_UTC(SYSTIMESTAMP), -11)))
+                      (YEAR(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 11 MONTH)) * 100 +
+                       MONTH(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 11 MONTH)))
                 ORDER BY YEAR_NUM DESC, MONTH_NUM DESC, HIT_COUNT DESC
             `);
             usageRows = result.rows || [];

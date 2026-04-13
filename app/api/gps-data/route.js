@@ -1,4 +1,4 @@
-import { getConnection, oracledb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
@@ -12,37 +12,36 @@ export async function GET(request) {
     const endDate = searchParams.get('endDate');
     const deviceId = searchParams.get('deviceId');
 
-    let connection;
     try {
-        connection = await getConnection();
-
         // Get location data with filters restricted by user
         const userId = session.USER_ID || session.id || session.ID;
-        let query = `
-            SELECT ld.id, ld.device_id, TO_CHAR(ld.timestamp_utc, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as TIMESTAMP_UTC, ld.latitude, ld.longitude, ld.altitude
+        let sql = `
+            SELECT ld.id as ID, ld.device_id as DEVICE_ID, 
+                   DATE_FORMAT(ld.timestamp_utc, '%Y-%m-%dT%H:%i:%sZ') as TIMESTAMP_UTC, 
+                   ld.latitude as LATITUDE, ld.longitude as LONGITUDE, ld.altitude as ALTITUDE
             FROM location_data ld
             JOIN USER_DEVICES ud ON ld.device_id = ud.device_id
-            WHERE ud.user_id = :userId
+            WHERE TRIM(ud.user_id) = TRIM(:userId)
         `;
 
         const params = { userId };
 
         if (deviceId) {
-            query += ` AND ld.device_id = :deviceId`;
+            sql += ` AND ld.device_id = :deviceId`;
             params.deviceId = deviceId;
         }
 
         if (startDate) {
-            // Robustly handle ISO strings (YYYY-MM-DDTHH:MM:SS.mmmZ) by truncating to seconds
             let startDateTime = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
             if (startDateTime.includes('.') && startDateTime.indexOf('.') > 10) {
                 startDateTime = startDateTime.split('.')[0];
             }
-            // If it ends with Z but has no milliseconds
             if (startDateTime.endsWith('Z')) {
                 startDateTime = startDateTime.slice(0, -1);
             }
-            query += ` AND ld.timestamp_utc >= TO_TIMESTAMP(:startDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
+            // MySQL standard format: YYYY-MM-DD HH:MM:SS
+            startDateTime = startDateTime.replace('T', ' ');
+            sql += ` AND ld.timestamp_utc >= :startDate`;
             params.startDate = startDateTime;
         }
 
@@ -54,15 +53,14 @@ export async function GET(request) {
             if (endDateTime.endsWith('Z')) {
                 endDateTime = endDateTime.slice(0, -1);
             }
-            query += ` AND ld.timestamp_utc <= TO_TIMESTAMP(:endDate, 'YYYY-MM-DD"T"HH24:MI:SS')`;
+            endDateTime = endDateTime.replace('T', ' ');
+            sql += ` AND ld.timestamp_utc <= :endDate`;
             params.endDate = endDateTime;
         }
 
-        query += ` ORDER BY ld.timestamp_utc DESC`;
+        sql += ` ORDER BY ld.timestamp_utc DESC`;
 
-        const result = await connection.execute(query, params, {
-            outFormat: oracledb.OUT_FORMAT_OBJECT,
-        });
+        const result = await query(sql, params);
 
         const locations = result.rows.map(row => ({
             id: row.ID,
@@ -82,13 +80,5 @@ export async function GET(request) {
             { success: false, error: error.message },
             { status: 500 }
         );
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error closing connection:', err);
-            }
-        }
     }
 }

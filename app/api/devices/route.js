@@ -1,4 +1,4 @@
-import { getConnection, oracledb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request) {
@@ -7,22 +7,17 @@ export async function GET(request) {
         return Response.json({ success: false, error: 'Unauthorized. API Key or Login required.' }, { status: 401 });
     }
 
-    let connection;
     try {
-        connection = await getConnection();
-
         // Get devices mapped to this user
         const userId = session.USER_ID || session.id || session.ID;
         const devicesQuery = `
-            SELECT d.device_id, d.description 
+            SELECT d.device_id as DEVICE_ID, d.description as DESCRIPTION
             FROM devices d
             JOIN USER_DEVICES ud ON d.device_id = ud.device_id
-            WHERE ud.user_id = :userId
+            WHERE TRIM(ud.user_id) = TRIM(:userId)
             ORDER BY d.device_id
         `;
-        const devicesResult = await connection.execute(devicesQuery, { userId }, {
-            outFormat: oracledb.OUT_FORMAT_OBJECT,
-        });
+        const devicesResult = await query(devicesQuery, { userId });
 
         const devices = devicesResult.rows.map(row => ({
             id: row.DEVICE_ID,
@@ -36,13 +31,5 @@ export async function GET(request) {
             { success: false, error: error.message },
             { status: 500 }
         );
-    } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error closing connection:', err);
-            }
-        }
     }
 }

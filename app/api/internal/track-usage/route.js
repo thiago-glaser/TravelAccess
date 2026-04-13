@@ -35,7 +35,11 @@ export async function POST(request) {
 
         console.log(`[track-usage] Recording hit for: ${path}`);
         await query(
-            `BEGIN UPSERT_PAGE_USAGE(:path); END;`,
+            `INSERT INTO PAGE_USAGE_MONTHLY (ID, PATH, YEAR_NUM, MONTH_NUM, HIT_COUNT, CREATED_AT, UPDATED_AT)
+             VALUES (UUID(), :path, YEAR(UTC_TIMESTAMP()), MONTH(UTC_TIMESTAMP()), 1, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+             ON DUPLICATE KEY UPDATE 
+                 HIT_COUNT = HIT_COUNT + 1, 
+                 UPDATED_AT = UTC_TIMESTAMP()`,
             { path: path.substring(0, 500) }
         );
 
