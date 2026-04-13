@@ -31,6 +31,7 @@ async function createViews() {
         CREATE OR REPLACE VIEW V_SESSION_CALC AS
         SELECT
             s.id AS session_id,
+            s.device_id AS DEVICE_ID,
             s.start_utc AS session_start_utc,
             s.end_utc   AS session_end_utc,
 
