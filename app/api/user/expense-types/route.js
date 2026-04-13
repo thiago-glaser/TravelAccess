@@ -94,8 +94,8 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             { 
                 where: sequelize.and(
-                    { id: String(id).trim().padEnd(36, " ") },
-                    { userId: String(userId).trim().padEnd(36, " ") }
+                    { id: String(id).trim() },
+                    { userId: String(userId).trim() }
                 )
             }
         );

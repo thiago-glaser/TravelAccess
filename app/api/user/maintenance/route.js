@@ -84,7 +84,7 @@ export async function POST(request) {
         // Ensure Car belongs to User
         const carCount = await Car.count({
             where: {
-                id: carId.padEnd(36, ' '), // Pad with spaces because CHAR(36) in Oracle might require it depending on drivers, or Sequelize handles it. Let's rely on DB or trim in where string, Sequelize escapes params.
+                id: carId, // Pad with spaces because CHAR(36) in Oracle might require it depending on drivers, or Sequelize handles it. Let's rely on DB or trim in where string, Sequelize escapes params.
                 userId: userId,
                 isDeleted: {
                     [Op.or]: [0, null]
@@ -95,8 +95,8 @@ export async function POST(request) {
         // Let's use raw where to ensure trim if needed
         const carExists = await Car.findOne({
             where: sequelize.and(
-                { id: String(carId).trim().padEnd(36, " ") },
-                { userId: String(userId).trim().padEnd(36, " ") },
+                { id: String(carId).trim() },
+                { userId: String(userId).trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -155,8 +155,8 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             { 
                 where: sequelize.and(
-                    { id: String(id).trim().padEnd(36, " ") },
-                    { userId: String(userId).trim().padEnd(36, " ") }
+                    { id: String(id).trim() },
+                    { userId: String(userId).trim() }
                 )
             }
         );

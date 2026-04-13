@@ -95,8 +95,8 @@ export async function POST(request) {
         // Ensure Car belongs to User
         const carExists = await Car.findOne({
             where: sequelize.and(
-                { id: String(carId).trim().padEnd(36, " ") },
-                { userId: String(userId).trim().padEnd(36, " ") },
+                { id: String(carId).trim() },
+                { userId: String(userId).trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -108,8 +108,8 @@ export async function POST(request) {
         // Ensure ExpenseType belongs to User
         const typeExists = await ExpenseType.findOne({
             where: sequelize.and(
-                { id: String(expenseTypeId).trim().padEnd(36, " ") },
-                { userId: String(userId).trim().padEnd(36, " ") },
+                { id: String(expenseTypeId).trim() },
+                { userId: String(userId).trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             )
         });
@@ -169,8 +169,8 @@ export async function DELETE(request) {
             { isDeleted: 1, updatedAt: new Date() },
             { 
                 where: sequelize.and(
-                    { id: String(id).trim().padEnd(36, " ") },
-                    { userId: String(userId).trim().padEnd(36, " ") }
+                    { id: String(id).trim() },
+                    { userId: String(userId).trim() }
                 )
             }
         );

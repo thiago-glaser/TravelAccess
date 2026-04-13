@@ -62,7 +62,7 @@ export async function POST(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const paddedUserId = String(userId).trim().padEnd(36, ' ');
+        const paddedUserId = String(userId).trim();
 
         // Check if device already exists for this user to avoid duplicates
         const existingCheck = await Bluetooth.findOne({
@@ -108,8 +108,8 @@ export async function PATCH(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const paddedId = String(id).trim().padEnd(36, ' ');
-        const paddedUserId = String(userId).trim().padEnd(36, ' ');
+        const paddedId = String(id).trim();
+        const paddedUserId = String(userId).trim();
 
         const [updatedRowsCount] = await Bluetooth.update(
             { 
@@ -157,8 +157,8 @@ export async function DELETE(request) {
         }
 
         const userId = session.USER_ID || session.id || session.ID;
-        const paddedId = String(id).trim().padEnd(36, ' ');
-        const paddedUserId = String(userId).trim().padEnd(36, ' ');
+        const paddedId = String(id).trim();
+        const paddedUserId = String(userId).trim();
 
         const [updatedRowsCount] = await Bluetooth.update(
             { isDeleted: 1, updatedAt: new Date() },

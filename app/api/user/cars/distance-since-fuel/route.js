@@ -22,8 +22,8 @@ export async function GET(request) {
         // 1. Get the most recent fuel record for the given car
         const lastFuel = await Fuel.findOne({
             where: sequelize.and(
-                { carId: String(carId).trim().padEnd(36, " ") },
-                { userId: String(userId).trim().padEnd(36, " ") },
+                { carId: String(carId).trim() },
+                { userId: String(userId).trim() },
                 { isDeleted: { [Op.or]: [0, null] } }
             ),
             order: [['timestampUtc', 'DESC']]
@@ -46,7 +46,7 @@ export async function GET(request) {
                 where: { isDeleted: { [Op.or]: [0, null] } }
             }],
             where: sequelize.and(
-                { carId: String(carId).trim().padEnd(36, " ") },
+                { carId: String(carId).trim() },
                 { startUtc: { [Op.gt]: lastFuelTimestamp } }
             ),
             raw: true

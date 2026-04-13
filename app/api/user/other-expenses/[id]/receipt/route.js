@@ -13,8 +13,8 @@ export async function GET(request, { params }) {
 
         const expense = await OtherExpense.findOne({
             where: sequelize.and(
-                { id: String(id).trim().padEnd(36, " ") },
-                { userId: String(userId).trim().padEnd(36, " ") }
+                { id: String(id).trim() },
+                { userId: String(userId).trim() }
             ),
             attributes: ['receiptImage', 'receiptMime']
         });
