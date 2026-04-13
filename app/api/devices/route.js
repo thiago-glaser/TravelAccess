@@ -12,7 +12,7 @@ export async function GET(request) {
         const userId = session.USER_ID || session.id || session.ID;
         const devicesQuery = `
             SELECT d.device_id as DEVICE_ID, d.description as DESCRIPTION
-            FROM devices d
+            FROM DEVICES d
             JOIN USER_DEVICES ud ON d.device_id = ud.device_id
             WHERE TRIM(ud.user_id) = TRIM(:userId)
             ORDER BY d.device_id

@@ -19,7 +19,7 @@ export async function GET(request) {
             SELECT ld.id as ID, ld.device_id as DEVICE_ID, 
                    DATE_FORMAT(ld.timestamp_utc, '%Y-%m-%dT%H:%i:%sZ') as TIMESTAMP_UTC, 
                    ld.latitude as LATITUDE, ld.longitude as LONGITUDE, ld.altitude as ALTITUDE
-            FROM location_data ld
+            FROM LOCATION_DATA ld
             JOIN USER_DEVICES ud ON ld.device_id = ud.device_id
             WHERE TRIM(ud.user_id) = TRIM(:userId)
         `;
