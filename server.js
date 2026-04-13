@@ -17,7 +17,9 @@ function loadEnv() {
 
 loadEnv();
 
-const dev = process.env.NODE_ENV !== 'production';
+const isDevEnv = process.env.NODE_ENV !== 'production';
+const hasSource = fs.existsSync(path.join(__dirname, 'app')) || fs.existsSync(path.join(__dirname, 'pages'));
+const dev = isDevEnv && hasSource;
 const hostname = '0.0.0.0';
 const port = parseInt(process.env.PORT || '443', 10);
 const useHttps = port !== 3000 && process.env.USE_HTTPS !== 'false';
