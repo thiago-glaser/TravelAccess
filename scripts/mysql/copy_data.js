@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import path from 'path';
 dotenv.config(); // The script will be run from the app root
 
 // When running locally outside of docker, we need to override the wallet dir to point correctly
@@ -6,9 +7,50 @@ if (process.env.CLOUD_ORACLE_WALLET_DIR === '/app/oracle_wallet') {
     process.env.CLOUD_ORACLE_WALLET_DIR = './oracle_wallet';
 }
 
+// Force the entire process to treat dates as UTC
+process.env.TZ = 'UTC';
+
 const { Sequelize, DataTypes } = await import('sequelize');
-const { default: oracleSequelize } = await import('../../lib/sequelize.js');
 const oracleModels = await import('../../lib/models/index.js');
+
+// Setup REAL Oracle Source Connection 
+// (We don't use lib/sequelize.js because that has been switched to MySQL for the app)
+const isCloud = process.env.USE_CLOUD_DB === 'true';
+const oraclePrefix = isCloud ? 'CLOUD_ORACLE_' : 'ORACLE_';
+
+console.log(`Connecting to Oracle (Cloud: ${isCloud})...`);
+
+const oracleSequelize = new Sequelize({
+    dialect: 'oracle',
+    username: process.env[`${oraclePrefix}USER`],
+    password: process.env[`${oraclePrefix}PASSWORD`],
+    // Standard Sequelize Oracle dialect often expects connectString in dialectOptions
+    dialectOptions: {
+        connectString: process.env[`${oraclePrefix}CONNECTION_STRING`],
+        walletLocation: path.resolve(process.env.CLOUD_ORACLE_WALLET_DIR),
+        walletPassword: process.env.CLOUD_ORACLE_WALLET_PASSWORD,
+        sslServerDnMatch: true
+    },
+    logging: false,
+    timezone: '+00:00'
+});
+
+// Re-initialize models on the REAL Oracle connection
+for (const [modelName, ModelClass] of Object.entries(oracleModels)) {
+    if (modelName === 'sequelize' || typeof ModelClass !== 'function' || !ModelClass.init) continue;
+    
+    // We re-init to bind to our local oracleSequelize instead of the MySQL one in lib/sequelize.js
+    ModelClass.init(ModelClass.getAttributes(), {
+        sequelize: oracleSequelize,
+        tableName: ModelClass.tableName,
+        timestamps: ModelClass.options?.timestamps,
+        createdAt: ModelClass.options?.createdAt,
+        updatedAt: ModelClass.options?.updatedAt,
+        deletedAt: ModelClass.options?.deletedAt,
+        paranoid: ModelClass.options?.paranoid,
+        freezeTableName: true
+    });
+}
 
 // Setup MySQL Connection
 const mysqlSequelize = new Sequelize(
@@ -19,6 +61,7 @@ const mysqlSequelize = new Sequelize(
         host: process.env.MYSQL_HOST,
         port: process.env.MYSQL_PORT || 3306,
         dialect: 'mysql',
+        timezone: '+00:00', // Strictly enforce UTC for target
         logging: false,
         pool: { max: 1, min: 1 } // Force single connection to ensure session variables persist
     }
@@ -159,7 +202,20 @@ async function run() {
                     const records = await OracleModel.findAll(queryOptions);
 
                     if (records.length > 0) {
-                        await MysqlModel.bulkCreate(records, { validate: false, ignoreDuplicates: true });
+                        // Ensure all dates are correctly handled as UTC strings for raw insertion
+                        // This helps if the source connection didn't have UTC configured correctly.
+                        const fixedRecords = records.map(record => {
+                            const newRecord = { ...record };
+                            for (const key in newRecord) {
+                                if (newRecord[key] instanceof Date) {
+                                    // Serialize to UTC string format that MySQL understands without TZ ambiguity
+                                    newRecord[key] = newRecord[key].toISOString().slice(0, 19).replace('T', ' ');
+                                }
+                            }
+                            return newRecord;
+                        });
+
+                        await MysqlModel.bulkCreate(fixedRecords, { validate: false, ignoreDuplicates: true });
                         const duration = ((Date.now() - batchStart) / 1000).toFixed(2);
                         console.log(` - Migrated ${offset + records.length} / ${totalRecords} for ${modelName} in ${duration}s`);
                     }
