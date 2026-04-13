@@ -1,11 +1,15 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import oracledb from 'oracledb';
 dotenv.config(); // The script will be run from the app root
 
 // When running locally outside of docker, we need to override the wallet dir to point correctly
 if (process.env.CLOUD_ORACLE_WALLET_DIR === '/app/oracle_wallet') {
     process.env.CLOUD_ORACLE_WALLET_DIR = './oracle_wallet';
 }
+
+// Ensure oracledb fetches BLOBs as Buffers so they can be easily copied to MySQL
+oracledb.fetchAsBuffer = [oracledb.BLOB];
 
 // Force the entire process to treat dates as UTC
 process.env.TZ = 'UTC';
@@ -127,7 +131,8 @@ async function run() {
                     } else if (typeName === 'DATE') {
                         cleanAttributes[key].type = DataTypes.DATE;
                     } else if (typeName === 'BLOB') {
-                        cleanAttributes[key].type = DataTypes.BLOB;
+                        // Use LONGBLOB (4GB) in MySQL to ensure we don't truncate large images/files
+                        cleanAttributes[key].type = DataTypes.BLOB('long');
                     } else if (typeName === 'BOOLEAN') {
                         cleanAttributes[key].type = DataTypes.BOOLEAN;
                     } else if (typeof oldType === 'string') {
@@ -204,16 +209,24 @@ async function run() {
                     if (records.length > 0) {
                         // Ensure all dates are correctly handled as UTC strings for raw insertion
                         // This helps if the source connection didn't have UTC configured correctly.
-                        const fixedRecords = records.map(record => {
+                        const fixedRecords = await Promise.all(records.map(async record => {
                             const newRecord = { ...record };
                             for (const key in newRecord) {
-                                if (newRecord[key] instanceof Date) {
-                                    // Serialize to UTC string format that MySQL understands without TZ ambiguity
-                                    newRecord[key] = newRecord[key].toISOString().slice(0, 19).replace('T', ' ');
+                                const val = newRecord[key];
+                                if (val instanceof Date) {
+                                    newRecord[key] = val.toISOString().slice(0, 19).replace('T', ' ');
+                                } else if (val && typeof val === 'object' && val.pipe && typeof val.on === 'function') {
+                                    // It's a Stream/Lob object, we must convert it to a Buffer manually
+                                    newRecord[key] = await new Promise((resolve, reject) => {
+                                        const chunks = [];
+                                        val.on('data', chunk => chunks.push(chunk));
+                                        val.on('error', reject);
+                                        val.on('end', () => resolve(Buffer.concat(chunks)));
+                                    });
                                 }
                             }
                             return newRecord;
-                        });
+                        }));
 
                         await MysqlModel.bulkCreate(fixedRecords, { validate: false, ignoreDuplicates: true });
                         const duration = ((Date.now() - batchStart) / 1000).toFixed(2);
