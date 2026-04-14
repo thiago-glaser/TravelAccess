@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { getSession, verifyDeviceOwnership } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
 
 export async function POST(request) {
     try {
@@ -13,44 +13,45 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { device_id, timestamp_utc, carId } = body;
+        const { bluetooth_address, timestamp_utc } = body;
 
-        if (!device_id || !timestamp_utc) {
-            return Response.json({ message: "Provide a device_id and timestamp_utc." }, { status: 400 });
+        if (!bluetooth_address || !timestamp_utc) {
+            return Response.json({ message: "Provide a bluetooth_address and timestamp_utc." }, { status: 400 });
         }
 
         const startTime = Date.now();
         const startUtc = new Date(timestamp_utc);
+        const userId = session.USER_ID || session.id || session.ID;
 
-        const isOwner = await verifyDeviceOwnership(session, device_id);
-        if (!isOwner) {
-            return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
+        // Look up the Bluetooth record to find the associated car
+        const btResult = await query(
+            `SELECT TRIM(CAR_ID) AS CAR_ID FROM BLUETOOTH
+             WHERE TRIM(ADDRESS) = TRIM(:address)
+               AND TRIM(USER_ID) = TRIM(:userId)
+               AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
+             LIMIT 1`,
+            { address: bluetooth_address, userId }
+        );
+
+        const rows = btResult.rows || [];
+        if (rows.length === 0 || !rows[0].CAR_ID) {
+            console.log(`Start session: no car associated with bluetooth address ${bluetooth_address}. Doing nothing.`);
+            return Response.json({ message: "No car associated with this bluetooth address." }, { status: 204 });
         }
 
-        let finalCarId = carId || null;
-        if (!finalCarId) {
-            const userId = session.USER_ID || session.id || session.ID;
-            const carsResult = await query(`SELECT TRIM(ID) AS ID FROM CARS WHERE TRIM(USER_ID) = TRIM(:userId) ORDER BY 1`, { userId });
-            if (carsResult.rows && carsResult.rows.length > 0) {
-                finalCarId = carsResult.rows[0].ID;
-            }
-        }
+        const carId = rows[0].CAR_ID;
 
         const insertSql = `
             INSERT INTO SESSION_DATA (ID, DEVICE_ID, CAR_ID, START_UTC, END_UTC, SESSION_TYPE)
-            VALUES (UUID(), :deviceId, :carId, :startUtc, NULL, 'P')
+            VALUES (UUID(), NULL, :carId, :startUtc, NULL, 'P')
         `;
 
-        const result = await query(insertSql, {
-            deviceId: device_id,
-            carId: finalCarId,
-            startUtc: startUtc
-        });
+        const result = await query(insertSql, { carId, startUtc });
 
         const inserted = result.rows ? result.rows.affectedRows : 0;
 
         const elapsed = Date.now() - startTime;
-        console.log(`Session started. Device: ${device_id} Elapsed time: ${elapsed} ms`);
+        console.log(`Session started. Bluetooth: ${bluetooth_address} Car: ${carId} Elapsed time: ${elapsed} ms`);
 
         return Response.json({ inserted }, { status: 201 });
     } catch (error) {

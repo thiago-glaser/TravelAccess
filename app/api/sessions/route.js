@@ -221,7 +221,7 @@ export async function POST(request) {
             startUtc: new Date(startUtc),
             endUtc: endUtc ? new Date(endUtc) : null,
             sessionType: sessionType || 'P',
-            valueConfirmed: 'Y' // Manually added sessions are usually confirmed
+            valueConfirmed: 'N' // Manually added sessions start unconfirmed
         });
 
         return Response.json({ success: true, id: newSession.id.trim() });

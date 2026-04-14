@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { getSession, verifyDeviceOwnership } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
 
 export async function POST(request) {
     try {
@@ -13,57 +13,53 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { device_id, timestamp_utc, id } = body;
+        const { bluetooth_address, timestamp_utc } = body;
 
-        if (!device_id || !timestamp_utc) {
-            return Response.json({ message: "Provide a device_id and timestamp_utc." }, { status: 400 });
+        if (!bluetooth_address || !timestamp_utc) {
+            return Response.json({ message: "Provide a bluetooth_address and timestamp_utc." }, { status: 400 });
         }
 
         const startTime = Date.now();
         const endUtc = new Date(timestamp_utc);
+        const userId = session.USER_ID || session.id || session.ID;
 
-        const isOwner = await verifyDeviceOwnership(session, device_id);
-        if (!isOwner) {
-            return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
+        // Look up the Bluetooth record to find the associated car
+        const btResult = await query(
+            `SELECT TRIM(CAR_ID) AS CAR_ID FROM BLUETOOTH
+             WHERE TRIM(ADDRESS) = TRIM(:address)
+               AND TRIM(USER_ID) = TRIM(:userId)
+               AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
+             LIMIT 1`,
+            { address: bluetooth_address, userId }
+        );
+
+        const rows = btResult.rows || [];
+        if (rows.length === 0 || !rows[0].CAR_ID) {
+            console.log(`End session: no car associated with bluetooth address ${bluetooth_address}. Doing nothing.`);
+            return Response.json({ message: "No car associated with this bluetooth address." }, { status: 204 });
         }
 
-        let updateSql;
-        let params;
+        const carId = rows[0].CAR_ID;
 
-        if (id) {
-            updateSql = `
-                UPDATE SESSION_DATA
-                SET END_UTC = :endUtc, UPDATED_AT = UTC_TIMESTAMP()
-                WHERE TRIM(ID) = TRIM(:id) AND TRIM(DEVICE_ID) = TRIM(:deviceId)
-            `;
-            params = {
-                id: id.trim(),
-                endUtc: endUtc,
-                deviceId: device_id.trim()
-            };
-        } else {
-            updateSql = `
-                UPDATE SESSION_DATA
-                SET END_UTC = :endUtc, UPDATED_AT = UTC_TIMESTAMP()
-                WHERE TRIM(DEVICE_ID) = TRIM(:deviceId) AND END_UTC IS NULL
-                ORDER BY START_UTC DESC LIMIT 1
-            `;
-            params = {
-                endUtc: endUtc,
-                deviceId: device_id.trim()
-            };
-        }
+        // Close the most recent open session for this car
+        const updateSql = `
+            UPDATE SESSION_DATA
+            SET END_UTC = :endUtc, UPDATED_AT = UTC_TIMESTAMP()
+            WHERE TRIM(CAR_ID) = TRIM(:carId)
+              AND END_UTC IS NULL
+              AND (IS_DELETED = 0 OR IS_DELETED IS NULL)
+            ORDER BY START_UTC DESC LIMIT 1
+        `;
 
-        const result = await query(updateSql, params);
+        const result = await query(updateSql, { endUtc, carId });
 
         const updated = result.rows ? result.rows.affectedRows : 0;
 
         const elapsed = Date.now() - startTime;
-        console.log(`Session ended. Device: ${device_id} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);
+        console.log(`Session ended. Bluetooth: ${bluetooth_address} Car: ${carId} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);
 
         if (updated === 0) {
-            const msg = id ? "Session not found or already closed." : "No open session found for the device.";
-            return Response.json({ message: msg }, { status: 404 });
+            return Response.json({ message: "No open session found for the associated car." }, { status: 404 });
         }
 
         return Response.json({ updated }, { status: 200 });
