@@ -16,7 +16,7 @@ export async function GET(request) {
         // Get location data with filters restricted by user
         const userId = session.USER_ID || session.id || session.ID;
         let sql = `
-            SELECT ld.id as ID, ld.device_id as DEVICE_ID, 
+            SELECT ld.device_id as DEVICE_ID, 
                    DATE_FORMAT(ld.timestamp_utc, '%Y-%m-%dT%H:%i:%sZ') as TIMESTAMP_UTC, 
                    ld.latitude as LATITUDE, ld.longitude as LONGITUDE, ld.altitude as ALTITUDE
             FROM LOCATION_DATA ld
@@ -63,7 +63,6 @@ export async function GET(request) {
         const result = await query(sql, params);
 
         const locations = result.rows.map(row => ({
-            id: row.ID,
             deviceId: row.DEVICE_ID,
             lat: parseFloat(row.LATITUDE),
             lng: parseFloat(row.LONGITUDE),
