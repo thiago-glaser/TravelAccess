@@ -13,10 +13,10 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { bluetooth_address, timestamp_utc } = body;
+        const { bluetooth_address, timestamp_utc, device_id } = body;
 
-        if (!bluetooth_address || !timestamp_utc) {
-            return Response.json({ message: "Provide a bluetooth_address and timestamp_utc." }, { status: 400 });
+        if (!bluetooth_address || !timestamp_utc || !device_id) {
+            return Response.json({ message: "Provide a bluetooth_address, device_id and timestamp_utc." }, { status: 400 });
         }
 
         const startTime = Date.now();
@@ -36,7 +36,7 @@ export async function POST(request) {
         const rows = btResult.rows || [];
         if (rows.length === 0 || !rows[0].CAR_ID) {
             console.log(`End session: no car associated with bluetooth address ${bluetooth_address}. Doing nothing.`);
-            return Response.json({ message: "No car associated with this bluetooth address." }, { status: 204 });
+            return new Response(null, { status: 204 });
         }
 
         const carId = rows[0].CAR_ID;
@@ -56,10 +56,11 @@ export async function POST(request) {
         const updated = result.rows ? result.rows.affectedRows : 0;
 
         const elapsed = Date.now() - startTime;
-        console.log(`Session ended. Bluetooth: ${bluetooth_address} Car: ${carId} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);
+        console.log(`Session ended. Bluetooth: ${bluetooth_address} Device: ${device_id} Car: ${carId} Updated rows: ${updated} Elapsed time: ${elapsed} ms`);
 
         if (updated === 0) {
-            return Response.json({ message: "No open session found for the associated car." }, { status: 404 });
+            console.log(`End session: no open session found for car ${carId}. Doing nothing.`);
+            return new Response(null, { status: 204 });
         }
 
         return Response.json({ updated }, { status: 200 });

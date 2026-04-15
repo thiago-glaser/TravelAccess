@@ -13,10 +13,10 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { bluetooth_address, timestamp_utc } = body;
+        const { bluetooth_address, timestamp_utc, device_id } = body;
 
-        if (!bluetooth_address || !timestamp_utc) {
-            return Response.json({ message: "Provide a bluetooth_address and timestamp_utc." }, { status: 400 });
+        if (!bluetooth_address || !timestamp_utc || !device_id) {
+            return Response.json({ message: "Provide a bluetooth_address, device_id and timestamp_utc." }, { status: 400 });
         }
 
         const startTime = Date.now();
@@ -36,17 +36,17 @@ export async function POST(request) {
         const rows = btResult.rows || [];
         if (rows.length === 0 || !rows[0].CAR_ID) {
             console.log(`Start session: no car associated with bluetooth address ${bluetooth_address}. Doing nothing.`);
-            return Response.json({ message: "No car associated with this bluetooth address." }, { status: 204 });
+            return new Response(null, { status: 204 });
         }
 
         const carId = rows[0].CAR_ID;
 
         const insertSql = `
             INSERT INTO SESSION_DATA (ID, DEVICE_ID, CAR_ID, START_UTC, END_UTC, SESSION_TYPE)
-            VALUES (UUID(), NULL, :carId, :startUtc, NULL, 'P')
+            VALUES (UUID(), :deviceId, :carId, :startUtc, NULL, 'P')
         `;
 
-        const result = await query(insertSql, { carId, startUtc });
+        const result = await query(insertSql, { deviceId: device_id, carId, startUtc });
 
         const inserted = result.rows ? result.rows.affectedRows : 0;
 
