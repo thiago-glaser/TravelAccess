@@ -8,11 +8,10 @@
  * connection and are covered separately by integration tests.
  */
 
-// Stub lib/db.js so auth.js can be imported without a real Oracle connection
+// Stub lib/db.js so auth.js can be imported without a real DB connection
 jest.mock('../lib/db.js', () => ({
     query: jest.fn(),
     getConnection: jest.fn(),
-    oracledb: {},
     __esModule: true,
 }));
 
