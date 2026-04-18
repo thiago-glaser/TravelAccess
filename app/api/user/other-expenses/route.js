@@ -26,7 +26,7 @@ export async function GET(request) {
                 'amount',
                 'description',
                 'receiptMime',
-                [sequelize.literal(`CASE WHEN "RECEIPT_IMAGE" IS NOT NULL THEN 1 ELSE 0 END`), 'hasReceipt']
+                [sequelize.literal('CASE WHEN `RECEIPT_IMAGE` IS NOT NULL THEN 1 ELSE 0 END'), 'hasReceipt']
             ],
             include: [
                 {

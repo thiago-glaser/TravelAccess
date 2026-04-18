@@ -8,8 +8,8 @@ export async function GET(request, { params }) {
     }
 
     try {
+        const { id } = await params;
         const userId = session.USER_ID || session.id || session.ID;
-        const id = params.id;
 
         const expense = await OtherExpense.findOne({
             where: sequelize.and(

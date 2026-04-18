@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useTranslation } from '@/lib/i18n/LanguageContext';
@@ -59,7 +59,7 @@ export default function MonthlyReportsPage() {
     const [error, setError] = useState(null);
     const [cars, setCars] = useState([]);
     const [fuelData, setFuelData] = useState([]);
-    const [insuranceData, setInsuranceData] = useState([]);
+    const [otherExpensesData, setOtherExpensesData] = useState([]);
     const [filters, setFilters] = useState({ carId: '', year: new Date().getFullYear().toString(), type: '' });
     const [reportData, setReportData] = useState([]);
     const [totals, setTotals] = useState({
@@ -67,9 +67,7 @@ export default function MonthlyReportsPage() {
         duration: 0,
         count: 0,
         cost: 0,
-        insurance: 0,
-        personalInsurance: 0,
-        businessInsurance: 0,
+        otherExpenses: {}, // Grouped by type
         breakdown: {
             P: { distance: 0, duration: 0, cost: 0 },
             B: { distance: 0, duration: 0, cost: 0 }
@@ -114,22 +112,22 @@ export default function MonthlyReportsPage() {
         }
     };
 
-    const fetchInsurance = async () => {
+    const fetchOtherExpenses = async () => {
         try {
-            const response = await fetch('/api/user/insurance');
+            const response = await fetch('/api/user/other-expenses');
             const result = await response.json();
             if (result.success) {
-                setInsuranceData(result.insurances);
+                setOtherExpensesData(result.expenses);
             }
         } catch (err) {
-            console.error('Failed to fetch insurance:', err);
+            console.error('Failed to fetch other expenses:', err);
         }
     };
 
     useEffect(() => {
         fetchCars();
         fetchFuel();
-        fetchInsurance();
+        fetchOtherExpenses();
     }, []);
 
     const parseUTC = (dateVal) => {
@@ -358,23 +356,6 @@ export default function MonthlyReportsPage() {
                 B: { distance: 0, duration: 0, cost: 0 }
             };
 
-            let insuranceTotal = 0;
-            const reportMonthNames = Array.from(new Set(groupedData.map(s => s.monthDisplay)));
-            insuranceData.forEach(ins => {
-                let matchesCar = filters.carId ? ins.carId === filters.carId : true;
-                let matchesMonth = false;
-                
-                if (filters.year) {
-                    matchesMonth = ins.period.includes(filters.year.toString());
-                } else {
-                    matchesMonth = reportMonthNames.includes(ins.period);
-                }
-                
-                if (matchesCar && matchesMonth) {
-                    insuranceTotal += parseFloat(ins.amount || 0);
-                }
-            });
-
             groupedData.forEach(s => {
                 const typeKey = s.type === 'P' || s.type === 'B' ? s.type : null;
                 if (typeKey) {
@@ -384,8 +365,34 @@ export default function MonthlyReportsPage() {
                 }
             });
 
-            const pInsurance = totalDist > 0 ? insuranceTotal * (breakdown.P.distance / totalDist) : 0;
-            const bInsurance = totalDist > 0 ? insuranceTotal * (breakdown.B.distance / totalDist) : 0;
+            // Calculate Other Expenses by Type
+            const otherExpensesTotals = {};
+            const reportYears = filters.year ? [filters.year.toString()] : Array.from(new Set(processed.map(s => parseUTC(s.startTime).getFullYear().toString())));
+            
+            otherExpensesData.forEach(exp => {
+                const matchesCar = filters.carId ? String(exp.carId).trim() === String(filters.carId).trim() : true;
+                const expDate = new Date(exp.expenseDate);
+                const matchesYear = reportYears.includes(expDate.getFullYear().toString());
+                
+                if (matchesCar && matchesYear) {
+                    const typeName = exp.expenseTypeName || t('reports.other');
+                    if (!otherExpensesTotals[typeName]) {
+                        otherExpensesTotals[typeName] = {
+                            total: 0,
+                            personal: 0,
+                            business: 0
+                        };
+                    }
+                    otherExpensesTotals[typeName].total += parseFloat(exp.amount || 0);
+                }
+            });
+
+            // Allocation for each type
+            Object.keys(otherExpensesTotals).forEach(type => {
+                const total = otherExpensesTotals[type].total;
+                otherExpensesTotals[type].personal = totalDist > 0 ? total * (breakdown.P.distance / totalDist) : 0;
+                otherExpensesTotals[type].business = totalDist > 0 ? total * (breakdown.B.distance / totalDist) : 0;
+            });
 
             setReportData(groupedData);
             setTotals({ 
@@ -393,9 +400,7 @@ export default function MonthlyReportsPage() {
                 duration: totalDur, 
                 count: totalCount, 
                 cost: totalCost, 
-                insurance: insuranceTotal, 
-                personalInsurance: pInsurance,
-                businessInsurance: bInsurance,
+                otherExpenses: otherExpensesTotals,
                 breakdown 
             });
 
@@ -448,17 +453,14 @@ export default function MonthlyReportsPage() {
         doc.text(`${t('reports.table.distance')}: ${totals.breakdown.P.distance.toFixed(2)} km`, 80, 60);
         doc.text(`${t('reports.table.duration')}: ${formatDuration(totals.breakdown.P.duration)}`, 80, 66);
         doc.text(`${t('reports.table.estCost')}: $${totals.breakdown.P.cost.toFixed(2)}`, 80, 72);
-        const pInsurance = totals.distance > 0 ? totals.insurance * (totals.breakdown.P.distance / totals.distance) : 0;
-        doc.text(`${t('reports.insurance')}: $${pInsurance.toFixed(2)}`, 80, 78);
 
         doc.text(t('reports.business'), 140, 54);
         doc.text(`${t('reports.table.distance')}: ${totals.breakdown.B.distance.toFixed(2)} km`, 140, 60);
         doc.text(`${t('reports.table.duration')}: ${formatDuration(totals.breakdown.B.duration)}`, 140, 66);
         doc.text(`${t('reports.table.estCost')}: $${totals.breakdown.B.cost.toFixed(2)}`, 140, 72);
-        const bInsurance = totals.distance > 0 ? totals.insurance * (totals.breakdown.B.distance / totals.distance) : 0;
-        doc.text(`${t('reports.insurance')}: $${bInsurance.toFixed(2)}`, 140, 78);
         
-        doc.text(`${t('reports.totalInsurance')}: $${totals.insurance.toFixed(2)}`, 14, 78);
+        const totalExpAmount = Object.values(totals.otherExpenses).reduce((sum, e) => sum + e.total, 0);
+        doc.text(`${t('expenses.title')}: $${totalExpAmount.toFixed(2)}`, 14, 78);
 
         const tableData = reportData.map(s => [
             s.monthDisplay,
@@ -477,15 +479,18 @@ export default function MonthlyReportsPage() {
             `$${totals.cost.toFixed(2)}`
         ]);
 
-        if (totals.insurance > 0) {
-            tableData.push([
-                t('reports.propPersonalInsurance'), '', '', '', '', '', 
-                `$${totals.personalInsurance.toFixed(2)}`
-            ]);
-            tableData.push([
-                t('reports.propBusinessInsurance'), '', '', '', '', '', 
-                `$${totals.businessInsurance.toFixed(2)}`
-            ]);
+        if (totalExpAmount > 0) {
+            Object.keys(totals.otherExpenses).forEach(typeName => {
+                const exp = totals.otherExpenses[typeName];
+                tableData.push([
+                    `Prop. Personal ${typeName}`, '', '', '', '', '', 
+                    `$${exp.personal.toFixed(2)}`
+                ]);
+                tableData.push([
+                    `Prop. Business ${typeName}`, '', '', '', '', '', 
+                    `$${exp.business.toFixed(2)}`
+                ]);
+            });
         }
 
         autoTable(doc, {
@@ -662,32 +667,39 @@ export default function MonthlyReportsPage() {
                     </div>
                 )}
 
-                {reportData.length > 0 && totals.insurance > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">{t('reports.personalInsurance')}</p>
-                                    <p className="text-3xl font-black text-indigo-600 font-mono">${totals.personalInsurance.toFixed(2)}</p>
+                {reportData.length > 0 && Object.keys(totals.otherExpenses).length > 0 && (
+                    <div className="space-y-6 mb-8">
+                        {Object.keys(totals.otherExpenses).map(typeName => {
+                            const exp = totals.otherExpenses[typeName];
+                            return (
+                                <div key={typeName} className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">Prop. Personal {typeName}</p>
+                                                <p className="text-3xl font-black text-indigo-600 font-mono">${exp.personal.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
+                                                <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-pink-500">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-bold text-pink-500 uppercase tracking-widest mb-1">Prop. Business {typeName}</p>
+                                                <p className="text-3xl font-black text-pink-600 font-mono">${exp.business.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
+                                                <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
-                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-pink-500">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="text-xs font-bold text-pink-500 uppercase tracking-widest mb-1">{t('reports.businessInsurance')}</p>
-                                    <p className="text-3xl font-black text-pink-600 font-mono">${totals.businessInsurance.toFixed(2)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t('reports.propAllocation')}</p>
-                                    <p className="text-sm font-bold text-gray-600">{totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%</p>
-                                </div>
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -784,29 +796,29 @@ export default function MonthlyReportsPage() {
                             
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">{t('reports.insuranceAllocation')}</span>
-                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: ${totals.insurance.toFixed(2)}</span>
+                                    <span className="text-gray-600 font-medium">Expenses Allocation</span>
+                                    <span className="text-gray-400 font-mono text-xs italic">{t('common.total')}: ${Object.values(totals.otherExpenses).reduce((sum, e) => sum + e.total, 0).toFixed(2)}</span>
                                 </div>
                                 <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
                                     <div
                                         className="bg-indigo-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.P.distance / totals.distance) * 100 : 0}%` }}
-                                        title={`${t('reports.personal')}: $${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)}`}
+                                        title={`${t('reports.personal')}: $${Object.values(totals.otherExpenses).reduce((sum, e) => sum + e.personal, 0).toFixed(2)}`}
                                     ></div>
                                     <div
                                         className="bg-pink-500 h-full transition-all duration-500"
                                         style={{ width: `${totals.distance > 0 ? (totals.breakdown.B.distance / totals.distance) * 100 : 0}%` }}
-                                        title={`${t('reports.business')}: $${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)}`}
+                                        title={`${t('reports.business')}: $${Object.values(totals.otherExpenses).reduce((sum, e) => sum + e.business, 0).toFixed(2)}`}
                                     ></div>
                                 </div>
                                 <div className="flex gap-4 mt-3">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-indigo-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.personal')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.P.distance / totals.distance : 0)).toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600">{t('reports.personal')} ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 bg-pink-500 rounded-sm"></div>
-                                        <span className="text-xs text-gray-600">{t('reports.business')} (${(totals.insurance * (totals.distance > 0 ? totals.breakdown.B.distance / totals.distance : 0)).toFixed(2)})</span>
+                                        <span className="text-xs text-gray-600">{t('reports.business')} ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}%)</span>
                                     </div>
                                 </div>
                             </div>
@@ -881,28 +893,31 @@ export default function MonthlyReportsPage() {
                                                 ${totals.cost.toFixed(2)}
                                             </td>
                                         </tr>
-                                        {totals.insurance > 0 && (
-                                            <>
-                                                <tr className="bg-white/50 border-t border-gray-100">
-                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">{t('reports.propPersonalInsurance')}</td>
-                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
-                                                        ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right text-indigo-600 font-mono font-bold">
-                                                        ${totals.personalInsurance.toFixed(2)}
-                                                    </td>
-                                                </tr>
-                                                <tr className="bg-white/50 border-t border-gray-100">
-                                                    <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">{t('reports.propBusinessInsurance')}</td>
-                                                    <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
-                                                        ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}% of ${totals.insurance.toFixed(2)})
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right text-pink-600 font-mono font-bold">
-                                                        ${totals.businessInsurance.toFixed(2)}
-                                                    </td>
-                                                </tr>
-                                            </>
-                                        )}
+                                        {Object.keys(totals.otherExpenses).map(typeName => {
+                                            const exp = totals.otherExpenses[typeName];
+                                            return (
+                                                <React.Fragment key={typeName}>
+                                                    <tr className="bg-white/50 border-t border-gray-100">
+                                                        <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">Prop. Personal {typeName}</td>
+                                                        <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                            ({totals.distance > 0 ? Math.round((totals.breakdown.P.distance / totals.distance) * 100) : 0}% of ${exp.total.toFixed(2)})
+                                                        </td>
+                                                        <td className="px-6 py-3 text-right text-indigo-600 font-mono font-bold">
+                                                            ${exp.personal.toFixed(2)}
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="bg-white/50 border-t border-gray-100">
+                                                        <td colSpan="4" className="px-6 py-3 text-right text-gray-400 text-xs font-bold uppercase tracking-wider">Prop. Business {typeName}</td>
+                                                        <td colSpan="2" className="px-6 py-3 text-right text-gray-400 text-xs italic">
+                                                            ({totals.distance > 0 ? Math.round((totals.breakdown.B.distance / totals.distance) * 100) : 0}% of ${exp.total.toFixed(2)})
+                                                        </td>
+                                                        <td className="px-6 py-3 text-right text-pink-600 font-mono font-bold">
+                                                            ${exp.business.toFixed(2)}
+                                                        </td>
+                                                    </tr>
+                                                </React.Fragment>
+                                            );
+                                        })}
                                     </>
                                 )}
                             </tbody>
