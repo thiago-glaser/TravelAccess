@@ -18,6 +18,9 @@ jest.mock('../lib/db.js', () => ({
 const { hashPassword, verifyPassword, generateToken, verifyToken, generateApiKey } =
     require('../lib/auth.js');
 
+// Set a dummy JWT_SECRET for tests to satisfy the 32-character requirement
+process.env.JWT_SECRET = 'test-secret-at-least-32-characters-long-1234567890';
+
 // ─── hashPassword / verifyPassword ────────────────────────────────────────────
 
 describe('hashPassword + verifyPassword', () => {
