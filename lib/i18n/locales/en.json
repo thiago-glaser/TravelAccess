@@ -31,8 +31,7 @@
       "setupDemoData": "Setup Demo Data",
       "forceDemoReset": "Force Demo Reset",
       "cleanDemoData": "Clean Demo Data",
-      "viewDemoLogs": "View Demo Logs",
-      "viewUsageStats": "View Usage Stats"
+      "viewDemoLogs": "View Demo Logs"
     },
     "logout": "Logout",
     "demoMode": "Demo Mode",
