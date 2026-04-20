@@ -27,7 +27,7 @@ export async function POST(request) {
             return Response.json({ message: "Forbidden: Device does not belong to the user." }, { status: 403 });
         }
 
-        // Prepare records for bulk insert
+        // Prepare records for individual insert
         const recordsToInsert = locations.map(loc => ({
             deviceId: device_id,
             timestampUtc: new Date(loc.timestamp_utc),
@@ -36,13 +36,26 @@ export async function POST(request) {
             altitude: loc.altitude
         }));
 
-        // Insert all locations using Sequelize bulkCreate
-        await LocationData.bulkCreate(recordsToInsert);
+        // Insert each record individually; skip duplicates, re-throw anything else
+        let inserted = 0;
+        let skipped = 0;
+        for (const record of recordsToInsert) {
+            try {
+                await LocationData.create(record);
+                inserted++;
+            } catch (err) {
+                if (err.name === 'SequelizeUniqueConstraintError') {
+                    skipped++;
+                } else {
+                    throw err; // non-duplicate error — propagate to outer catch
+                }
+            }
+        }
 
         const elapsed = Date.now() - startTime;
-        console.log(`Inserted rows: ${recordsToInsert.length} Elapsed time: ${elapsed} ms - Device: ${device_id}`);
+        console.log(`Inserted: ${inserted} - Skipped (duplicate): ${skipped} Elapsed: ${elapsed} ms - Device: ${device_id}`);
 
-        return Response.json({ inserted: recordsToInsert.length }, { status: 201 });
+        return Response.json({ inserted, skipped }, { status: 201 });
     } catch (error) {
         console.error('LocationData insert error:', error);
         return Response.json({ message: "Internal server error" }, { status: 500 });
