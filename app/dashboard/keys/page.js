@@ -104,10 +104,10 @@ export default function ApiKeysPage() {
                             />
                             <button
                                 type="submit"
-                                disabled={creating || userProfile?.isDemo}
+                                disabled={creating}
                                 className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? t('keys.viewOnly') : (creating ? t('keys.generating') : t('keys.generateBtn'))}
+                                {creating ? t('keys.generating') : t('keys.generateBtn')}
                             </button>
                         </form>
 
@@ -167,8 +167,7 @@ export default function ApiKeysPage() {
                                                 <td className="px-6 py-4">
                                                     <button
                                                         onClick={() => handleRevokeKey(key.ID)}
-                                                        disabled={userProfile?.isDemo}
-                                                        className="text-red-600 hover:text-red-300 text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        className="text-red-600 hover:text-red-300 text-sm font-medium transition-colors"
                                                     >
                                                         {t('keys.revoke')}
                                                     </button>

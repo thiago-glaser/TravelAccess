@@ -35,10 +35,7 @@ TravelAccess is a full-stack web platform for drivers, gig economy workers, and 
 - **API Key** management for external device integrations (Android app, OBD trackers)
 - Multi-tenant — all data is strictly isolated per user
 
-### 🧪 Demo & Admin
-- **Demo mode** — instant access with `demo` / `demo123`
-- Demo data auto-resets daily at **8:00 AM UTC**
-- Admin panel for manual demo resets and usage monitoring
+### 🧪 Admin & Monitoring
 - **API usage tracking** — middleware logs every request path
 
 ---
@@ -102,7 +99,6 @@ GEOAPIFY_API_KEY=...
 # Background job API keys
 GEOCODE_JOB_API_KEY=...
 MERGE_JOB_API_KEY=...
-DEMO_RESET_JOB_API_KEY=...
 
 # Internal middleware tracking
 INTERNAL_TRACK_SECRET=long-random-string
@@ -149,7 +145,7 @@ All endpoints require authentication via **API Key** (`x-api-key` header) or **s
 | **Other Expenses** | `GET/POST/DELETE /api/user/other-expenses` |
 | **Expense Types** | `GET/POST/DELETE /api/user/expense-types` |
 | **Jobs** | `POST /api/jobs/geocode-locations` · `POST /api/jobs/merge-location-geocodes` |
-| **Admin** | `GET /api/admin/demo-logs` · `POST /api/setup-demo` |
+
 
 ---
 
@@ -166,7 +162,6 @@ TravelAccess/
 │   │   ├── user/             # Cars, fuel, maintenance, insurance, bluetooth, devices, expenses
 │   │   ├── auth/             # Login, register, OAuth, API keys
 │   │   ├── jobs/             # Geocoding background jobs
-│   │   └── admin/            # Admin tools
 │   └── dashboard/            # UI pages
 │       ├── cars/
 │       ├── fuel/
@@ -176,11 +171,10 @@ TravelAccess/
 │       ├── devices/
 │       ├── expense-types/
 │       ├── other-expenses/
-│       └── admin/
 ├── components/               # Shared UI components (Navbar, Maps, Charts)
 ├── lib/
 │   ├── models/               # Sequelize models (MySQL)
-│   ├── jobs/                 # Background job logic (geocoding, demo reset)
+│   ├── jobs/                 # Background job logic (geocoding)
 │   ├── db.js                 # mysql2 connection pool
 │   ├── sequelize.js          # Sequelize instance
 │   └── auth.js               # JWT, bcrypt, API key utilities

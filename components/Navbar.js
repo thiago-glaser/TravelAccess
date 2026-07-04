@@ -26,7 +26,6 @@ export default function Navbar() {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' });
-    const [demoStatus, setDemoStatus] = useState({ loading: false, message: '' });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: '', success: '' });
 
@@ -133,35 +132,6 @@ export default function Navbar() {
             setDeleteStatus({ loading: false, error: 'An error occurred. Please try again.', success: '' });
         }
     };
-
-    const handleSetupDemo = async (mode = 'setup') => {
-        let confirmMsg = 'Initialize demo user and data?';
-        if (mode === 'force') confirmMsg = 'Warning: This will DELETE all existing demo user data and recreate it. Continue?';
-        if (mode === 'clean') confirmMsg = 'Warning: This will DELETE all existing demo user data. Continue?';
-
-        const result = await Swal.fire({ title: 'Confirmation', text: String(confirmMsg), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
-        if (!result.isConfirmed) return;
-
-        setDemoStatus({ loading: true, message: 'Processing...' });
-        try {
-            let url = '/api/setup-demo';
-            if (mode === 'force') url += '?force=true';
-            if (mode === 'clean') url += '?clean=true';
-
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.success) {
-                alert(data.message);
-                setIsSettingsOpen(false);
-            } else {
-                alert('Error: ' + data.error);
-            }
-        } catch (err) {
-            alert('An error occurred during demo setup.');
-        } finally {
-            setDemoStatus({ loading: false, message: '' });
-        }
-    };
     const isDataActive = pathname?.startsWith('/dashboard/cars') || pathname?.startsWith('/dashboard/fuel') || pathname?.startsWith('/dashboard/devices') || pathname?.startsWith('/dashboard/bluetooth') || pathname?.startsWith('/dashboard/other-expenses');
 
     const isSettingsActive = pathname?.startsWith('/dashboard/keys') || isPasswordModalOpen;
@@ -181,11 +151,6 @@ export default function Navbar() {
                                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight leading-none">
                                     TravelAccess
                                 </span>
-                                {userProfile?.isDemo && (
-                                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider mt-0.5 self-start">
-                                        {t('navbar.demoMode')}
-                                    </span>
-                                )}
                             </div>
                         </Link>
                     </div>
@@ -429,97 +394,41 @@ export default function Navbar() {
                                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-[60] transform origin-top transition-all duration-200 animate-in fade-in zoom-in-95">
                                     <button
                                         onClick={() => {
-                                            if (userProfile?.isDemo) return;
                                             setIsSettingsOpen(false);
                                             setIsPasswordModalOpen(true);
                                             setPwdStatus({ loading: false, error: '', success: '' });
                                             setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                                         }}
-                                        className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${userProfile?.isDemo ? 'text-gray-400 cursor-not-allowed opacity-60' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                         </svg>
                                         {t('navbar.settings.changePassword')}
                                     </button>
-                                    {!userProfile?.isDemo && (
-                                        <Link
-                                            href="/dashboard/keys"
-                                            onClick={() => setIsSettingsOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                            </svg>
-                                            {t('navbar.settings.apiKeys')}
-                                        </Link>
-                                    )}
-
-                                    {!userProfile?.isDemo && (
-                                        <button
-                                            onClick={() => {
-                                                setIsSettingsOpen(false);
-                                                setIsDeleteModalOpen(true);
-                                                setDeleteStatus({ loading: false, error: '', success: '' });
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            {t('navbar.settings.deleteAccount')}
-                                        </button>
-                                    )}
-
-                                    {userProfile?.isAdmin && (
-                                        <>
-                                            <div className="border-t border-gray-100 my-1 mx-2"></div>
-                                            <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                {t('navbar.settings.adminTools')}
-                                            </div>
-                                            <button
-                                                onClick={() => handleSetupDemo('setup')}
-                                                disabled={demoStatus.loading}
-                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a2 2 0 00-1.996 1.414l-.5 1.5a2 2 0 01-1.898 1.367c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L11 2.5a2 2 0 00-2-1.5H3a2 2 0 00-2 2v6a2 2 0 00.5 1.5l1.5.5a2 2 0 011.367 1.898v.5a2 2 0 01-2.032 2.032c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L13 2.5" />
-                                                </svg>
-                                                {demoStatus.loading ? '...' : t('navbar.settings.setupDemoData')}
-                                            </button>
-                                            <button
-                                                onClick={() => handleSetupDemo('force')}
-                                                disabled={demoStatus.loading}
-                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                </svg>
-                                                {t('navbar.settings.forceDemoReset')}
-                                            </button>
-                                            <button
-                                                onClick={() => handleSetupDemo('clean')}
-                                                disabled={demoStatus.loading}
-                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                {t('navbar.settings.cleanDemoData')}
-                                            </button>
-                                                <Link
-                                                    href="/dashboard/admin/demo-logs"
-                                                    onClick={() => setIsSettingsOpen(false)}
-                                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    {t('navbar.settings.viewDemoLogs')}
-                                                </Link>
-                                                
-                                        </>
-                                    )}
+                                    <Link
+                                        href="/dashboard/keys"
+                                        onClick={() => setIsSettingsOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                        {t('navbar.settings.apiKeys')}
+                                    </Link>
+                                    <button
+                                        onClick={() => {
+                                            setIsSettingsOpen(false);
+                                            setIsDeleteModalOpen(true);
+                                            setDeleteStatus({ loading: false, error: '', success: '' });
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        {t('navbar.settings.deleteAccount')}
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -751,97 +660,41 @@ export default function Navbar() {
                         <div className="space-y-1 ml-2 border-l-2 border-blue-50 pl-2 animate-in slide-in-from-top-1 duration-200">
                             <button
                                 onClick={() => {
-                                    if (userProfile?.isDemo) return;
                                     setIsMobileMenuOpen(false);
                                     setIsPasswordModalOpen(true);
                                     setPwdStatus({ loading: false, error: '', success: '' });
                                     setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${userProfile?.isDemo ? 'text-gray-400 cursor-not-allowed opacity-60' : 'text-gray-600 hover:bg-gray-50'}`}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
                             >
                                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                 </svg>
                                 {t('navbar.settings.changePassword')}
                             </button>
-                            {!userProfile?.isDemo && (
-                                <Link
-                                    href="/dashboard/keys"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
-                                >
-                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                    </svg>
-                                    {t('navbar.settings.apiKeys')}
-                                </Link>
-                            )}
-
-                            {!userProfile?.isDemo && (
-                                <button
-                                    onClick={() => {
-                                        setIsMobileMenuOpen(false);
-                                        setIsDeleteModalOpen(true);
-                                        setDeleteStatus({ loading: false, error: '', success: '' });
-                                    }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
-                                >
-                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    {t('navbar.settings.deleteAccount')}
-                                </button>
-                            )}
-
-                            {userProfile?.isAdmin && (
-                                <>
-                                    <div className="border-t border-gray-100 my-1 mx-2"></div>
-                                    <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        {t('navbar.settings.adminTools')}
-                                    </div>
-                                    <button
-                                        onClick={() => handleSetupDemo('setup')}
-                                        disabled={demoStatus.loading}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-all"
-                                    >
-                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a2 2 0 00-1.996 1.414l-.5 1.5a2 2 0 01-1.898 1.367c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L11 2.5a2 2 0 00-2-1.5H3a2 2 0 00-2 2v6a2 2 0 00.5 1.5l1.5.5a2 2 0 011.367 1.898v.5a2 2 0 01-2.032 2.032c-1.12 0-2.032-.912-2.032-2.032v-.5a2 2 0 011.367-1.898l1.5-.5a2 2 0 001.414-1.996l-.477-2.387a2 2 0 00-.547-1.022L13 2.5" />
-                                        </svg>
-                                        {demoStatus.loading ? '...' : t('navbar.settings.setupDemoData')}
-                                    </button>
-                                    <button
-                                        onClick={() => handleSetupDemo('force')}
-                                        disabled={demoStatus.loading}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-all"
-                                    >
-                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        {t('navbar.settings.forceDemoReset')}
-                                    </button>
-                                        <button
-                                            onClick={() => handleSetupDemo('clean')}
-                                            disabled={demoStatus.loading}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
-                                        >
-                                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            {t('navbar.settings.cleanDemoData')}
-                                        </button>
-                                        <Link
-                                            href="/dashboard/admin/demo-logs"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all text-left"
-                                        >
-                                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            {t('navbar.settings.viewDemoLogs')}
-                                        </Link>
-                                        
-                                </>
-                            )}
+                            <Link
+                                href="/dashboard/keys"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${pathname === '/dashboard/keys' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                            >
+                                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                                {t('navbar.settings.apiKeys')}
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    setIsMobileMenuOpen(false);
+                                    setIsDeleteModalOpen(true);
+                                    setDeleteStatus({ loading: false, error: '', success: '' });
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
+                            >
+                                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                {t('navbar.settings.deleteAccount')}
+                            </button>
                         </div>
                     )}
                     

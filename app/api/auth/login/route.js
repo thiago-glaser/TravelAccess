@@ -26,9 +26,8 @@ export async function POST(request) {
             return Response.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Check if email is verified (skip for demo users)
-        const isDemo = user.isDemo === 'Y' || user.isDemo === true;
-        if (!isDemo && user.isVerified !== 1) {
+        // Check if email is verified
+        if (user.isVerified !== 1) {
             return Response.json({ 
                 success: false, 
                 error: 'Please verify your email address before logging in. Check your inbox for the verification link.' 
@@ -40,38 +39,13 @@ export async function POST(request) {
             ID: user.id,
             USERNAME: user.username,
             IS_ADMIN: user.isAdmin,
-            IS_DEMO: user.isDemo,
             // Fallbacks for the rest if generating generic session objects
             id: user.id
         };
 
         const token = generateToken(tokenTokenPayload);
 
-        // Log demo access if it's the demo user
-        if (user.isDemo === 'Y' || user.isDemo === true) {
-            try {
-                const { DemoAccessLog } = await import('@/lib/models/index.js');
 
-                // Ensure table exists (quick check/init)
-                await DemoAccessLog.sync();
-
-                const ip = request.headers.get('x-forwarded-for') ||
-                    request.headers.get('x-real-ip') ||
-                    'unknown';
-                const ua = request.headers.get('user-agent') || 'unknown';
-                const referer = request.headers.get('referer') || '';
-
-                await DemoAccessLog.create({
-                    ipAddress: ip.split(',')[0].trim(),
-                    userAgent: ua,
-                    referer: referer
-                });
-                console.log(`[Demo Access] Logged connection from ${ip}`);
-            } catch (logError) {
-                console.error('Failed to log demo access:', logError);
-                // Don't block login if logging fails
-            }
-        }
 
         // Set cookie for browser sessions
         const response = Response.json({

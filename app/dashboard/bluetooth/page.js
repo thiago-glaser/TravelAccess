@@ -207,10 +207,10 @@ export default function ManageBluetoothPage() {
                             </select>
                             <button
                                 type="submit"
-                                disabled={submitting || !newName || !newAddress || userProfile?.isDemo}
+                                disabled={submitting || !newName || !newAddress}
                                 className="md:col-span-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? t('bluetooth.viewOnly') : (submitting ? t('bluetooth.adding') : t('bluetooth.addBtn'))}
+                                {submitting ? t('bluetooth.adding') : t('bluetooth.addBtn')}
                             </button>
                         </form>
 
@@ -273,8 +273,7 @@ export default function ManageBluetoothPage() {
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => handleSaveBluetooth(device.ID)}
-                                                                disabled={userProfile?.isDemo}
-                                                                className="px-4 py-2 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50"
+                                                                className="px-4 py-2 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors"
                                                             >
                                                                 {t('bluetooth.save')}
                                                             </button>
@@ -331,8 +330,7 @@ export default function ManageBluetoothPage() {
                                                 <div className="flex items-start md:items-center">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleRemoveBluetooth(device.ID); }}
-                                                        disabled={userProfile?.isDemo}
-                                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest mt-2 md:mt-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest mt-2 md:mt-0"
                                                     >
                                                         {t('bluetooth.remove')}
                                                     </button>

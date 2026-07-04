@@ -154,10 +154,10 @@ export default function ManageDevicesPage() {
                             />
                             <button
                                 type="submit"
-                                disabled={submitting || userProfile?.isDemo}
+                                disabled={submitting}
                                 className="md:col-span-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? t('devices.viewOnly') : (submitting ? t('devices.adding') : t('devices.addDevice'))}
+                                {submitting ? t('devices.adding') : t('devices.addDevice')}
                             </button>
                         </form>
 
@@ -205,8 +205,7 @@ export default function ManageDevicesPage() {
                                                             />
                                                             <button
                                                                 onClick={() => handleSaveDescription(device.DEVICE_ID)}
-                                                                disabled={userProfile?.isDemo}
-                                                                className="px-3 py-1.5 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50"
+                                                                className="px-3 py-1.5 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors"
                                                             >
                                                                 {t('devices.save')}
                                                             </button>
@@ -236,8 +235,7 @@ export default function ManageDevicesPage() {
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     onClick={() => handleRemoveDevice(device.DEVICE_ID)}
-                                                    disabled={userProfile?.isDemo}
-                                                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest"
                                                 >
                                                     {t('devices.remove')}
                                                 </button>

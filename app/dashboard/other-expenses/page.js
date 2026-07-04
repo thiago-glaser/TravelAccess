@@ -317,7 +317,7 @@ export default function ManageOtherExpensesPage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || cars.length === 0 || expenseTypes.length === 0 || userProfile?.isDemo}
+                                disabled={submitting || cars.length === 0 || expenseTypes.length === 0}
                                 className="md:col-span-2 mt-4 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50 text-lg"
                             >
                                 {submitting ? 'Saving...' : 'Add Expense'}
@@ -396,7 +396,7 @@ export default function ManageOtherExpensesPage() {
                                                     <button
                                                         onClick={() => handleRemoveExpense(entry.id)}
                                                         className="px-3 py-2 text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all uppercase disabled:opacity-30"
-                                                        disabled={submitting || userProfile?.isDemo}
+                                                        disabled={submitting}
                                                     >
                                                         Delete
                                                     </button>

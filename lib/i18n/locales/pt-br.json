@@ -25,14 +25,9 @@
       "changePassword": "Alterar Senha",
       "apiKeys": "Chaves API",
       "deleteAccount": "Excluir Conta",
-      "adminTools": "Ferramentas Admin",
-      "setupDemoData": "Configurar Dados-Demo",
-      "forceDemoReset": "Resetar Demo Forçado",
-      "cleanDemoData": "Limpar Dados-Demo",
-      "viewDemoLogs": "Ver Logs Demo"
+      "adminTools": "Ferramentas Admin"
     },
     "logout": "Sair",
-    "demoMode": "Modo Demo",
     "avatarAlt": "Avatar",
     "language": "Idioma",
     "modals": {
@@ -60,8 +55,6 @@
     "title": "TravelAccess",
     "subtitle": "Rastreamento de Viagens e Despesas",
     "description": "A ferramenta definitiva para profissionais da gig economy. Seja você motorista da Uber, entregador do DoorDash, ou gerente de frota, o TravelAccess automatiza seus registros de quilometragem, despesas de combustível e relatórios prontos para impostos.",
-    "demoTitle": "Experimente o Modo Demo",
-    "demoDescription": "Explore todos os recursos instantaneamente com nosso teste apenas-leitura.",
     "username": "Usuário",
     "password": "Senha",
     "signIn": "Entrar",
@@ -213,7 +206,6 @@
     "modalSingleTitle": "Detalhe do Mapa da Sessão",
     "modalMultiSubtitle": "Visualizando múltiplas sessões selecionadas em um mapa",
     "modalSingleSubtitle": "Visualizando o caminho GPS da sessão selecionada",
-    "demoWarning": "Usuários demo não podem alterar tipos de sessão",
     "updateError": "Erro ao atualizar tipo de sessão: {{error}}",
     "updateFailed": "Falha na atualização: {{error}}",
     "expandToggleTitle": "Expandir detalhes da sessão",
@@ -419,21 +411,6 @@
     "calculateFailed": "Falha ao calcular combustível",
     "calculateError": "Ocorreu um erro durante o cálculo",
     "removeConfirm": "Tem certeza de que deseja remover este abastecimento?"
-  },
-  "admin": {
-    "title": "Logs de Acesso da Demo",
-    "subtitle": "Monitore as conexões feitas na conta demo.",
-    "refresh": "Atualizar Logs",
-    "table": {
-      "time": "Hora (UTC)",
-      "ip": "Endereço IP",
-      "userAgent": "User Agent",
-      "referer": "Referer"
-    },
-    "loading": "Carregando logs...",
-    "noLogs": "Nenhum log de acesso encontrado",
-    "fetchFailed": "Falha ao buscar logs",
-    "backToDashboard": "Voltar para o Painel"
   },
   "bluetooth": {
     "title": "Gerenciar Dispositivos Bluetooth",

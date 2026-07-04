@@ -25,14 +25,9 @@
       "changePassword": "Change Password",
       "apiKeys": "API Keys",
       "deleteAccount": "Delete Account",
-      "adminTools": "Admin Tools",
-      "setupDemoData": "Setup Demo Data",
-      "forceDemoReset": "Force Demo Reset",
-      "cleanDemoData": "Clean Demo Data",
-      "viewDemoLogs": "View Demo Logs"
+      "adminTools": "Admin Tools"
     },
     "logout": "Logout",
-    "demoMode": "Demo Mode",
     "avatarAlt": "Avatar",
     "language": "Language",
     "modals": {
@@ -60,8 +55,6 @@
     "title": "TravelAccess",
     "subtitle": "Precision Travel & Expense Tracking",
     "description": "The ultimate tool for gig economy professionals. Whether you drive for Uber, deliver with DoorDash, or manage a fleet, TravelAccess automates your mileage logs, fuel expenses, and tax-ready reports.",
-    "demoTitle": "Try Demo Mode",
-    "demoDescription": "Explore all features instantly with our read-only trial.",
     "username": "Username",
     "password": "Password",
     "signIn": "Sign In",
@@ -213,7 +206,6 @@
     "modalSingleTitle": "Session Map Detail",
     "modalMultiSubtitle": "Visualizing multiple selected sessions on one map",
     "modalSingleSubtitle": "Viewing GPS path for the selected session",
-    "demoWarning": "Demo users cannot change session types",
     "updateError": "Error updating session type: {{error}}",
     "updateFailed": "Update failed: {{error}}",
     "expandToggleTitle": "Expand session details",
@@ -417,21 +409,6 @@
     "calculateFailed": "Failed to calculate fuel",
     "calculateError": "An error occurred during calculation",
     "removeConfirm": "Are you sure you want to remove this fuel entry?"
-  },
-  "admin": {
-    "title": "Demo Access Logs",
-    "subtitle": "Monitor connections to the demo account.",
-    "refresh": "Refresh Logs",
-    "table": {
-      "time": "Time (UTC)",
-      "ip": "IP Address",
-      "userAgent": "User Agent",
-      "referer": "Referer"
-    },
-    "loading": "Loading logs...",
-    "noLogs": "No access logs found",
-    "fetchFailed": "Failed to fetch logs",
-    "backToDashboard": "Back to Dashboard"
   },
   "bluetooth": {
     "title": "Manage Bluetooth Devices",

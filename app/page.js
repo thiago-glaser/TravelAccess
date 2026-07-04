@@ -345,10 +345,6 @@ export default function SessionsPage() {
 
     const toggleSessionType = async (e, sessionId, currentType) => {
         e.stopPropagation();
-        if (userProfile?.isDemo) {
-            alert(t('sessions.demoWarning'));
-            return;
-        }
         const newType = currentType === 'B' ? 'P' : 'B';
         try {
             const response = await fetch('/api/sessions', {
@@ -371,10 +367,6 @@ export default function SessionsPage() {
 
     const deleteSession = async (e, sessionId) => {
         e.stopPropagation();
-        if (userProfile?.isDemo) {
-            alert(t('sessions.demoWarning'));
-            return;
-        }
         const result = await Swal.fire({ title: 'Confirmation', text: String(t('sessions.deleteConfirm')), icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33' });
         if (!result.isConfirmed) return;
         try {
@@ -397,10 +389,6 @@ export default function SessionsPage() {
     };
 
     const endSessionWithTime = async (deviceId, timestamp_utc, id = null) => {
-        if (userProfile?.isDemo) {
-            alert(t('sessions.demoWarning'));
-            return;
-        }
         try {
             const response = await fetch('/api/Session/end-session', {
                 method: 'POST',
@@ -423,10 +411,6 @@ export default function SessionsPage() {
     };
 
     const handleAddSession = async () => {
-        if (userProfile?.isDemo) {
-            alert(t('sessions.demoWarning'));
-            return;
-        }
 
         if (!addFormData.deviceId || !addFormData.startUtc) {
             alert('Please provide at least a Device and Start Time.');

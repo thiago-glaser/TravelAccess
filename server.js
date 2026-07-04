@@ -66,41 +66,6 @@ function scheduleJob(name, path, intervalMs, apiKey) {
     }, intervalMs);
 }
 
-function scheduleDailyJob(name, path, hourUtc, apiKey) {
-    const http = require(useHttps ? 'https' : 'http');
-    const baseUrl = useHttps ? `https://${hostname}:${port}` : `http://localhost:${port}`;
-
-    const runJob = () => {
-        const currentKey = process.env[name + '_API_KEY'] || apiKey;
-        console.log(`[Job Runner] Executing daily ${name}...`);
-        
-        http.get(`${baseUrl}${path}`, { 
-            headers: { 
-                'x-internal-job': 'true',
-                'x-api-key': currentKey || ''
-            }
-        }, (res) => {
-            let data = '';
-            res.on('data', chunk => (data += chunk));
-            res.on('end', () => console.log('[Job Runner] Daily %s result:', name, res.statusCode));
-        }).on('error', (e) => console.error('[Job Runner] Daily %s error:', name, e.message));
-        
-        setTimeout(scheduleNext, 60000);
-    };
-
-    const scheduleNext = () => {
-        const now = new Date();
-        const nextRun = new Date();
-        nextRun.setUTCHours(hourUtc, 0, 0, 0);
-        if (nextRun <= now) nextRun.setUTCDate(nextRun.getUTCDate() + 1);
-        const delay = nextRun.getTime() - now.getTime();
-        console.log(`[Job Runner] Next ${name} at ${nextRun.toISOString()}`);
-        setTimeout(runJob, delay);
-    };
-
-    scheduleNext();
-}
-
 app.prepare().then(() => {
     const requestHandler = async (req, res) => {
         try {
@@ -121,6 +86,5 @@ app.prepare().then(() => {
 
         scheduleJob('GEOCODE_JOB', '/api/jobs/geocode-locations', 60000, process.env.GEOCODE_JOB_API_KEY);
         scheduleJob('MERGE_JOB', '/api/jobs/merge-location-geocodes', 60000, process.env.MERGE_JOB_API_KEY);
-        scheduleDailyJob('DEMO_RESET_JOB', '/api/setup-demo?force=true', 8, process.env.DEMO_RESET_JOB_API_KEY);
     });
 });

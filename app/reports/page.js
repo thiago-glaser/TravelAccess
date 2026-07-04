@@ -262,7 +262,7 @@ export default function ReportsPage() {
                             sessionCost = distanceKm * sessionPricePerKm;
 
                             // Save results back to DB if they've changed and session is finished
-                            if (session.endTime && !userProfile?.isDemo) {
+                            if (session.endTime) {
                                 fetch('/api/sessions', {
                                     method: 'PATCH',
                                     headers: { 'Content-Type': 'application/json' },

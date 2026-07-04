@@ -116,7 +116,6 @@ export async function GET(request) {
             ID: user.id,
             USERNAME: user.username,
             IS_ADMIN: user.isAdmin,
-            IS_DEMO: user.isDemo,
             id: user.id
         };
 

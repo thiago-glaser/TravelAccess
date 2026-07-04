@@ -97,18 +97,6 @@ function LoginForm() {
                     <p className="text-sm text-gray-600 leading-relaxed text-center">
                         {t('login.description')}
                     </p>
-                    
-                    <div className="p-3 bg-blue-100 border border-blue-200 rounded-xl">
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('login.demoTitle')}</span>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                            {t('login.demoDescription')}
-                            <br />
-                            <span className="text-gray-600 font-mono mt-1 block">User: <b className="text-blue-300">demo</b> / Pass: <b className="text-blue-300">demo123</b></span>
-                        </p>
-                    </div>
                 </div>
 
                 {success && (

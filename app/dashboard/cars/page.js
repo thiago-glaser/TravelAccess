@@ -187,10 +187,10 @@ export default function ManageCarsPage() {
                             />
                             <button
                                 type="submit"
-                                disabled={submitting || (!newLicensePlate && !newDescription) || userProfile?.isDemo}
+                                disabled={submitting || (!newLicensePlate && !newDescription)}
                                 className="md:col-span-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                             >
-                                {userProfile?.isDemo ? t('cars.viewOnly') : (submitting ? t('cars.adding') : t('cars.addCar'))}
+                                {submitting ? t('cars.adding') : t('cars.addCar')}
                             </button>
                         </form>
 
@@ -238,8 +238,7 @@ export default function ManageCarsPage() {
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => handleSaveCar(car.ID)}
-                                                                disabled={userProfile?.isDemo}
-                                                                className="px-4 py-2 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50"
+                                                                className="px-4 py-2 bg-blue-600 text-slate-900 rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors"
                                                             >
                                                                 {t('cars.save')}
                                                             </button>
@@ -298,8 +297,7 @@ export default function ManageCarsPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleRemoveCar(car.ID)}
-                                                        disabled={userProfile?.isDemo}
-                                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest"
                                                     >
                                                         {t('cars.remove')}
                                                     </button>

@@ -24,9 +24,6 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
 
-        if (user.isDemo === 'Y' || user.isDemo === true) {
-            return NextResponse.json({ success: false, error: 'Demo users cannot delete their account' }, { status: 403 });
-        }
 
         const deletionToken = crypto.randomBytes(32).toString('hex');
         const expires = new Date();

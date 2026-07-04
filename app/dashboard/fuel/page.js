@@ -310,10 +310,10 @@ export default function ManageFuelPage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || cars.length === 0 || userProfile?.isDemo}
+                                disabled={submitting || cars.length === 0}
                                 className="md:col-span-2 mt-4 py-4 bg-green-600 hover:bg-green-500 rounded-xl font-semibold transition-all shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                             >
-                                {userProfile?.isDemo ? t('fuel.viewOnly') : (submitting ? t('fuel.saving') : t('fuel.addLog'))}
+                                {submitting ? t('fuel.saving') : t('fuel.addLog')}
                             </button>
                         </form>
 
@@ -439,7 +439,7 @@ export default function ManageFuelPage() {
                                                     <button
                                                         onClick={() => handleCalculateFuel(entry.id)}
                                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-blue-600 hover:bg-blue-400/10 rounded-lg border border-transparent hover:border-blue-400/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        disabled={submitting || userProfile?.isDemo}
+                                                        disabled={submitting}
                                                     >
                                                         {t('fuel.calculate')}
                                                     </button>
@@ -447,7 +447,7 @@ export default function ManageFuelPage() {
                                                     <button
                                                         onClick={() => handleRemoveFuel(entry.id)}
                                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        disabled={submitting || userProfile?.isDemo}
+                                                        disabled={submitting}
                                                     >
                                                         {t('fuel.delete')}
                                                     </button>

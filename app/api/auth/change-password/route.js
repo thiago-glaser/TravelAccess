@@ -10,9 +10,6 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (session.isDemo === 'Y' || session.isDemo === true) {
-            return NextResponse.json({ success: false, error: 'Demo users cannot change password' }, { status: 403 });
-        }
 
         const { currentPassword, newPassword } = await request.json();
 
