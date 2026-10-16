@@ -16,6 +16,7 @@ The scripts are numbered to ensure correct execution order:
     *   `V_SESSIONS`: Summarizes session start/end points.
     *   `V_SESSION_CALC`: Complex logic for session start/end location determination.
 4.  **`05_indexes.sql`**: Essential performance indexes for high-volume tables (`LOCATION_DATA`, `SESSION_DATA`) and foreign keys.
+5.  **`12_session_ai_description.sql`**: AI-generated descriptions for trip sessions (`SESSION_AI_DESCRIPTION`).
 
 ## 🚀 Initialization
 
@@ -29,6 +30,7 @@ To set up the database from scratch:
     @02_functions_procedures.sql
     @03_views.sql
     @05_indexes.sql
+    @12_session_ai_description.sql
     ```
 
     *Using SQL*Plus or SQL Developer.*
@@ -42,6 +44,7 @@ To set up the database from scratch:
 *   **`FUEL`**: Logs of fuel inserted mapping to users and cars, with capability to store receipt blob images.
 *   **`LOCATION_DATA`**: Raw high-frequency GPS telemetry.
 *   **`SESSION_DATA`**: Aggregated travel sessions (trips).
+*   **`SESSION_AI_DESCRIPTION`**: AI trip descriptions keyed by `SESSION_DATA_ID`.
 
 ## ⚙️ Configuration
 

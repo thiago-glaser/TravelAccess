@@ -155,6 +155,12 @@
     "error": "Error: {{error}}",
     "noPoints": "No GPS data points found for this session.",
     "title": "Session Data Points ({{count}})",
+    "aiSummaryTitle": "AI Trip Resume",
+    "generateAi": "Generate with Gemini AI",
+    "regenerateAi": "Regenerate",
+    "generatingAi": "Analyzing session with Gemini...",
+    "noAiDescription": "No AI description generated yet for this session.",
+    "aiError": "Failed to generate AI summary.",
     "headers": {
       "dateTime": "Date/Time (Local)",
       "latitude": "Latitude",
@@ -223,7 +229,12 @@
     "actions": "Actions",
     "addSession": "Add Session",
     "selectDevice": "Select Device",
-    "selectCar": "Select Car"
+    "selectCar": "Select Car",
+    "aiDescriptionBtn": "AI Summary",
+    "generateAiDescription": "Create AI description for this trip",
+    "viewAiDescription": "View / Regenerate AI description",
+    "aiSummaryModalTitle": "Trip Description (Gemini AI)",
+    "aiErrorTitle": "AI Generation Error"
   },
   "months": {
     "1": "January",

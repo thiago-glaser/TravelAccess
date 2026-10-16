@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth';
-import { SessionView, SessionData, Device, UserDevice, sequelize } from '@/lib/models/index.js';
+import { SessionView, SessionData, SessionAiDescription, Device, UserDevice, sequelize } from '@/lib/models/index.js';
 import { Op } from 'sequelize';
 
 export async function GET(request) {
@@ -71,7 +71,16 @@ export async function GET(request) {
                     as: 'sessionData',
                     attributes: ['valueConfirmed'],
                     where: { isDeleted: 0 },
-                    required: true
+                    required: true,
+                    include: [
+                        {
+                            model: SessionAiDescription,
+                            as: 'aiDescription',
+                            attributes: ['description'],
+                            where: { isDeleted: 0 },
+                            required: false
+                        }
+                    ]
                 },
                 {
                     model: Device,
@@ -88,11 +97,13 @@ export async function GET(request) {
         // Map abstract models into original json response form
         const sessions = results.map(row => {
             const description = row.carDescription || (row.deviceInfo ? row.deviceInfo.description : null);
+            const aiDescription = row.sessionData?.aiDescription?.description || null;
             return {
                 id: row.id.trim(),
                 deviceId: row.deviceId.trim(),
                 carId: row.carId ? row.carId.trim() : null,
                 description: description,
+                aiDescription: aiDescription,
                 startTime: row.startUtc ? row.startUtc.toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
                 endTime: row.endUtc ? row.endUtc.toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
                 type: row.sessionType,

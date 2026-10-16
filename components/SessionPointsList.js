@@ -10,6 +10,26 @@ export default function SessionPointsList({ session }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [aiDescription, setAiDescription] = useState(session.aiDescription || null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
+
+    // Sync or fetch AI description
+    useEffect(() => {
+        if (session.aiDescription) {
+            setAiDescription(session.aiDescription);
+        } else if (session.id) {
+            fetch(`/api/sessions/${session.id}/ai-description`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.description) {
+                        setAiDescription(data.description);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [session.id, session.aiDescription]);
+
     useEffect(() => {
         let isMounted = true;
 
@@ -42,13 +62,11 @@ export default function SessionPointsList({ session }) {
                 const result = await response.json();
 
                 if (result.success && isMounted) {
-                    // Sort descending (newest first)? Actually the user wants to see sequential, maybe oldest first?
-                    // Let's use oldest first as it makes sense for "incremental time and distance"
                     const sortedLocations = [...result.data].sort((a, b) => {
                         return new Date(a.date).getTime() - new Date(b.date).getTime();
                     });
 
-                    // Apply the 10 meters rule requested by the user just like Map did
+                    // Apply the 10 meters rule requested by the user
                     const filteredLocations = filterLocationsByDistance(sortedLocations, 10);
 
                     // Process them to calculate speed, incremental distance, incremental time
@@ -58,9 +76,13 @@ export default function SessionPointsList({ session }) {
                     setError(result.error || 'Failed to fetch points');
                 }
             } catch (err) {
-                if (isMounted) setError(err.message);
+                if (isMounted) {
+                    setError(err.message || 'Error fetching locations');
+                }
             } finally {
-                if (isMounted) setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
 
@@ -71,6 +93,26 @@ export default function SessionPointsList({ session }) {
         };
     }, [session.id, session.startTime, session.endTime, session.deviceId]);
 
+    const handleGenerateAi = async () => {
+        setAiLoading(true);
+        setAiError(null);
+        try {
+            const res = await fetch(`/api/sessions/${session.id}/ai-description`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success && data.description) {
+                setAiDescription(data.description);
+            } else {
+                setAiError(data.error || t('sessionPointsList.aiError'));
+            }
+        } catch (err) {
+            setAiError(err.message || t('sessionPointsList.aiError'));
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     if (loading) {
         return <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.loading')}</div>;
     }
@@ -79,43 +121,103 @@ export default function SessionPointsList({ session }) {
         return <div className="p-4 text-center text-red-500 text-sm">{t('sessionPointsList.error', { error })}</div>;
     }
 
-    if (locations.length === 0) {
-        return <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.noPoints')}</div>;
-    }
-
     return (
-        <div className="bg-white p-4 overflow-x-auto border-t border-gray-100">
-            <h4 className="font-bold text-gray-800 mb-3 text-sm">{t('sessionPointsList.title', { count: locations.length })}</h4>
-            <div className="max-h-80 overflow-y-auto rounded border border-gray-200">
-                <table className="w-full text-left text-xs">
-                    <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
-                        <tr>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.dateTime')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.latitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.longitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.altitude')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalDistTitle')}>{t('sessionPointsList.headers.totalDist')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalTimeTitle')}>{t('sessionPointsList.headers.totalTime')}</th>
-                            <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.speed')}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {locations.map((loc, idx) => (
-                            <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-700">
-                                    {loc.localDate.toLocaleDateString(locale)} {loc.localDate.toLocaleTimeString(locale)}
-                                </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lat.toFixed(6)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lng.toFixed(6)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.altitude != null ? loc.altitude.toFixed(1) : '-'}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.cumulativeDistanceKm.toFixed(2)}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-gray-600 font-mono text-xs">{loc.formattedCumulativeTime}</td>
-                                <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{loc.speedKmH.toFixed(1)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+        <div className="bg-white p-4 overflow-x-auto border-t border-gray-100 space-y-4">
+            {/* AI Trip Resume Card */}
+            <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-purple-50/80 border border-indigo-100 rounded-xl p-4 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-600 text-white shadow-xs">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </span>
+                        <h4 className="font-semibold text-indigo-950 text-sm flex items-center gap-1.5">
+                            {t('sessionPointsList.aiSummaryTitle')}
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                Gemini
+                            </span>
+                        </h4>
+                    </div>
+                    <button
+                        onClick={handleGenerateAi}
+                        disabled={aiLoading}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-indigo-700 bg-white border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                        {aiLoading ? (
+                            <>
+                                <svg className="animate-spin w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>{t('sessionPointsList.generatingAi')}</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>{aiDescription ? t('sessionPointsList.regenerateAi') : t('sessionPointsList.generateAi')}</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {aiError && (
+                    <div className="mt-2 text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100">
+                        {aiError}
+                    </div>
+                )}
+
+                {aiDescription ? (
+                    <div className="mt-2 text-xs text-gray-700 whitespace-pre-line leading-relaxed bg-white/90 p-3 rounded-lg border border-indigo-50 shadow-2xs">
+                        {aiDescription}
+                    </div>
+                ) : !aiLoading && (
+                    <p className="mt-1 text-xs text-gray-500 italic">
+                        {t('sessionPointsList.noAiDescription')}
+                    </p>
+                )}
             </div>
+
+            {/* GPS Telemetry Points Table */}
+            {locations.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.noPoints')}</div>
+            ) : (
+                <div>
+                    <h4 className="font-bold text-gray-800 mb-3 text-sm">{t('sessionPointsList.title', { count: locations.length })}</h4>
+                    <div className="max-h-80 overflow-y-auto rounded border border-gray-200">
+                        <table className="w-full text-left text-xs">
+                            <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.dateTime')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.latitude')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.longitude')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.altitude')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalDistTitle')}>{t('sessionPointsList.headers.totalDist')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500" title={t('sessionPointsList.headers.totalTimeTitle')}>{t('sessionPointsList.headers.totalTime')}</th>
+                                    <th className="px-3 py-2 font-semibold text-gray-500">{t('sessionPointsList.headers.speed')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {locations.map((loc, idx) => (
+                                    <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-700">
+                                            {loc.localDate.toLocaleDateString(locale)} {loc.localDate.toLocaleTimeString(locale)}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lat.toFixed(6)}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.lng.toFixed(6)}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.altitude != null ? loc.altitude.toFixed(1) : '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-600">{loc.cumulativeDistanceKm.toFixed(2)}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-600 font-mono text-xs">{loc.formattedCumulativeTime}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{loc.speedKmH.toFixed(1)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

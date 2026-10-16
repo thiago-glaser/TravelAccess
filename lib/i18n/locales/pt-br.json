@@ -155,6 +155,12 @@
     "error": "Erro: {{error}}",
     "noPoints": "Nenhum ponto de dado GPS encontrado para esta sessão.",
     "title": "Pontos de Dados da Sessão ({{count}})",
+    "aiSummaryTitle": "Resumo da Viagem com IA",
+    "generateAi": "Gerar com Gemini IA",
+    "regenerateAi": "Regerar",
+    "generatingAi": "Analisando sessão com o Gemini...",
+    "noAiDescription": "Nenhuma descrição de IA gerada ainda para esta sessão.",
+    "aiError": "Falha ao gerar resumo com IA.",
     "headers": {
       "dateTime": "Data/Hora (Local)",
       "latitude": "Latitude",
@@ -223,7 +229,12 @@
     "actions": "Ações",
     "addSession": "Adicionar Sessão",
     "selectDevice": "Selecionar Dispositivo",
-    "selectCar": "Selecionar Carro"
+    "selectCar": "Selecionar Carro",
+    "aiDescriptionBtn": "Resumo com IA",
+    "generateAiDescription": "Criar descrição com IA para esta viagem",
+    "viewAiDescription": "Ver / Regerar descrição com IA",
+    "aiSummaryModalTitle": "Descrição da Viagem (Gemini IA)",
+    "aiErrorTitle": "Erro ao Gerar com IA"
   },
   "months": {
     "1": "Janeiro",
