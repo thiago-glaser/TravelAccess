@@ -97,7 +97,8 @@ export default function SessionPointsList({ session }) {
         setAiLoading(true);
         setAiError(null);
         try {
-            const res = await fetch(`/api/sessions/${session.id}/ai-description`, {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const res = await fetch(`/api/sessions/${session.id}/ai-description?tz=${encodeURIComponent(tz)}`, {
                 method: 'POST'
             });
             const data = await res.json();

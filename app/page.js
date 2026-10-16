@@ -393,7 +393,8 @@ export default function SessionsPage() {
         if (e && e.stopPropagation) e.stopPropagation();
         setGeneratingAiId(sessionId);
         try {
-            const response = await fetch(`/api/sessions/${sessionId}/ai-description`, {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const response = await fetch(`/api/sessions/${sessionId}/ai-description?tz=${encodeURIComponent(tz)}`, {
                 method: 'POST'
             });
             const result = await response.json();

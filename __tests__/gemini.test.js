@@ -71,4 +71,14 @@ describe('lib/gemini.js', () => {
             .rejects
             .toThrow('Gemini API error (403): API key expired');
     });
+
+    test('formatInTimezone correctly converts UTC date to local time', () => {
+        const utcDate = new Date('2026-10-15T15:30:00Z');
+        const formatted = geminiModule.formatInTimezone(utcDate, 'America/Sao_Paulo', 'full');
+        // Sao Paulo is UTC-3, so 15:30 UTC is 12:30 local
+        expect(formatted).toContain('12:30:00');
+
+        const timeOnly = geminiModule.formatInTimezone(utcDate, 'America/Sao_Paulo', 'timeOnly');
+        expect(timeOnly).toBe('12:30:00');
+    });
 });

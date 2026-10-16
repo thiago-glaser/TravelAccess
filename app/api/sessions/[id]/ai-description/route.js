@@ -44,7 +44,18 @@ export async function POST(request, { params }) {
             return Response.json({ success: false, error: 'Session ID is required' }, { status: 400 });
         }
 
-        const result = await generateSessionSummary(id);
+        const url = new URL(request.url);
+        let tz = url.searchParams.get('tz');
+        if (!tz) {
+            try {
+                const body = await request.json();
+                tz = body?.tz;
+            } catch {
+                // Ignore empty or non-JSON body
+            }
+        }
+
+        const result = await generateSessionSummary(id, { tz });
 
         if (!result) {
             return Response.json({ success: false, error: 'Failed to generate session summary' }, { status: 400 });
