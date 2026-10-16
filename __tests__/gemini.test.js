@@ -50,7 +50,10 @@ describe('lib/gemini.js', () => {
             expect.stringContaining('gemini-2.5-flash:generateContent?key=mock-key'),
             expect.objectContaining({
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': 'mock-key'
+                }
             })
         );
     });
