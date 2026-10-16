@@ -24,7 +24,8 @@ param(
     [string]$Tag = "latest",
     [string]$RemoteDir = "~/TravelAccess",
     [switch]$SkipRuntimeFiles,  # skip certs/wallet/env upload (already on server)
-    [switch]$Dev  # Deploy to dev environment
+    [switch]$Dev,  # Deploy to dev environment
+    [switch]$SkipLogs  # Do not tail container logs indefinitely at end of deploy
 )
 
 $LocalDir = $PSScriptRoot
