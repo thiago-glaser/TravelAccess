@@ -11,6 +11,8 @@ export default function SessionPointsList({ session }) {
     const [error, setError] = useState(null);
 
     const [aiDescription, setAiDescription] = useState(session.aiDescription || null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     // Sync or fetch AI description
     useEffect(() => {
@@ -91,6 +93,27 @@ export default function SessionPointsList({ session }) {
         };
     }, [session.id, session.startTime, session.endTime, session.deviceId]);
 
+    const handleGenerateAi = async () => {
+        setAiLoading(true);
+        setAiError(null);
+        try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const res = await fetch(`/api/sessions/${session.id}/ai-description?tz=${encodeURIComponent(tz)}`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success && data.description) {
+                setAiDescription(data.description);
+            } else {
+                setAiError(data.error || t('sessionPointsList.aiError'));
+            }
+        } catch (err) {
+            setAiError(err.message || t('sessionPointsList.aiError'));
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     if (loading) {
         return <div className="p-4 text-center text-gray-500 text-sm">{t('sessionPointsList.loading')}</div>;
     }
@@ -103,25 +126,55 @@ export default function SessionPointsList({ session }) {
         <div className="bg-white p-4 overflow-x-auto border-t border-gray-100 space-y-4">
             {/* AI Trip Resume Card */}
             <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-purple-50/80 border border-indigo-100 rounded-xl p-4 shadow-xs">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-600 text-white shadow-xs">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </span>
-                    <h4 className="font-semibold text-indigo-950 text-sm flex items-center gap-1.5">
-                        {t('sessionPointsList.aiSummaryTitle')}
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                            Gemini
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-600 text-white shadow-xs">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
                         </span>
-                    </h4>
+                        <h4 className="font-semibold text-indigo-950 text-sm flex items-center gap-1.5">
+                            {t('sessionPointsList.aiSummaryTitle')}
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                Gemini
+                            </span>
+                        </h4>
+                    </div>
+                    <button
+                        onClick={handleGenerateAi}
+                        disabled={aiLoading}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-indigo-700 bg-white border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                        {aiLoading ? (
+                            <>
+                                <svg className="animate-spin w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>{t('sessionPointsList.generatingAi')}</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>{aiDescription ? t('sessionPointsList.regenerateAi') : t('sessionPointsList.generateAi')}</span>
+                            </>
+                        )}
+                    </button>
                 </div>
+
+                {aiError && (
+                    <div className="mt-2 text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100">
+                        {aiError}
+                    </div>
+                )}
 
                 {aiDescription ? (
                     <div className="mt-2 text-xs text-gray-700 whitespace-pre-line leading-relaxed bg-white/90 p-3 rounded-lg border border-indigo-50 shadow-2xs">
                         {aiDescription}
                     </div>
-                ) : (
+                ) : !aiLoading && (
                     <p className="mt-1 text-xs text-gray-500 italic">
                         {t('sessionPointsList.noAiDescription')}
                     </p>
