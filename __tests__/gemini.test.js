@@ -47,7 +47,7 @@ describe('lib/gemini.js', () => {
         const result = await geminiModule.callGeminiApi('Test telemetry prompt');
         expect(result).toBe('Trip summary from origin to destination.');
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('gemini-2.5-flash:generateContent?key=mock-key'),
+            expect.stringContaining('gemini-3.8-flash:generateContent?key=mock-key'),
             expect.objectContaining({
                 method: 'POST',
                 headers: {
