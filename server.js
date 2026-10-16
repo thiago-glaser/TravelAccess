@@ -86,5 +86,6 @@ app.prepare().then(() => {
 
         scheduleJob('GEOCODE_JOB', '/api/jobs/geocode-locations', 60000, process.env.GEOCODE_JOB_API_KEY);
         scheduleJob('MERGE_JOB', '/api/jobs/merge-location-geocodes', 60000, process.env.MERGE_JOB_API_KEY);
+        scheduleJob('AI_DESCRIPTION_JOB', '/api/jobs/generate-ai-description', 300000, process.env.GEOCODE_JOB_API_KEY);
     });
 });

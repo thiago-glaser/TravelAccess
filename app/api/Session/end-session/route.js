@@ -1,6 +1,5 @@
 import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import { generateSessionSummary } from '@/lib/gemini';
 
 export async function POST(request) {
     try {
@@ -101,11 +100,6 @@ export async function POST(request) {
 
         const elapsed = Date.now() - startTime;
         console.log(`Session ended. ID: ${targetSessionId} Car: ${carId} Updated rows: ${updated} Elapsed: ${elapsed}ms`);
-
-        // Trigger Gemini AI trip resume generation in background so response is not delayed
-        generateSessionSummary(targetSessionId).catch(err => {
-            console.error(`[Gemini AI] Background session summary failed for ${targetSessionId}:`, err.message);
-        });
 
         return Response.json({ updated, sessionId: targetSessionId }, { status: 200 });
     } catch (error) {

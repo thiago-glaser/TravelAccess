@@ -49,7 +49,6 @@ export default function SessionsPage() {
     const [devices, setDevices] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [addFormData, setAddFormData] = useState({ deviceId: '', carId: '', startUtc: '', endUtc: '', sessionType: 'P' });
-    const [generatingAiId, setGeneratingAiId] = useState(null);
     const { t, locale } = useTranslation();
 
     // Fetch user profile on mount
@@ -389,51 +388,6 @@ export default function SessionsPage() {
         }
     };
 
-    const handleGenerateAiDescription = async (e, sessionId) => {
-        if (e && e.stopPropagation) e.stopPropagation();
-        setGeneratingAiId(sessionId);
-        try {
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const response = await fetch(`/api/sessions/${sessionId}/ai-description?tz=${encodeURIComponent(tz)}`, {
-                method: 'POST'
-            });
-            const result = await response.json();
-            if (result.success && result.description) {
-                // Update session state in list
-                setSessions(prev => prev.map(s =>
-                    s.id === sessionId ? { ...s, aiDescription: result.description } : s
-                ));
-                // Automatically expand row to reveal points & AI resume card
-                setExpandedSessionIds(prev =>
-                    prev.includes(sessionId) ? prev : [...prev, sessionId]
-                );
-                await Swal.fire({
-                    title: '✨ ' + t('sessions.aiSummaryModalTitle'),
-                    html: `<div style="text-align: left; max-height: 400px; overflow-y: auto; font-size: 14px; line-height: 1.6; white-space: pre-line; color: #374151;">${result.description}</div>`,
-                    icon: 'success',
-                    confirmButtonColor: '#4f46e5',
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                await Swal.fire({
-                    title: t('sessions.aiErrorTitle'),
-                    text: result.error || 'Failed to generate AI description.',
-                    icon: 'error',
-                    confirmButtonColor: '#4f46e5'
-                });
-            }
-        } catch (err) {
-            await Swal.fire({
-                title: t('sessions.aiErrorTitle'),
-                text: err.message || 'Failed to generate AI description.',
-                icon: 'error',
-                confirmButtonColor: '#4f46e5'
-            });
-        } finally {
-            setGeneratingAiId(null);
-        }
-    };
-
     const endSessionWithTime = async (deviceId, timestamp_utc, id = null) => {
         try {
             const response = await fetch('/api/Session/end-session', {
@@ -544,24 +498,6 @@ export default function SessionsPage() {
                                         <span className="font-mono text-gray-800">
                                             {formatAgo(now - parseUTC(timerSession.endTime))}
                                         </span>
-                                        <button
-                                            onClick={(e) => handleGenerateAiDescription(e, timerSession.id)}
-                                            disabled={generatingAiId === timerSession.id}
-                                            className="ml-2 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
-                                            title={t('sessions.generateAiDescription')}
-                                        >
-                                            {generatingAiId === timerSession.id ? (
-                                                <svg className="w-3.5 h-3.5 animate-spin text-indigo-700" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-3.5 h-3.5 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                </svg>
-                                            )}
-                                            <span>{t('sessions.aiDescriptionBtn')}</span>
-                                        </button>
                                     </>
                                 )}
                             </div>
@@ -890,26 +826,6 @@ export default function SessionsPage() {
                                                         </td>
                                                         <td className="px-2 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                             <div className="flex items-center gap-1.5">
-                                                                <button
-                                                                    onClick={(e) => handleGenerateAiDescription(e, session.id)}
-                                                                    disabled={generatingAiId === session.id}
-                                                                    className={`p-1.5 rounded-lg transition-all cursor-pointer group/ai ${session.aiDescription
-                                                                        ? 'text-indigo-600 bg-indigo-50/70 hover:bg-indigo-100/80 shadow-2xs hover:scale-105'
-                                                                        : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-                                                                    }`}
-                                                                    title={session.aiDescription ? t('sessions.viewAiDescription') : t('sessions.generateAiDescription')}
-                                                                >
-                                                                    {generatingAiId === session.id ? (
-                                                                        <svg className="w-4 h-4 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
-                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                                        </svg>
-                                                                    ) : (
-                                                                        <svg className="w-4 h-4 group-hover/ai:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                        </svg>
-                                                                    )}
-                                                                </button>
                                                                 {!session.endTime && (
                                                                     <button
                                                                         onClick={(e) => {
